@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "declaration": true,
+        "removeComments": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "target": "ES2017",
+        "sourceMap": true,
+        "outDir": "./dist",
+        "esModuleInterop": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": [
+        "Backend/src/**/*"
+    ], // Adjust based on where your code files are located
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
