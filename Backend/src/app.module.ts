@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { DatabaseConfig } from './config/database.config';
 // import { CartModule } from './modules/cart/cart.module';
 import { CommunicationModule } from './modules/communication/communication.module';
 // import { UserModule } from './modules/user/user.module';
@@ -8,9 +8,9 @@ import { CommunicationModule } from './modules/communication/communication.modul
 @Module({
     imports: [
         ConfigModule.forRoot({
-            isGlobal: true, // Makes the ConfigModule available globally in the app
+            isGlobal: true, // Loads .env file globally
         }),
-        MongooseModule.forRoot(process.env.MONGO_URI || 'your_default_mongo_uri'),
+        DatabaseConfig,
         // CartModule,
         CommunicationModule,
         // UserModule,
