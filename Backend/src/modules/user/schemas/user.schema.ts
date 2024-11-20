@@ -1,82 +1,58 @@
-import {Schema} from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-export const UserSchema = new Schema({
-    userid:{
-        type: String ,
-        required: true , 
-        unique: true
-    }, 
+@Schema({ timestamps: true }) // adds createdAt and updatedAt attributes automatically without manually creating them 
 
-    name:{
-        type: String , 
-        required: true , 
-        trim: true  
-    },
+export class User extends Document {
+  @Prop({ required: true , unique: true })
+  userId!: string;
 
-    email:{
-        type: String , 
-        required: true , 
-        unique: true ,
-        lowercase: true ,
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    },
+  @Prop({ required: true, trim: true })
+  name!: string;
 
-    passwordhash:{
-        type: String ,
-        required: true
-    },
+  @Prop({
+    required: true ,
+    unique: true ,
+    lowercase: true ,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ ,
+  })
+  email!: string;
 
-    role:{
-        type: String , 
-        required: true ,
-        // enum: ['student' , 'admin' , 'instructor'] if we will use the enum to decide the role of the user
-    },
+  @Prop({ required: true })
+  passwordHash!: string;
 
-    profile_picture_URL:{
-        type: String ,
-        default: null
-    },
+  @Prop({
+    required: true,
+    enum: ['student' , 'admin' , 'instructor'] , // to be confirmed if we will use an enum for deciding the user type
+  })
+  role!: string;
 
-    createdAt:{
-        type: Date ,
-        default: Date.now
-    },
+  @Prop({ default: null })
+  profilePictureUrl?: string;
 
-    birthday:{
-        type: Date ,
-        required: false
-    },
+  @Prop({ required: false })
+  birthday?: Date;
 
-    enrolled_courses:[
-        {
-        // type: type will be a reference to the course collection when it is created
-        // ref: 'Course' link to course collection
-    }],
+  @Prop({
+    type: [{ type: Types.ObjectId , ref: 'Course' }] , // references to courses
+    default: [],
+  })
+  enrolledCourses?: Types.ObjectId[];
 
-    bio:{
-        type: String , 
-        default: '' ,
-        required: false ,
-        trim: true
-    },
+  @Prop({ default: '' , trim: true })
+  bio?: string;
 
-    preferences:{
-        type: String , // type can be changed to courses or another feature
-        required: false
-    },
+  @Prop({ type: Object , default: {} }) // any object type
+  preferences?: Record<string , any>;
 
-    isActive:{
-        type: Boolean ,
-        default: true
-    },
+  @Prop({ default: true })
+  isActive: boolean = true;
 
-    lastLogin:{
-        type: Date ,
-        default: null
-    },
+  @Prop({ default: null })
+  lastLogin?: Date;
 
-    lastChangedPassword:{
-        type: Date ,
-        default: null
-    }
-});
+  @Prop({ default: null })
+  lastChangedPassword?: Date;
+}
+
+export const UserSchema = SchemaFactory.createForClass(User);
