@@ -72,3 +72,4 @@ node-repl-history
 package-lock.json
 *.json
 *.json
+package.json
