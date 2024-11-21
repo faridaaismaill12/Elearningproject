@@ -12,6 +12,9 @@ export class Note {
     @Prop({type: Types.ObjectId, ref: 'Module', required: false})
     module !: Types.ObjectId
     
+    @Prop({type: Types.ObjectId, ref: 'Lesson', required: false})
+    Lesson !: Types.ObjectId
+    
     @Prop({ type: String, required: true})
     content!: string;
 

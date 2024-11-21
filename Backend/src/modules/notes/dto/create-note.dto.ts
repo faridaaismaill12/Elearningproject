@@ -1,17 +1,22 @@
 import { IsNotEmpty, IsString, IsOptional, IsDate, IsMongoId } from 'class-validator';
+import {Types} from 'mongoose'
 
 export class CreateNoteDto {
   @IsMongoId()
   @IsNotEmpty()
-  creator !: string;
+  creator !: Types.ObjectId;
 
   @IsMongoId()
   @IsNotEmpty()
-  course !: string;
+  course !: Types.ObjectId;
 
   @IsMongoId()
   @IsOptional()
-  module?: string;
+  module?: Types.ObjectId;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  lesson!: Types.ObjectId
 
   @IsString()
   @IsNotEmpty()
