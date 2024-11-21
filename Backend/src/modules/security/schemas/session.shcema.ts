@@ -3,29 +3,29 @@
 //authentication log schema
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document,Types } from 'mongoose';
 // import { v4 as uuidv4 } from 'uuid'
 
 
 @Schema({ timestamps: true })
 export class Session extends Document {
 
-    @Prop({ required: true })
-    user_id!: String
+    @Prop({ required: true,type: Types.ObjectId, ref: 'User'  })
+    userId!: Types.ObjectId
 
     @Prop({ required: true })
-    Expiry_date!: Date;
+    ExpiryDate!: Date;
 
     @Prop({ required: true, default: Date.now })
-    Created_at!: Date;
+    CreatedAt!: Date;
 
-    @Prop({ required: true })
-    Session_id!: String;
+    @Prop({ required: true,type: Types.ObjectId })
+    SessionId!: String;
 
-    @Prop()
+    @Prop({required: true})
     Ipaddress?:  String;
 
-    @Prop()
+    @Prop({required: true})
     UserAgent?: String;
 
 }

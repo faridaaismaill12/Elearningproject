@@ -3,17 +3,18 @@
 //authentication log schema
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Mongoose, Types } from 'mongoose';
+import { session } from 'passport';
 
 
 @Schema({ timestamps: true })
 export class AuthenticationLog extends Document {
 
-    @Prop({ required: true })
-    log_id!: String
+    @Prop({ required: true,type: Types.ObjectId  })
+    logId!: String
 
-    @Prop({ required: true })
-    user_id!: String
+    @Prop({ required: true,type: Types.ObjectId, ref: 'User' })
+    userId!:  Types.ObjectId;
 
     @Prop({ required: true, enum: ['LOGIN', 'LOGOUT', 'PASSWORD_RESET', 'DELETE_ACCOUNT'] })
     Action!: String
@@ -24,8 +25,8 @@ export class AuthenticationLog extends Document {
     @Prop({ required: true, default: Date.now })
     timeStamp!: Date;
 
-    @Prop({ required: true })
-    Session_id!: String;
+    @Prop({ required: true,type: Types.ObjectId, ref:'session' })
+    SessionId!: Types.ObjectId;
 
 }
 
