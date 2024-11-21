@@ -70,3 +70,4 @@ node-repl-history
 
 # Hiding package-lock.json if you're using Yarn
 package-lock.json
+*.json
