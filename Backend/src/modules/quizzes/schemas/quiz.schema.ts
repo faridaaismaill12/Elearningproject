@@ -20,5 +20,4 @@ export class Quiz {
     difficultyLevel: 'easy' | 'medium' | 'hard';
   }>;
 }
-
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
