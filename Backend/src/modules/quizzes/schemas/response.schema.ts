@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose'; 
-//import {User} from "../models/user.schema"
-//import {Quiz} from "../models/quiz.schema"
+import {User} from "../../user/schemas/user.schema"
+import {Quiz} from "../../quizzes/schemas/quiz.schema"
 export type ResponseDocument = Response & Document;
 
 @Schema({ timestamps: { createdAt: 'submitted_at', updatedAt: false } })
