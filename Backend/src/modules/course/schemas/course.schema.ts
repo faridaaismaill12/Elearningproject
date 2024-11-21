@@ -36,8 +36,8 @@ export class Course {
   @Prop({ type: String, enum: ["Beginner", "Intermediate", "Advanced"], required: true })
   difficultyLevel!: string; // Difficulty level (Beginner, Intermediate, Advanced)
 
-  @Prop({ type: String, required: true })
-  createdBy!: string;  // Instructor who created the course
+  @Prop({ type: Types.ObjectId, ref: "User"  })
+  createdBy!: Types.ObjectId;  // Instructor who created the course
   
   
 }
