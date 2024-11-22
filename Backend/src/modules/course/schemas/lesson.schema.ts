@@ -26,6 +26,9 @@ export class Lesson {
 
   @Prop({ type: [String] })
   objectives!: string[]; // Learning objectives for the lesson
+
+  @Prop({type: MongooseSchema.Types.ObjectId, ref:"Note"})
+  noteId?:MongooseSchema.Types.ObjectId[];
 }
 
 

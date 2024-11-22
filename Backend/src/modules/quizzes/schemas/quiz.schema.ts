@@ -3,7 +3,7 @@ import { Document, Schema as MongooseSchema } from 'mongoose';  // Import Mongoo
 import { Module } from '../../course/schemas/module.schema';
 export type QuizDocument = Quiz & Document;
 
-@Schema({ timestamps: { createdAt: 'created_at' } })
+@Schema({ timestamps: true })
 export class Quiz {
     @Prop({ required: true, unique: true })
     quizId!: string;

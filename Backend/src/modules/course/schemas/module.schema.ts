@@ -6,7 +6,7 @@ import { Lesson } from '../../course/schemas/lesson.schema'
 
 export type ModuleDocument = Module & Document;
 
-@Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
+@Schema({ timestamps: true })
 export class Module {
 
   @Prop({required:true, unique:true})

@@ -4,7 +4,7 @@ import { User } from "../../user/schemas/user.schema"
 import { Quiz } from "../../quizzes/schemas/quiz.schema"
 export type ResponseDocument = Response & Document;
 
-@Schema({ timestamps: { createdAt: 'submitted_at', updatedAt: false } })
+@Schema({ timestamps: true })
 export class Response {
     @Prop({ required: true, unique: true })
     responseId!: string;

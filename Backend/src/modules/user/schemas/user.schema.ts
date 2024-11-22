@@ -27,7 +27,7 @@ export class User extends Document {
     })
     role!: string;
 
-    @Prop({ default: null })
+    @Prop({ default: '' })
     profilePictureUrl?: string;
 
     @Prop({ required: false })

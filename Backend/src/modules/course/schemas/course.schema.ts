@@ -16,7 +16,7 @@ export class Course {
   description!: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: "User", required: true })
-  instructor!: MongooseSchema.Types.ObjectId;
+  instructor!: MongooseSchema.Types.ObjectId; //does the same thing as createdBy
 
   @Prop({ default: 1 })
   version!: number;
@@ -24,11 +24,6 @@ export class Course {
   @Prop({ type: String, enum: ["beginner", "intermediate", "advanced"], required: true })
   difficultyLevel!: string; 
 
-  @Prop({ type: String, required: true })
-  createdBy!: string; 
-
-  @Prop({ type: Date, default: Date.now })
-  createdAt?: Date; 
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
