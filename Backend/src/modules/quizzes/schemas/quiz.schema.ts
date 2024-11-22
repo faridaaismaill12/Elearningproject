@@ -23,5 +23,11 @@ export class Quiz {
         correctAnswer: string;
         difficultyLevel: 'easy' | 'medium' | 'hard';
     }>;
+
+    @Prop({ required: true, default: 30 }) // Duration in minutes
+    duration!: number;
+
+    @Prop({ type: Date, default: null }) 
+    startTime!: Date | null;
 }
 export const QuizSchema = SchemaFactory.createForClass(Quiz);

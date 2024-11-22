@@ -15,9 +15,12 @@ export class Response {
     @Prop({ type: MongooseSchema.Types.ObjectId, required: true, ref: 'Quiz' })  // Correctly reference ObjectId
     quizId!: MongooseSchema.Types.ObjectId;
 
-    @Prop({ type: [{ question_id: String, answer: String }] })
+    @Prop({ 
+        type: [{ 
+            questionId: { type: String, required: true }, answer: { type: String, required: true } }] 
+    })
     answers!: Array<{
-        questionId: string;
+        questionId: string;  // This corresponds to the question field in Quiz schema
         answer: string;
     }>;
 
