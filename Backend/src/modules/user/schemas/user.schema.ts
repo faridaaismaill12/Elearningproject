@@ -1,20 +1,21 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop , Schema , SchemaFactory } from '@nestjs/mongoose';
+import { Document , Types } from 'mongoose';
 
-@Schema({ timestamps: true }) // adds createdAt and updatedAt attributes automatically without manually creating them 
+@Schema({ timestamps: true })
 
 export class User extends Document {
-    @Prop({ required: true, unique: true })
+    
+    @Prop({ required: true , unique: true })
     userId!: string;
 
-    @Prop({ required: true, trim: true })
+    @Prop({ required: true , trim: true })
     name!: string;
 
     @Prop({
-        required: true,
-        unique: true,
-        lowercase: true,
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        required: true ,
+        unique: true ,
+        lowercase: true ,
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     })
     email!: string;
 
@@ -22,8 +23,8 @@ export class User extends Document {
     passwordHash!: string;
 
     @Prop({
-        required: true,
-        enum: ['student', 'admin', 'instructor'], // to be confirmed if we will use an enum for deciding the user type
+        required: true ,
+        enum: ['student' , 'admin' , 'instructor']
     })
     role!: string;
 
@@ -34,16 +35,16 @@ export class User extends Document {
     birthday?: Date;
 
     @Prop({
-        type: [{ type: Types.ObjectId, ref: 'Course' }], // references to courses
-        default: [],
+        type: [{ type: Types.ObjectId , ref: 'Course' }] ,
+        default: []
     })
     enrolledCourses?: Types.ObjectId[];
 
-    @Prop({ default: '', trim: true })
+    @Prop({ default: '' , trim: true })
     bio?: string;
 
-    @Prop({ type: Object, default: {} }) // any object type
-    preferences?: Record<string, any>;
+    @Prop({ type: Object , default: {} , required: false })
+    preferences?: Record<string , any>;
 
     @Prop({ default: true })
     isActive: boolean = true;
@@ -53,6 +54,7 @@ export class User extends Document {
 
     @Prop({ default: null })
     lastChangedPassword?: Date;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
