@@ -13,16 +13,16 @@ export class AuthenticationLog extends Document {
     userId!: Types.ObjectId;
 
     @Prop({ required: true, enum: ['LOGIN', 'LOGOUT', 'PASSWORD_RESET', 'DELETE_ACCOUNT'] })
-    Action!: String
+    action!: String
 
     @Prop({ required: true, default: false })
-    Success!: Boolean;
+    success!: Boolean;
 
     @Prop({ required: true, default: Date.now })
     timeStamp!: Date;
 
     @Prop({ required: true,type: Types.ObjectId, ref:'session' })
-    SessionId!: Types.ObjectId;
+    sessionId!: Types.ObjectId;
 
 }
 
