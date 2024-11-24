@@ -16,7 +16,7 @@ export class CreateCourseDto {
 
   @IsMongoId()
   @IsNotEmpty()
-  instructor!: MongooseSchema.Types.ObjectId;  
+  instructor!: string;  
 
   @IsNotEmpty()
   @IsNumber()

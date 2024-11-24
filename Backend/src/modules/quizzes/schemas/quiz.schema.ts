@@ -18,6 +18,7 @@ export class Quiz {
         }]
     })
     questions!: Array<{
+        questionId:string;
         question: string;
         options: string[];
         correctAnswer: string;
