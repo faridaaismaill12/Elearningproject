@@ -10,16 +10,16 @@ export class Session extends Document {
     userId!: Types.ObjectId
 
     @Prop({ required: true })
-    ExpiryDate!: Date;
+    expiresAt!: Date;
     
     @Prop({ required: true,type: Types.ObjectId })
-    SessionId!: String;
+    sessionId!: String;
 
     @Prop({required: true})
-    Ipaddress?:  String;
+    ipAddress?:  String;
 
     @Prop({required: true})
-    UserAgent?: String;
+    userAgent?: String;
 
 }
 
