@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { Quiz } from '../../quizzes/schemas/quiz.schema';
-import { Lesson } from '../../course/schemas/lesson.schema'
+import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 
 export type ModuleDocument = HydratedDocument<Module>
 
