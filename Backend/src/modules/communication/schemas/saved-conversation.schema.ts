@@ -7,10 +7,10 @@ export class SavedConversation extends Document {
     user!: Types.ObjectId;
 
     @Prop({ type: Types.ObjectId, ref: 'Chat' })
-    chat!: Types.ObjectId;
+    chat?: Types.ObjectId;
 
     @Prop({ type: Types.ObjectId, ref: 'ForumThread' })
-    forumThread!: Types.ObjectId;
+    forumThread?: Types.ObjectId;
 
     @Prop({ type: Date, default: Date.now })
     savedAt!: Date;

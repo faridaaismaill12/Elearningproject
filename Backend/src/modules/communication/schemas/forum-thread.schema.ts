@@ -22,7 +22,7 @@ export class ForumThread extends Document {
             timestamp: { type: Date, default: Date.now },
         },
     ])
-    replies!: {
+    replies?: {
         user: Types.ObjectId;
         message: string;
         timestamp: Date;
