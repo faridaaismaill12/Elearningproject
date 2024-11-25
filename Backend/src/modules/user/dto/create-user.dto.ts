@@ -1,21 +1,26 @@
-import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray } from 'class-validator';
+import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray , IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateUserDto {
     
   @IsString()
+  @IsNotEmpty()
   userId!: string;
 
   @IsString()
+  @IsNotEmpty()
   name!: string;
 
   @IsEmail()
+  @IsNotEmpty()
   email!: string;
 
   @IsString()
+  @IsNotEmpty()
   passwordHash!: string;
 
   @IsEnum(['student' , 'admin' , 'instructor'])
+  @IsNotEmpty()
   role!: string;
 
   @IsOptional()
