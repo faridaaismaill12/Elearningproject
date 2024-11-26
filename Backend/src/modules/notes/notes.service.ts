@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateNoteDto } from './dto/create-note.dto';
+import {UpdateNoteDto} from './dto/update-note.dto';
 import { Note } from './schemas/note.schema';
 import { validate } from 'class-validator';
 
@@ -94,17 +95,19 @@ export class NoteService {
   }
 
   // Update a Note
-  async updateNote(noteId: string, updateData: Partial<CreateNoteDto>): Promise<Note> {
+  
+  async updateNote(noteId: string, updateData: UpdateNoteDto): Promise<Note> {
     try {
+      // Update the note and handle the possibility of null
       const updatedNote = await this.noteModel
         .findByIdAndUpdate(noteId, updateData, { new: true, runValidators: true })
         .exec();
-
+  
       if (!updatedNote) {
         throw new HttpException('Note not found', HttpStatus.NOT_FOUND);
       }
-
-      return updatedNote;
+  
+      return updatedNote as Note; // Explicitly assert the type to Note
     } catch (error: any) {
       throw new HttpException(
         { message: 'Failed to update the note', error: error.message },
@@ -112,6 +115,7 @@ export class NoteService {
       );
     }
   }
+  
 
   // Delete a Note
   async deleteNote(noteId: string): Promise<{ message: string }> {
