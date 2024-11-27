@@ -1,6 +1,7 @@
-import { Controller , Post , Body } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Delete, Get, Param } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserService } from './user.service';
 
@@ -22,6 +23,45 @@ export class UserController {
     @Post('forgot-password')
     forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
         return this.userService.forgotPassword(forgotPasswordDto);
+    }
+
+    @Patch('profile')
+    updateProfile(@Body() updateUserDto: UpdateUserDto , @Param('id') userId: string) {
+        return this.userService.updateProfile(userId, updateUserDto);
+    }
+
+    @Delete('profile')
+    deleteProfile(@Param('id') userId: string) {
+        return this.userService.deleteProfile(userId);
+    }
+
+    @Get('profile')
+    viewProfile(@Param('id') userId: string) {
+        return this.userService.viewProfile(userId);
+    }
+
+    // (instructor only)
+    @Post(':id/courses')
+    assignCourses(@Param('id') id: string , @Body() assignCoursesDto: any) {
+        return this.userService.assignCourses(id, assignCoursesDto);
+    }
+
+    // (instructor only)
+    @Post('student')
+    createAccount(@Body() createUserDto: CreateUserDto) {
+        return this.userService.createAccount(createUserDto);
+    }
+
+    // (admin only)
+    @Delete(':id')
+    deleteUser(@Param('id') id: string) {
+        return this.userService.deleteUser(id);
+    }
+
+    // (admin only)
+    @Get()
+    getUsers() {
+        return this.userService.getUsers();
     }
 
 }
