@@ -60,8 +60,14 @@ export class UserController {
 
     // (admin only)
     @Get()
-    getUsers() {
-        return this.userService.getUsers();
+    getAllUsers() {
+        return this.userService.getAllUsers();
+    }
+
+    // (admin only)
+    @Get(':id')
+    getUserById(@Param('id') id: string){
+        return this.userService.getUserById(id);
     }
 
 }

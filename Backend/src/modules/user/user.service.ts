@@ -78,7 +78,7 @@ export class UserService {
         return { message: 'Password reset email sent' };
     }
 
-    async updateProfile(userId: string, updateUserDto: UpdateUserDto) {
+    async updateProfile(userId: string , updateUserDto: UpdateUserDto) {
         // Security: Validate the user's identity (ensure only authenticated users can update their own profiles)
         // This can be done using JWT tokens or other means to verify the user's identity
 
@@ -104,8 +104,18 @@ export class UserService {
 
     async viewProfile(userId: string) {
         // Security: Validate the user's identity (ensure only authenticated users can view their own profiles)
+        const user = await this.userModel
+        .findById(userId)
+        .select('-passwordHash')
+        .populate({
+            path: 'enrolledCourses',
+            select: 'title description difficultyLevel instructor',
+            populate: {
+                path: 'instructor',
+                select: 'name email profilePictureUrl'
+        }
+    });
 
-        const user = await this.userModel.findById(userId).select('-passwordHash'); // Exclude passwordHash field
         if (!user) {
             throw new NotFoundException('User not found');
         }
@@ -122,13 +132,13 @@ export class UserService {
         return user.role;
     }
 
-    async assignCourses(userId: string, assignCoursesDto: any) {
+    async assignCourses(userId: string , assignCoursesDto: any) {
         const userRole = await this.getUserRole(userId);
         if (userRole !== 'instructor') {
             throw new ForbiddenException('Only instructors can assign courses');
         }
 
-        const student = await this.userModel.findById(assignCoursesDto.studentId);
+        const student = await this.userModel.findById(assignCoursesDto.studentId).populate({path: 'enrolledCourses', select: 'title difficultyLevel'});
         if (!student) {
             throw new NotFoundException('Student not found');
         }
@@ -144,7 +154,7 @@ export class UserService {
         }
 
         // Adding the course IDs to the student's enrolledCourses array
-        student.enrolledCourses = [...student.enrolledCourses, ...assignCoursesDto.courseIds];
+        student.enrolledCourses = [...student.enrolledCourses , ...assignCoursesDto.courseIds];
         
         await student.save();
 
@@ -173,6 +183,7 @@ export class UserService {
         }
 
         const deletedUser = await this.userModel.findByIdAndDelete(userId);
+
         if (!deletedUser) {
             throw new NotFoundException('User not found');
         }
@@ -180,14 +191,34 @@ export class UserService {
         return { message: 'User deleted successfully' };
     }
 
-    async getUsers() {
+    async getAllUsers() {
         const userRole = await this.getUserRole();
         if (userRole !== 'admin') {
             throw new ForbiddenException('Only admins can view all users');
         }
 
-        const users = await this.userModel.find();
+        const users = await this.userModel.find().select('-passwordHash').populate({path: 'enrolledCourses', select: 'title difficultyLevel'});
+
+        if (!users) {
+            throw new NotFoundException('User not found');
+        }
+
         return users;
+    }
+
+    async getUserById(userId: string){
+        const userRole = await this.getUserRole();
+        if (userRole !== 'admin') {
+            throw new ForbiddenException('Only admins can view all users by a certain id');
+        }
+
+        const user = await this.userModel.findById(userId).select('-passwordHash').populate({path: 'enrolledCourses', select: 'title difficultyLevel'});
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+    
+        return user;
     }
 
 }
