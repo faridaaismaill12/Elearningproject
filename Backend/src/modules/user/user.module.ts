@@ -7,6 +7,7 @@ import { Course , CourseSchema } from '../course/schemas/course.schema';
 import { JwtModule } from '@nestjs/jwt'; // Optional: for JWT authentication
 
 @Module({
+
   imports: [
     MongooseModule.forFeature([
       { name: User.name , schema: UserSchema },
@@ -16,5 +17,7 @@ import { JwtModule } from '@nestjs/jwt'; // Optional: for JWT authentication
   ] ,
   controllers: [UserController] ,
   providers: [UserService]
+
 })
+
 export class UserModule {}
