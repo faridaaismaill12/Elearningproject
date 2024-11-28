@@ -1,6 +1,6 @@
 #this is an example of how ur .env should look like
 
-
+mongodb+srv://<db_username>:<db_password>@user.vfvwp.mongodb.net/?retryWrites=true&w=majority&appName=User
 PORT= ur port number here
 
 DB_CONN_STRING= ur Db connection string here

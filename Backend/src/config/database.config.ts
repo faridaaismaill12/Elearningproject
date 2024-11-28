@@ -23,11 +23,11 @@ export const DatabaseConfig = MongooseModule.forRootAsync({
 
                 // Attach listeners to the provided connection instance
                 connection.on('connected', () => {
-                    console.log(`Successfully connected to the database: ${uri}`);
+                    console.log('Successfully connected to the database: ${uri}');
                 });
 
                 connection.on('error', (err: Error) => {
-                    console.error(`Database connection error: ${err.message}`);
+                           console.error('Database connection error: ${err.message}');
                 });
 
                 return connection;

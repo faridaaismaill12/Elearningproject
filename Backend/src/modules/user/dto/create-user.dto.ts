@@ -1,6 +1,6 @@
 import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray , IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
-
+//test the code on postman
 export class CreateUserDto {
     
   @IsString()
