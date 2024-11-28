@@ -1,10 +1,10 @@
-import {
-SubscribeMessage, 
+import { 
 WebSocketGateway,
 OnGatewayConnection,
 OnGatewayDisconnect, 
 WebSocketServer,
-MessageBody} from '@nestjs/websockets'; 
+MessageBody,
+SubscribeMessage} from '@nestjs/websockets'; 
 import { Socket, Server } from 'socket.io';
 import { chatDocument } from './schemas/chat-schema';
 
@@ -12,10 +12,6 @@ import { chatDocument } from './schemas/chat-schema';
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server!: Server;
-
-    
-
-
 
 handleConnection(client: Socket) { // we need to log the connection
     console.log("New client connected", client.id); 
