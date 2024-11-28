@@ -1,14 +1,17 @@
-import { Controller , Post , Body , Patch , Delete , Get , Param } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Delete, Get, Param, BadRequestException, Query, UseGuards, Req, NotFoundException } from '@nestjs/common';
+import { Request } from 'express';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserService } from './user.service';
+import { ResetPasswordDto } from './dto/password-reset.dto';
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UserController {
 
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService) { }
 
     @Post('register')
     register(@Body() createUserDto: CreateUserDto) {
@@ -21,14 +24,57 @@ export class UserController {
     }
 
     @Post('forgot-password')
-    forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-        return this.userService.forgotPassword(forgotPasswordDto);
+    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        const email = forgotPasswordDto.email;
+
+        if (!email) {
+            throw new BadRequestException('Email is required');
+        }
+
+        return await this.userService.forgetPassword(email);
     }
 
-    @Patch('profile')
-    updateProfile(@Body() updateUserDto: UpdateUserDto , @Param('id') userId: string) {
-        return this.userService.updateProfile(userId, updateUserDto);
+
+
+    @Post('reset')
+    async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
+        const { newPassword } = resetPasswordDto;
+
+        if (!token || !newPassword) {
+            throw new BadRequestException('Token and new password are required');
+        }
+
+        return await this.userService.resetPassword(token, newPassword);
     }
+
+
+
+
+
+
+
+    @UseGuards(JwtAuthGuard)
+    @Patch('update/:id')
+    async updateUser(
+        @Param('id') id: string,
+        @Body() updateUserDto: UpdateUserDto,
+        @Req() req: Request,
+    ) {
+        const userIdFromToken = (req.user as any)?.sub; // Extract user ID from JWT payload
+
+        if (userIdFromToken !== id) {
+            throw new NotFoundException('You can only update your own profile');
+        }
+
+        const updatedUser = await this.userService.updateProfile(id, updateUserDto);
+        return { message: 'User updated successfully', user: updatedUser };
+    }
+
+
+
+
+
+
 
     @Delete('profile')
     deleteProfile(@Param('id') userId: string) {
@@ -42,7 +88,7 @@ export class UserController {
 
     // (instructor only)
     @Post(':id/courses')
-    assignCourses(@Param('id') id: string , @Body() assignCoursesDto: any) {
+    assignCourses(@Param('id') id: string, @Body() assignCoursesDto: any) {
         return this.userService.assignCourses(id, assignCoursesDto);
     }
 
@@ -66,7 +112,7 @@ export class UserController {
 
     // (admin only)
     @Get(':id')
-    getUserById(@Param('id') id: string){
+    getUserById(@Param('id') id: string) {
         return this.userService.getUserById(id);
     }
 
