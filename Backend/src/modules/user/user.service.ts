@@ -1,4 +1,4 @@
-import { Injectable , BadRequestException , NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable , BadRequestException , NotFoundException , ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -138,7 +138,7 @@ export class UserService {
             throw new ForbiddenException('Only instructors can assign courses');
         }
 
-        const student = await this.userModel.findById(assignCoursesDto.studentId).populate({path: 'enrolledCourses', select: 'title difficultyLevel'});
+        const student = await this.userModel.findById(assignCoursesDto.studentId).populate({path: 'enrolledCourses' , select: 'title difficultyLevel'});
         if (!student) {
             throw new NotFoundException('Student not found');
         }
@@ -197,7 +197,7 @@ export class UserService {
             throw new ForbiddenException('Only admins can view all users');
         }
 
-        const users = await this.userModel.find().select('-passwordHash').populate({path: 'enrolledCourses', select: 'title difficultyLevel'});
+        const users = await this.userModel.find().select('-passwordHash').populate({path: 'enrolledCourses' , select: 'title difficultyLevel'});
 
         if (!users) {
             throw new NotFoundException('User not found');
@@ -212,7 +212,7 @@ export class UserService {
             throw new ForbiddenException('Only admins can view all users by a certain id');
         }
 
-        const user = await this.userModel.findById(userId).select('-passwordHash').populate({path: 'enrolledCourses', select: 'title difficultyLevel'});
+        const user = await this.userModel.findById(userId).select('-passwordHash').populate({path: 'enrolledCourses' , select: 'title difficultyLevel'});
 
         if (!user) {
             throw new NotFoundException('User not found');
