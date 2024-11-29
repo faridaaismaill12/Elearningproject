@@ -8,20 +8,13 @@ import {
     import { Socket, Server } from 'socket.io';
     // import { CommunicationService } from './services/communication.service';
     import { NotificationService } from '../communication/services/notification.service';
-    import { Types } from 'mongoose';
+
     
     @WebSocketGateway(3002, {})
     export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         @WebSocketServer()
         server!: Server;
-    
-        constructor(
-            // private readonly communicationService: CommunicationService,
-            private readonly notificationService: NotificationService
-        ) {
-            console.log('Chat Gateway is ready!');
-        }
     
     handleConnection(client: Socket) { // we need to log the connection
         console.log("New client connected", client.id); 
@@ -49,5 +42,3 @@ import {
             // socket.emit()
         }
     }
-    
-    
