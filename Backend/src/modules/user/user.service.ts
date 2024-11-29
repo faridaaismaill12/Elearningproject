@@ -31,8 +31,8 @@ export class UserService {
         if (calculatePasswordEntropy(passwordHash) < 50) {
             throw new BadRequestException('Password is weak');
         }
-        const salt = await bcrypt.genSalt(10); // Generate a salt for hashing
-        const hashedPassword = await bcrypt.hash(passwordHash, salt); // Hash the password with the salt
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(passwordHash, salt);
 
         // Create and save the user to the database
         const user = new this.userModel({ ...createUserDto, passwordHash: hashedPassword });
@@ -49,18 +49,17 @@ export class UserService {
             throw new NotFoundException('User not found');
         }
 
-        // Security: Validate the provided password against the stored hashed password
+        // Validate the provided password against the stored hashed password
         const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
         if (!isPasswordValid) {
             throw new BadRequestException('Invalid credentials');
         }
 
-        // Security: Generate a JWT token for authenticated sessions
-        // Generate the token with necessary claims (e.g., user ID, expiration)
+        const token = this.generateJwt(user);
 
         return {
             message: 'Login successful',
-            // token: 'jwtToken'  // Placeholder for the actual JWT token to be returned
+            token
         };
     }
 
@@ -74,7 +73,7 @@ export class UserService {
 
     async validateUser(email: string, password: string): Promise<User | null> {
         // Find the user by email
-        const user = await this.userModel.findOne({ where: { email } });
+        const user = await this.userModel.findOne({ email });
         if (user && (await bcrypt.compare(password, user.passwordHash))) {
             return user;
         }
@@ -93,8 +92,9 @@ export class UserService {
         }
     }
 
-    async forgetPassword(email: string): Promise<{ message: string }> {
-        const user = await this.userModel.findOne({ where: { email } });
+    async forgetPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+        const { email } = forgotPasswordDto;
+        const user = await this.userModel.findOne({ email });
         if (!user) {
             throw new BadRequestException('No user found with this email');
         }
@@ -139,40 +139,13 @@ export class UserService {
         }
     }
 
-    // async enable2FA(userId: string): Promise<string> {
-    //     const user = await this.userModel.findOne({ where: { id: userId } });
-    //     if (!user) {
-    //         throw new BadRequestException('User not found');
-    //     }
-    
-    //     const secret = speakeasy.generateSecret({ name: `PersonalFinanceTracker (${user.email})` });
-    //     user.twoFactorSecret = secret.base32;
-    //     user.isTwoFactorEnabled = true;
-    //     await this.userModel.save(user);
-    
-    //     const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
-    //     return qrCodeUrl;
-    // }   
+    async updateProfile(updateUserDto: UpdateUserDto , userId: string , token: string) {
+        // Ensure only authenticated users can update their own profiles
+        const decodedToken = await this.validateToken(token);
 
-    // async verify2FA(userId: string, otp: string): Promise<boolean> {
-    //     const user = await this.userModel.findOne({ where: { id: userId } });
-    //     if (!user || !user.twoFactorSecret) {
-    //         throw new UnauthorizedException('2FA is not enabled');
-    //     }
-    
-    //     const isValid = speakeasy.totp.verify({
-    //         secret: user.twoFactorSecret,
-    //         encoding: 'base32',
-    //         token: otp,
-    //     });
-    
-    //     console.log({ secret: user.twoFactorSecret, otp, isValid });
-    //     return isValid;
-    // }
-
-    async updateProfile(userId: string, updateUserDto: UpdateUserDto) {
-        // Security: Validate the user's identity (ensure only authenticated users can update their own profiles)
-        // This can be done using JWT tokens or other means to verify the user's identity
+        if (decodedToken.sub !== userId) {
+            throw new ForbiddenException('You can only update your own profile');
+        }
 
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
@@ -182,9 +155,13 @@ export class UserService {
         return { message: 'Profile updated successfully', user: updatedUser };
     }
 
-    async deleteProfile(userId: string) {
-        // Security: Validate the user's identity (ensure only the authenticated user can delete their profile)
-        // This can be done by comparing the user ID from the JWT with the user ID in the request
+    async deleteProfile(userId: string , token: string) {
+        // Ensure only the authenticated user can delete their profile
+        const decodedToken = await this.validateToken(token);
+
+        if (decodedToken.sub !== userId) {
+            throw new ForbiddenException('You can only delete your own profile');
+        }
 
         const deletedUser = await this.userModel.findByIdAndDelete(userId);
         if (!deletedUser) {
@@ -194,8 +171,13 @@ export class UserService {
         return { message: 'User profile deleted successfully' };
     }
 
-    async viewProfile(userId: string) {
-        // Security: Validate the user's identity (ensure only authenticated users can view their own profiles)
+    async viewProfile(userId: string , token: string) {
+        // Validate user identity
+        const decodedToken = await this.validateToken(token);
+
+        if (decodedToken.sub !== userId) {
+            throw new ForbiddenException('You can only view your own profile');
+        }
         const user = await this.userModel
             .findById(userId)
             .select('-passwordHash')
@@ -259,7 +241,6 @@ export class UserService {
             throw new ForbiddenException('Only instructors can create student accounts');
         }
 
-        // Security: hashing of the password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(createUserDto.passwordHash, salt);
         const user = new this.userModel({ ...createUserDto, passwordHash: hashedPassword });
@@ -268,8 +249,11 @@ export class UserService {
         return { message: 'Student account created successfully', userId: user._id };
     }
 
-    async deleteUser(userId: string) {
-        const userRole = await this.getUserRole(userId);
+    async deleteUser(userId: string , token: string) {
+        // Validate the JWT token and extract the user's role
+        const decodedToken = await this.validateToken(token);
+        const userRole = await this.getUserRole(decodedToken.sub);
+
         if (userRole !== 'admin') {
             throw new ForbiddenException('Only admins can delete users');
         }
@@ -283,8 +267,11 @@ export class UserService {
         return { message: 'User deleted successfully' };
     }
 
-    async getAllUsers() {
-        const userRole = await this.getUserRole();
+    async getAllUsers(token: string) {
+         // Validate the JWT token and extract the user's role
+        const decodedToken = await this.validateToken(token); 
+        const userRole = await this.getUserRole(decodedToken.sub);
+        
         if (userRole !== 'admin') {
             throw new ForbiddenException('Only admins can view all users');
         }

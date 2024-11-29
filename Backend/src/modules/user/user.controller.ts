@@ -31,10 +31,10 @@ export class UserController {
             throw new BadRequestException('Email is required');
         }
 
-        return await this.userService.forgetPassword(email);
+        return await this.userService.forgetPassword(forgotPasswordDto);
     }
 
-    @Post('reset')
+    @Post('reset-password')
     async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
         const { newPassword } = resetPasswordDto;
 
@@ -47,10 +47,11 @@ export class UserController {
 
     @UseGuards(JwtAuthGuard)
     @Patch('update/:id')
-    async updateUser(
+    async updateProfile(
         @Param('id') id: string,
         @Body() updateUserDto: UpdateUserDto,
-        @Req() req: Request,
+        @Req() req: Request & { user: { sub: string; email: string } },
+        @Query() token: string
     ) {
         const userIdFromToken = (req.user as any)?.sub; // Extract user ID from JWT payload
 
@@ -58,19 +59,19 @@ export class UserController {
             throw new NotFoundException('You can only update your own profile');
         }
 
-        const updatedUser = await this.userService.updateProfile(id, updateUserDto);
+        const updatedUser = await this.userService.updateProfile(updateUserDto , id , token);
         return { message: 'User updated successfully', user: updatedUser };
     }
 
 
     @Delete('profile')
-    deleteProfile(@Param('id') userId: string) {
-        return this.userService.deleteProfile(userId);
+    deleteProfile(@Param('id') userId: string , @Query() token: string) {
+        return this.userService.deleteProfile(userId , token);
     }
 
     @Get('profile')
-    viewProfile(@Param('id') userId: string) {
-        return this.userService.viewProfile(userId);
+    viewProfile(@Param('id') userId: string , @Query() token: string) {
+        return this.userService.viewProfile(userId , token);
     }
 
     // (instructor only)
@@ -87,14 +88,14 @@ export class UserController {
 
     // (admin only)
     @Delete(':id')
-    deleteUser(@Param('id') id: string) {
-        return this.userService.deleteUser(id);
+    deleteUser(@Param('id') id: string , @Query() token: string) {
+        return this.userService.deleteUser(id , token);
     }
 
     // (admin only)
     @Get()
-    getAllUsers() {
-        return this.userService.getAllUsers();
+    getAllUsers(@Query() token: string) {
+        return this.userService.getAllUsers(token);
     }
 
     // (admin only)
