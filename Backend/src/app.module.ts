@@ -11,7 +11,10 @@ import { CommunicationModule } from './modules/communication/communication.modul
             isGlobal: true, // Loads .env file globally
         }),
         DatabaseConfig,
+        // CartModule,
         CommunicationModule,
+        // UserModule,
+        // other modules...
     ],
 })
 export class AppModule { }

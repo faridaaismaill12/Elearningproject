@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument,Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type forumDocument = HydratedDocument<ForumThread>;
 @Schema({ timestamps: true })
 export class ForumThread extends Document {
     @Prop({ type: Types.ObjectId, ref: 'Course', required: true })

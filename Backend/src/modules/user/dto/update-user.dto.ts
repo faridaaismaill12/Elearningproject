@@ -2,6 +2,11 @@ import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray
 import { Type } from 'class-transformer';
 
 export class UpdateUserDto {
+    
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
   @IsOptional()
   @IsString()
   @Length(3 , 50)
