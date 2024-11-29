@@ -31,7 +31,7 @@ export class ForumController {
     }
 
     // Add a reply to a forum thread
-    @Put(':id/replies')
+@Put(':id/replies')
     async addReply(
         @Param('id') threadId: string,
         @Body() replyData: { userId: string; message: string },
