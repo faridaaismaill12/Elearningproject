@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Mongoose, Types } from 'mongoose';
+import { Document, Mongoose, Types } from 'mongoose';
 //import { session } from 'passport';
 
-export type authenticationlogDocument = HydratedDocument<AuthenticationLog>;
+
 @Schema({ timestamps: true })
 export class AuthenticationLog extends Document {
 

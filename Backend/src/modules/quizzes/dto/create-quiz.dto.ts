@@ -28,6 +28,11 @@ export class CreateQuestionDto {
 export class CreateQuizDto {
     @IsString()
     @IsNotEmpty()
+    @Length(1, 50)
+    quizId!: string;
+
+    @IsString()
+    @IsNotEmpty()
     moduleId!: string; // Ensure this aligns with Mongoose ObjectId
 
     @IsArray()

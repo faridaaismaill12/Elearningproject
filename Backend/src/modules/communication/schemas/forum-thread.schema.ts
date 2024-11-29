@@ -1,20 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument,Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type forumDocument = HydratedDocument<ForumThread>;
 @Schema({ timestamps: true })
 export class ForumThread extends Document {
     @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
-    course!: Types.ObjectId;
+    course!: Types.ObjectId; // The course this thread is associated with
 
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-    createdBy!: Types.ObjectId;
+    createdBy!: Types.ObjectId; // The user who created the thread
 
     @Prop({ type: String, required: true })
-    title!: string;
+    title!: string; // The title of the thread
 
     @Prop({ type: String })
-    content!: string;
+    content!: string; // The content of the thread
 
     @Prop([
         {
@@ -23,11 +22,19 @@ export class ForumThread extends Document {
             timestamp: { type: Date, default: Date.now },
         },
     ])
-    replies?: {
-        user: Types.ObjectId;
-        message: string;
-        timestamp: Date;
-    }[];
+    replies?: Array<{
+        user: Types.ObjectId; // The user who replied
+        message: string; // The reply message
+        timestamp: Date; // Timestamp of the reply
+    }>;
 }
 
 export const ForumThreadSchema = SchemaFactory.createForClass(ForumThread);
+
+// Add schema-level hooks or methods if needed
+ForumThreadSchema.methods.toJSON = function () {
+    const obj = this.toObject();
+    obj.id = obj._id; // Optionally map _id to id for clarity in JSON responses
+    delete obj.__v; // Remove Mongoose version key
+    return obj;
+};

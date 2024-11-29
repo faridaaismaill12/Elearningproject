@@ -1,13 +1,15 @@
-import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray , IsNotEmpty } from 'class-validator';
+import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray , IsNotEmpty , Length } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateUserDto {
+    
   @IsString()
   @IsNotEmpty()
   userId!: string;
 
   @IsString()
   @IsNotEmpty()
+  @Length(3 , 50)
   name!: string;
 
   @IsEmail()
@@ -16,6 +18,7 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
+  @Length(8 , 20)
   passwordHash!: string;
 
   @IsEnum(['student' , 'admin' , 'instructor'])
