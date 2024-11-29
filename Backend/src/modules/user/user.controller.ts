@@ -34,8 +34,6 @@ export class UserController {
         return await this.userService.forgetPassword(email);
     }
 
-
-
     @Post('reset')
     async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
         const { newPassword } = resetPasswordDto;
@@ -46,12 +44,6 @@ export class UserController {
 
         return await this.userService.resetPassword(token, newPassword);
     }
-
-
-
-
-
-
 
     @UseGuards(JwtAuthGuard)
     @Patch('update/:id')
@@ -69,11 +61,6 @@ export class UserController {
         const updatedUser = await this.userService.updateProfile(id, updateUserDto);
         return { message: 'User updated successfully', user: updatedUser };
     }
-
-
-
-
-
 
 
     @Delete('profile')

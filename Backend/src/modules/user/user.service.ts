@@ -41,13 +41,6 @@ export class UserService {
         return { message: 'User registered successfully', userId: user._id };
     }
 
-
-
-
-
-
-
-
     async login(loginUserDto: LoginUserDto) {
         const { email, passwordHash } = loginUserDto;
 
@@ -71,13 +64,8 @@ export class UserService {
         };
     }
 
-
-
-
-
     /////////HEGAB//////////
-
-
+    
     generateJwt(user: User): string {
         const payload = { email: user.email, sub: user.userId };
         return this.jwtService.sign(payload); // Use the JwtService to sign the token
@@ -105,18 +93,6 @@ export class UserService {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
     async forgetPassword(email: string): Promise<{ message: string }> {
         const user = await this.userModel.findOne({ where: { email } });
         if (!user) {
@@ -134,10 +110,6 @@ export class UserService {
 
         return { message: 'Password reset link has been sent to your email' };
     }
-
-
-
-
 
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
@@ -167,11 +139,6 @@ export class UserService {
         }
     }
 
-
-
-
-
-
     // async enable2FA(userId: string): Promise<string> {
     //     const user = await this.userModel.findOne({ where: { id: userId } });
     //     if (!user) {
@@ -185,8 +152,7 @@ export class UserService {
     
     //     const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
     //     return qrCodeUrl;
-    // }
-    
+    // }   
 
     // async verify2FA(userId: string, otp: string): Promise<boolean> {
     //     const user = await this.userModel.findOne({ where: { id: userId } });
@@ -203,22 +169,6 @@ export class UserService {
     //     console.log({ secret: user.twoFactorSecret, otp, isValid });
     //     return isValid;
     // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     async updateProfile(userId: string, updateUserDto: UpdateUserDto) {
         // Security: Validate the user's identity (ensure only authenticated users can update their own profiles)
