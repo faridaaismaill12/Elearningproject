@@ -45,7 +45,6 @@ handleDisconnect(client: Socket) { // we need to log the disconnection
     }
 }
 
-
 //socket.on() //listen to the event
 //io.emit() //broadcast
 //socket.emit() //send to the client
