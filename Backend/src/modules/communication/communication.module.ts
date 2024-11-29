@@ -3,14 +3,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 // Controllers
 import { ForumController } from './controllers/forum.controller';
-// import { ThreadController } from './controllers/thread.controller';
+// Add other controllers if needed
 // import { NotificationController } from './controllers/notification.controller';
 // import { SavedConversationController } from './controllers/saved-conversation.controller';
 
 // Services
 import { ForumService } from './services/forum.service';
-// import { ThreadService } from './services/thread.service';
-// import { NotificationService } from './services/notification.service';
+import { NotificationService } from './services/notification.service';
 // import { SavedConversationService } from './services/saved-conversation.service';
 
 // Schemas
@@ -30,15 +29,17 @@ import { Chat, ChatSchema } from './schemas/chat-schema';
   ],
   controllers: [
     ForumController,
-    // ThreadController,
-    // NotificationController,
-    // SavedConversationController,
+    // NotificationController, // Ensure this is added
+    // SavedConversationController, // Ensure this is added
   ],
   providers: [
     ForumService,
-    // ThreadService,
-    // NotificationService,
-    // SavedConversationService,
+    NotificationService, // Ensure this is included
+    // SavedConversationService, // Ensure this is included
+  ],
+  exports: [
+    NotificationService, // Export services if needed by other modules
+    // SavedConversationService, // Export if required elsewhere
   ],
 })
 export class CommunicationModule {}
