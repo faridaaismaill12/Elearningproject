@@ -2,7 +2,6 @@ import { IsString, IsArray, IsOptional, IsEnum, IsMongoId, IsNumber, IsDate, IsD
 import { Type } from 'class-transformer';
 
 export class UpdateQuizDto {
-
   @IsMongoId()
   @IsOptional()  // moduleId is optional for update
   moduleId?: string;

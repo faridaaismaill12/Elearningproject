@@ -12,10 +12,6 @@ class AnswerDto {
 }
 
 export class SubmitResponseDto {
-  @IsString()
-  @IsNotEmpty()
-  responseId!: string;
-
   @IsMongoId()
   @IsNotEmpty()
   userId!: Types.ObjectId;

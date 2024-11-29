@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { Chat, ChatSchema } from './schemas/chat-schema';
+import { ChatGateway } from './chat-gateway';
+
 
 // Controllers
 import { ForumController } from './controllers/forum.controller';
@@ -17,7 +20,7 @@ import { ForumService } from './services/forum.service';
 import { ForumThread, ForumThreadSchema } from './schemas/forum-thread.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { SavedConversation, SavedConversationSchema } from './schemas/saved-conversation.schema';
-import { Chat, ChatSchema } from './schemas/chat-schema';
+
 
 @Module({
   imports: [
@@ -36,6 +39,7 @@ import { Chat, ChatSchema } from './schemas/chat-schema';
   ],
   providers: [
     ForumService,
+    ChatGateway
     // ThreadService,
     // NotificationService,
     // SavedConversationService,
