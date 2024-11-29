@@ -10,6 +10,7 @@ import { User } from './schemas/user.schema';
 import { Course } from '../course/schemas/course.schema';
 import { calculatePasswordEntropy } from '../security/password.utils';
 import { JwtService } from '@nestjs/jwt';
+import { v2 as cloudinary } from 'cloudinary';
 
 @Injectable()
 export class UserService {
@@ -108,6 +109,8 @@ export class UserService {
         // Send token to the user's email (mocked)
         console.log(`Send this reset link to the user's email: http://localhost:3000/doNotForgetAgain/reset-password?token=${resetToken}`);
 
+        // deploy: fix link
+
         return { message: 'Password reset link has been sent to your email' };
     }
 
@@ -139,21 +142,45 @@ export class UserService {
         }
     }
 
-    async updateProfile(updateUserDto: UpdateUserDto , userId: string , token: string) {
+    private async uploadToCloudinary(base64Image: string): Promise<any> {
+        try {
+            // Upload to Cloudinary
+            const result = await cloudinary.uploader.upload(base64Image, {
+                folder: 'profile-pictures',
+                public_id: `user_${Date.now()}`, // Unique identifier
+                resource_type: 'image',
+            });
+            return result; // Result contains secure_url, public_id, etc.
+        } catch (error) {
+            throw new BadRequestException('Failed to upload image to Cloudinary');
+        }
+    }
+
+    async updateProfile(
+        updateUserDto: UpdateUserDto,
+        userId: string,
+        token: string
+    ) {
         // Ensure only authenticated users can update their own profiles
         const decodedToken = await this.validateToken(token);
-
+    
         if (decodedToken.sub !== userId) {
             throw new ForbiddenException('You can only update your own profile');
         }
-
+    
+        // Handle profile picture upload logic
+        if (updateUserDto.profilePictureUrl) {
+            const uploadResult = await this.uploadToCloudinary(updateUserDto.profilePictureUrl);
+            updateUserDto.profilePictureUrl = uploadResult.secure_url; // Use Cloudinary's secure URL
+        }
+    
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
             throw new NotFoundException('User not found');
         }
-
+    
         return { message: 'Profile updated successfully', user: updatedUser };
-    }
+    }    
 
     async deleteProfile(userId: string , token: string) {
         // Ensure only the authenticated user can delete their profile
@@ -195,6 +222,7 @@ export class UserService {
         }
 
         return user;
+
     }
 
     // Helper to get userRole
@@ -247,6 +275,7 @@ export class UserService {
         await user.save();
 
         return { message: 'Student account created successfully', userId: user._id };
+
     }
 
     async deleteUser(userId: string , token: string) {
