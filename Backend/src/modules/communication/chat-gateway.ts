@@ -12,6 +12,7 @@ import {
     
     @WebSocketGateway(3002, {})
     export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+        
         @WebSocketServer()
         server!: Server;
     
@@ -40,10 +41,13 @@ import {
     // this method is used to make sure that every client in a groupchat sees that message
         @SubscribeMessage('newMessage')
         handleNewMessage(@MessageBody() message: string) {
-            this.server.emit('newMessage', message); // we need to broadcast the message to all clients   
+            this.server.emit('newMessage', message); // we need to broadcast the message to all clients
+            console.log('New message:', message);
+
+            // socket.on() //listen to the event
+            // io.emit() //broadcast
+            // socket.emit()
         }
     }
     
-    //socket.on() //listen to the event
-    //io.emit() //broadcast
-    //socket.emit()
+    
