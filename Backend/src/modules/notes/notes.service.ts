@@ -68,7 +68,7 @@ export class NoteService {
         })
         .exec();
       return notes;
-    } catch (error: any) {
+    } catch (error: any) { //404 error
       throw new HttpException(
         { message: 'Failed to fetch notes by module', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -134,6 +134,9 @@ export class NoteService {
       );
     }
   }
+  
+  //Autosave
+
  
 
 }
