@@ -16,12 +16,12 @@ export class UserController {
     @Post('register')
     register(@Body() createUserDto: CreateUserDto) {
         return this.userService.register(createUserDto);
-    }
+    } // tested
 
     @Post('login')
     login(@Body() loginUserDto: LoginUserDto) {
         return this.userService.login(loginUserDto);
-    }
+    } // entering password provides an error with hashing 
 
     @Post('forgot-password')
     async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
@@ -32,7 +32,7 @@ export class UserController {
         }
 
         return await this.userService.forgetPassword(forgotPasswordDto);
-    }
+    } // tested (link needs to fixed in the deployment)
 
     @Post('reset-password')
     async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
@@ -47,8 +47,7 @@ export class UserController {
 
     @UseGuards(JwtAuthGuard)
     @Patch('update/:id')
-    async updateProfile(
-        @Param('id') id: string,
+    async updateProfile(@Param('id') id: string,
         @Body() updateUserDto: UpdateUserDto,
         @Req() req: Request & { user: { sub: string; email: string } },
         @Query() token: string

@@ -22,47 +22,81 @@ export class UserService {
     ) { }
 
     async register(createUserDto: CreateUserDto) {
-        const { email, passwordHash } = createUserDto;
-
-        const existingUser = await this.userModel.findOne({ email });
-        if (existingUser) {
-            throw new BadRequestException('Email already registered');
+        console.log('Register API invoked with DTO:', createUserDto);
+    
+        const { email, passwordHash } = createUserDto;  // `passwordHash` here is actually the raw password
+    
+        try {
+            // Check if the user already exists
+            console.log('Checking if a user with the email already exists...');
+            const existingUser = await this.userModel.findOne({ email });
+            if (existingUser) {
+                console.error('Error: Email already registered:', email);
+                throw new BadRequestException('Email already registered');
+            }
+            console.log('No existing user found for email:', email);
+    
+            // Check password strength
+            console.log('Calculating password entropy...');
+            const entropy = calculatePasswordEntropy(passwordHash);  // Use the raw password here
+            console.log('Password entropy:', entropy);
+            if (entropy < 50) {
+                console.error('Error: Password is weak, entropy:', entropy);
+                throw new BadRequestException('Password is weak');
+            }
+    
+            // Hash the password
+            console.log('Generating salt for password hashing...');
+            const salt = await bcrypt.genSalt(10);
+            console.log('Salt generated:', salt);
+            console.log('Hashing password...');
+            const hashedPassword = await bcrypt.hash(passwordHash, salt);  // Hash the raw password
+            console.log('Password hashed successfully.');
+    
+            // Create and save the user
+            console.log('Creating user object for database...');
+            const user = new this.userModel({ ...createUserDto, passwordHash: hashedPassword });  // Store the hashed password as `passwordHash`
+            console.log('Saving user to database...');
+            await user.save();
+            console.log('User saved successfully with ID:', user._id);
+    
+            return { message: 'User registered successfully', userId: user._id };
+    
+        } catch (error) {
+            console.error('An error occurred during user registration:', error);
+            throw error;
         }
-
-        if (calculatePasswordEntropy(passwordHash) < 50) {
-            throw new BadRequestException('Password is weak');
-        }
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(passwordHash, salt);
-
-        // Create and save the user to the database
-        const user = new this.userModel({ ...createUserDto, passwordHash: hashedPassword });
-        await user.save();
-
-        return { message: 'User registered successfully', userId: user._id };
-    }
+    }    
 
     async login(loginUserDto: LoginUserDto) {
-        const { email, passwordHash } = loginUserDto;
-
+        const { email, passwordHash } = loginUserDto;  // `passwordHash` is the raw password entered by the user
+    
+        console.log('Received email:', email);
+        console.log('Received raw password:', passwordHash);
+    
         const user = await this.userModel.findOne({ email });
         if (!user) {
             throw new NotFoundException('User not found');
         }
-
-        // Validate the provided password against the stored hashed password
+    
+        // Log the stored hashed password in the database
+        console.log('Stored hashed password in DB:', user.passwordHash);
+    
+        // Validate the entered password against the stored hashed password
         const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
+        console.log('Is password valid?', isPasswordValid);  // Log the result of the password comparison
+        
         if (!isPasswordValid) {
             throw new BadRequestException('Invalid credentials');
         }
-
+    
         const token = this.generateJwt(user);
-
+    
         return {
             message: 'Login successful',
             token
         };
-    }
+    }       
 
     /////////HEGAB//////////
     
@@ -124,9 +158,10 @@ export class UserService {
                 throw new UnauthorizedException('Invalid token');
             }
 
+            // Check password strength (optional but recommended)
             const entropy = calculatePasswordEntropy(newPassword);
             if (entropy < 60) {
-                throw new BadRequestException(' You want to be hacked?? use a stronger password');
+                throw new BadRequestException('You want to be hacked? Use a stronger password');
             }
 
             // Hash the new password
