@@ -35,4 +35,13 @@ export class UpdateModuleDto{
     @ValidateNested({ each: true })
     @Type(() => MongooseSchema.Types.ObjectId)
     quizzes?: MongooseSchema.Types.ObjectId[];
+
+    @IsEnum(['easy', 'medium', 'hard'])
+    @IsOptional()
+    difficultyLevel!: 'easy' | 'medium' | 'hard';
+
+    @IsArray()
+    @IsMongoId({ each: true })
+    @IsOptional()
+    questions!: MongooseSchema.Types.ObjectId[];
 }
