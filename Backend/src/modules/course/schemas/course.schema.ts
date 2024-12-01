@@ -15,8 +15,8 @@ export class Course {
   @Prop({ required: true })
   description!: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: "User", required: true })
-  instructor!: MongooseSchema.Types.ObjectId; //does the same thing as createdBy
+  @Prop({ type: String, required: true })
+  instructor!: string; //does the same thing as createdBy
 
   @Prop({ default: 1 })
   version!: number;
