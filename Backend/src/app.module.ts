@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseConfig } from './config/database.config';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { CourseModule } from './modules/course/course.module'; // Import CourseModule
-
+import { UserModule } from './modules/user/user.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -11,7 +11,8 @@ import { CourseModule } from './modules/course/course.module'; // Import CourseM
         }),
         DatabaseConfig,
         CommunicationModule,
-        CourseModule, // Add CourseModule here
+        CourseModule,
+        UserModule // Add CourseModule here
         // other modules...
     ],
 })

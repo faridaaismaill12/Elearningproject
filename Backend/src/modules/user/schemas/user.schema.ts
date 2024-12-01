@@ -35,10 +35,10 @@ export class User extends Document {
     birthday?: Date;
 
     @Prop({
-        type: [{ type: Types.ObjectId , ref: 'Course' }] ,
-        default: []
-    })
-    enrolledCourses?: Types.ObjectId[];
+        type: [String], // Store an array of strings instead of ObjectId
+        default: [],
+      })
+      enrolledCourses?: string[];      
 
     @Prop({ default: '' , trim: true })
     bio?: string;
@@ -58,3 +58,5 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+export type UserDocument = User & Document;
