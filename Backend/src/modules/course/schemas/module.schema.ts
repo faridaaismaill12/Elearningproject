@@ -5,11 +5,8 @@ export type ModuleDocument = Module & Document;
 
 @Schema({ timestamps: true })
 export class Module {
-  @Prop({ required: true, unique: true })
-  moduleId!: string;
-
   @Prop({ required: true })
-  courseId!: string;
+  courseId!: string; // MongoDB _id of the parent course
 
   @Prop({ required: true })
   title!: string;
@@ -19,7 +16,7 @@ export class Module {
 
   @Prop({ type: Array, default: [] })
   lessons!: Array<{
-    lessonId: string;
+    _id?: string; // MongoDB _id for each lesson
     title: string;
     content: string;
   }>;

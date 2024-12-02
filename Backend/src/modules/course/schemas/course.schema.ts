@@ -1,5 +1,4 @@
 
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -7,8 +6,8 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: true, unique: true })
-  courseId!: string;
+  @Prop({ required: false, unique: true }) // Optional courseId
+  courseId?: string;
 
   @Prop({ required: true })
   title!: string;
@@ -29,12 +28,10 @@ export class Course {
   @Prop({
     type: [
       {
-        moduleId: { type: String, required: true },
         title: { type: String, required: true },
         content: { type: String, required: true },
         lessons: [
           {
-            lessonId: { type: String, required: true },
             title: { type: String, required: true },
             content: { type: String, required: true },
           },
@@ -44,11 +41,11 @@ export class Course {
     default: [],
   })
   modules!: Array<{
-    moduleId: string;
+    _id?: string; // MongoDB _id for each module
     title: string;
     content: string;
     lessons: Array<{
-      lessonId: string;
+      _id?: string; // MongoDB _id for each lesson
       title: string;
       content: string;
     }>;
