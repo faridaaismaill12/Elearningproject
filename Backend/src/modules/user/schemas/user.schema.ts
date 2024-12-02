@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -35,10 +36,10 @@ export class User {
   birthday?: Date;
 
   @Prop({
-    type: [{ type: Types.ObjectId, ref: 'Course' }],
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }],
     default: [],
   })
-  enrolledCourses?: Types.ObjectId[];
+  enrolledCourses?: MongooseSchema.Types.ObjectId[];
 
   @Prop({ default: '', trim: true })
   bio?: string;

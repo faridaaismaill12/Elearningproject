@@ -2,8 +2,6 @@ import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray
 import { Type } from 'class-transformer';
 
 export class CreateUserDto {
-    
-
 
   @IsString()
   @IsNotEmpty()

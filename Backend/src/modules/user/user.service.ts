@@ -11,12 +11,13 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types , Schema as MongooseSchema } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { Course } from '../course/schemas/course.schema';
 import { calculatePasswordEntropy } from '../security/password.utils';
 import { JwtService } from '@nestjs/jwt';
 import { v2 as cloudinary } from 'cloudinary';
+import { CreateStudentDto } from './dto/create-student.dto';
 
 @Injectable()
 export class UserService {
@@ -85,9 +86,12 @@ export class UserService {
 
         const token = this.generateJwt(user);
 
+        const mongo_id = user._id;
+
         return {
-            message: 'Login successful',
+            message: 'Login successful', 
             token,
+            mongo_id
         };
     }
 
@@ -183,18 +187,13 @@ export class UserService {
     /**
      * Deletes a user's profile.
      */
-    async deleteProfile(userId: string, token: string) {
-        const decodedToken = await this.validateToken(token);
-
-        if (decodedToken.sub !== userId) {
-            throw new ForbiddenException('You can only delete your own profile');
-        }
-
+    async deleteProfile(userId: string) {
         const deletedUser = await this.userModel.findByIdAndDelete(userId);
+        
         if (!deletedUser) {
             throw new NotFoundException('User not found');
         }
-
+    
         return { message: 'User profile deleted successfully' };
     }
 
@@ -228,40 +227,96 @@ export class UserService {
         return user;
     }
 
-    
-    // async assignCourses(instructorId: string, assignCoursesDto: { studentId: string; courseIds: string[] }) {
-    //     const instructor = await this.userModel.findById(instructorId);
-    //     if (!instructor || instructor.role !== 'instructor') {
-    //         throw new ForbiddenException('Only instructors can assign courses');
-    //     }
-    
-    //     const student = await this.userModel.findById(assignCoursesDto.studentId);
-    //     if (!student) {
-    //         throw new NotFoundException('Student not found');
-    //     }
-    
-    //     student.enrolledCourses = [...new Set([...student.enrolledCourses, ...assignCoursesDto.courseIds])];
-    //     await student.save();
-    
-    //     return { message: 'Courses assigned successfully', student };
-    // }
 
+    async assignCourse(instructorId: string, studentId: string, courseId: string) {
+        // Step 1: Check if the instructor exists and their role is 'instructor'
+        const instructor = await this.userModel.findById(instructorId);
+        if (!instructor || instructor.role !== 'instructor') {
+            throw new ForbiddenException('Only instructors can assign courses');
+        }
     
+        // Step 2: Check if the student exists
+        const student = await this.userModel.findById(studentId);
+        if (!student) {
+            throw new NotFoundException('Student not found');
+        }
+    
+        // Step 3: Ensure that `enrolledCourses` is initialized (in case it's undefined)
+        if (!student.enrolledCourses) {
+            student.enrolledCourses = []; // Initialize as an empty array if undefined
+        }
+    
+        // Step 4: Validate and convert courseId to Mongoose ObjectId
+        let courseObjectId;
+        try {
+            courseObjectId = new MongooseSchema.Types.ObjectId(courseId);
+        } catch (error) {
+            throw new BadRequestException('Invalid course ID');
+        }
+    
+        // Step 5: Check if the course is already in the student's enrolled courses
+        if (student.enrolledCourses.includes(courseObjectId)) {
+            throw new BadRequestException('Student is already enrolled in this course');
+        }
+    
+        // Step 6: Assign the course to the student (push the courseId as ObjectId)
+        student.enrolledCourses.push(courseObjectId);
+        await student.save();
+    
+        return { message: 'Course assigned successfully', student };
+    }    
 
-    async deleteUser(userId: string): Promise<{ message: string }> {
-        const user = await this.userModel.findByIdAndDelete(userId);
+    async createStudentAccount(instructorId: string , createStudentDto: CreateStudentDto) {
+        const instructor = await this.userModel.findById(instructorId);
+        if (!instructor || instructor.role !== 'instructor') {
+          throw new ForbiddenException('You are not authorized to create a student account');
+        }
     
-        if (!user) {
+        const { name, email, passwordHash } = createStudentDto;
+        
+        const existingStudent = await this.userModel.findOne({ email });
+        if (existingStudent) {
+          throw new BadRequestException('Student with this email already exists');
+        }
+
+        const hashedPassword = await bcrypt.hash(passwordHash, 10);
+    
+        const student = new this.userModel({
+          name: name,
+          email: email,
+          passwordHash: hashedPassword,
+          role: 'student',
+        });
+    
+        await student.save();
+        return { message: 'Student created successfully', student };
+    }
+
+    async deleteUser(adminId: string, userId: string) {
+        const admin = await this.userModel.findById(adminId);
+        if (!admin || admin.role !== 'admin') {
+            throw new ForbiddenException('You are not authorized to delete users');
+        }
+    
+        // Find the user to delete
+        const userToDelete = await this.userModel.findByIdAndDelete(userId);
+        if (!userToDelete) {
             throw new NotFoundException('User not found');
         }
     
         return { message: 'User deleted successfully' };
     }
-
     
 
-    async getAllUsers(): Promise<User[]> {
-        const users = await this.userModel.find().select('-passwordHash'); // Exclude password hashes
+    async getAllUsers(userId: string): Promise<User[]> {
+        const admin = await this.userModel.findById(userId);
+    
+        // Check if the user making the request is an admin
+        if (!admin || admin.role !== 'admin') {
+            throw new ForbiddenException('You are not authorized to access this resource');
+        }
+    
+        const users = await this.userModel.find().select('-passwordHash');
         if (!users || users.length === 0) {
             throw new NotFoundException('No users found');
         }
