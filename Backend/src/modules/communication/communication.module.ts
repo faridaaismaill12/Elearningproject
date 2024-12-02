@@ -5,12 +5,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ForumController } from './controllers/forum.controller';
 // Add other controllers if needed
 // import { NotificationController } from './controllers/notification.controller';
-// import { SavedConversationController } from './controllers/saved-conversation.controller';
+import { SavedConversationController } from './controllers/saved-conversation.controller';
 
 // Services
 import { ForumService } from './services/forum.service';
 import { NotificationService } from './services/notification.service';
-// import { SavedConversationService } from './services/saved-conversation.service';
+import { SavedConversationService } from './services/saved-conversation.service';
 
 // Schemas
 import { ForumThread, ForumThreadSchema } from './schemas/forum-thread.schema';
@@ -24,24 +24,25 @@ import { UserSchema } from '../user/schemas/user.schema';
     MongooseModule.forFeature([
       { name: ForumThread.name, schema: ForumThreadSchema },
       { name: Notification.name, schema: NotificationSchema },
-      { name: SavedConversation.name, schema: SavedConversationSchema },
+      // { name: SavedConversation.name, schema: SavedConversationSchema },
       { name: Chat.name, schema: ChatSchema },
       { name: 'User', schema: UserSchema },
+      { name: SavedConversation.name, schema: SavedConversationSchema },
     ]),
   ],
   controllers: [
     ForumController,
     // NotificationController, // Ensure this is added
-    // SavedConversationController, // Ensure this is added
+    SavedConversationController, // Ensure this is added
   ],
   providers: [
     ForumService,
     NotificationService, // Ensure this is included
-    // SavedConversationService, // Ensure this is included
+    SavedConversationService, // Ensure this is included
   ],
   exports: [
     NotificationService, // Export services if needed by other modules
-    // SavedConversationService, // Export if required elsewhere
+    SavedConversationService, // Export if required elsewhere
   ],
 })
 export class CommunicationModule {}
