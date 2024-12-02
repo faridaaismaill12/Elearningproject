@@ -4,10 +4,10 @@ import { CreateForumThreadDto } from '../dto/create-forum-thread.dto';
 
 @Controller('forums')
 export class ForumController {
-    constructor(private readonly forumService: ForumService) { }
+    constructor(private readonly forumService: ForumService) {}
 
     // Create a new forum thread
-    @Post('create') // Change to a specific path to avoid conflict
+    @Post('create')
     async create(@Body() createForumThreadDto: CreateForumThreadDto) {
         return this.forumService.create(createForumThreadDto);
     }
@@ -19,7 +19,7 @@ export class ForumController {
     }
 
     // Get a specific forum thread by ID
-    @Get(':id') // Ensure :id only processes valid IDs
+    @Get(':id')
     async findOne(@Param('id') id: string) {
         return this.forumService.findOne(id);
     }
@@ -31,7 +31,7 @@ export class ForumController {
     }
 
     // Add a reply to a forum thread
-@Put(':id/replies')
+    @Put(':id/replies')
     async addReply(
         @Param('id') threadId: string,
         @Body() replyData: { userId: string; message: string },
@@ -39,4 +39,19 @@ export class ForumController {
         const { userId, message } = replyData;
         return this.forumService.addReply(threadId, userId, message);
     }
+    
+    @Put(':id/replies/nested')
+    async addNestedReply(
+        @Param('id') threadId: string,
+        @Body() body: {
+            pathToReply: number[]; // Path to the nested reply (array of indices)
+            userId: string; // User ID of the person replying
+            message: string; // Reply message
+        },
+    ) {
+        const { pathToReply, userId, message } = body;
+        return this.forumService.addNestedReply(threadId, pathToReply, userId, message);
+    }
+
+    
 }

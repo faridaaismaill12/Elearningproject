@@ -17,6 +17,7 @@ import { ForumThread, ForumThreadSchema } from './schemas/forum-thread.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { SavedConversation, SavedConversationSchema } from './schemas/saved-conversation.schema';
 import { Chat, ChatSchema } from './schemas/chat-schema';
+import { UserSchema } from '../user/schemas/user.schema';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Chat, ChatSchema } from './schemas/chat-schema';
       { name: Notification.name, schema: NotificationSchema },
       { name: SavedConversation.name, schema: SavedConversationSchema },
       { name: Chat.name, schema: ChatSchema },
+      { name: 'User', schema: UserSchema },
     ]),
   ],
   controllers: [
