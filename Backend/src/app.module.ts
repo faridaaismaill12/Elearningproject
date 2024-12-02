@@ -1,22 +1,43 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { DatabaseConfig } from './config/database.config';
-// import { CartModule } from './modules/cart/cart.module';
-import { CommunicationModule } from './modules/communication/communication.module';
-import { ChatSchema } from './modules/communication/schemas/chat-schema';
+
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatGateway } from './modules/communication/chat-gateway';
-// import { UserModule } from './modules/user/user.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserModule } from './modules/user/user.module';
+import { JwtModule } from '@nestjs/jwt';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({
-            isGlobal: true, // Loads .env file globally
-        }),
-        MongooseModule.forFeature([{ name: 'Chat', schema: ChatSchema }]),
-        DatabaseConfig,
-        CommunicationModule,
-        
-    ],providers: [ChatGateway],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,  // Ensures the config is globally available
+      envFilePath: '.env'
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI'),
+      }),
+      inject: [ConfigService],
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const jwtSecret = configService.get<string>('JWT_SECRET');
+        console.log('JWT_SECRET from ConfigService' , jwtSecret);
+        if (!jwtSecret) {
+          throw new Error('JWT_SECRET is not defined in the .env file');
+        }
+        return {
+          secret: jwtSecret,
+          signOptions: { expiresIn: '1h' },
+        };
+      },
+      inject: [ConfigService],
+    }),
+    UserModule,
+  ],
+
 })
-export class AppModule { }
+export class AppModule {}

@@ -3,9 +3,7 @@ import { Type } from 'class-transformer';
 
 export class CreateUserDto {
     
-  @IsString()
-  @IsNotEmpty()
-  userId!: string;
+
 
   @IsString()
   @IsNotEmpty()
