@@ -3,11 +3,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,  // Ensures the config is globally available
+      envFilePath: '.env'
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -20,12 +24,13 @@ import { JwtModule } from '@nestjs/jwt';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const jwtSecret = configService.get<string>('JWT_SECRET');
+        console.log('JWT_SECRET from ConfigService' , jwtSecret);
         if (!jwtSecret) {
           throw new Error('JWT_SECRET is not defined in the .env file');
         }
         return {
           secret: jwtSecret,
-          signOptions: { expiresIn: '60m' },
+          signOptions: { expiresIn: '1h' },
         };
       },
       inject: [ConfigService],

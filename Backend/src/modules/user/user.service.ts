@@ -45,13 +45,7 @@ export class UserService {
                 throw new BadRequestException('Password is weak');
             }
     
-            // Hash the password
-            console.log('Generating salt for password hashing...');
-            const salt = await bcrypt.genSalt(10);
-            console.log('Salt generated:', salt);
-            console.log('Hashing password...');
-            const hashedPassword = await bcrypt.hash(passwordHash, salt);  // Hash the raw password
-            console.log('Password hashed successfully.');
+           const hashedPassword = await bcrypt.hash(passwordHash , 10);
     
             // Create and save the user
             console.log('Creating user object for database...');
@@ -69,22 +63,15 @@ export class UserService {
     }    
 
     async login(loginUserDto: LoginUserDto) {
-        const { email, passwordHash } = loginUserDto;  // `passwordHash` is the raw password entered by the user
-    
-        console.log('Received email:', email);
-        console.log('Received raw password:', passwordHash);
+        const { email, passwordHash } = loginUserDto;
     
         const user = await this.userModel.findOne({ email });
         if (!user) {
             throw new NotFoundException('User not found');
         }
     
-        // Log the stored hashed password in the database
-        console.log('Stored hashed password in DB:', user.passwordHash);
-    
         // Validate the entered password against the stored hashed password
         const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
-        console.log('Is password valid?', isPasswordValid);  // Log the result of the password comparison
         
         if (!isPasswordValid) {
             throw new BadRequestException('Invalid credentials');
@@ -100,9 +87,9 @@ export class UserService {
 
     /////////HEGAB//////////
     
-    generateJwt(user: User): string {
+    generateJwt(user: any): string {
         const payload = { email: user.email, sub: user.userId };
-        return this.jwtService.sign(payload); // Use the JwtService to sign the token
+        return this.jwtService.sign(payload);
     }
 
 
@@ -161,7 +148,7 @@ export class UserService {
             // Check password strength (optional but recommended)
             const entropy = calculatePasswordEntropy(newPassword);
             if (entropy < 60) {
-                throw new BadRequestException('You want to be hacked? Use a stronger password');
+                throw new BadRequestException('You want to get hacked? Use a stronger password');
             }
 
             // Hash the new password

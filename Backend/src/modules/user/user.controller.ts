@@ -21,7 +21,7 @@ export class UserController {
     @Post('login')
     login(@Body() loginUserDto: LoginUserDto) {
         return this.userService.login(loginUserDto);
-    } // entering password provides an error with hashing 
+    } // problem with jwt
 
     @Post('forgot-password')
     async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
