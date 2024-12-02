@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import { Quiz } from '../../quizzes/schemas/quiz.schema';
 import { Lesson } from '../../course/schemas/lesson.schema'
+//import { Question } from '../../quizzes/schemas/question.schema';
 
 export type ModuleDocument = Module & Document;
 
@@ -36,8 +37,9 @@ export class Module {
     })
     difficultyLevel!: 'easy' | 'medium' | 'hard';  
     
-  @Prop({ type: [Types.ObjectId], ref: 'Question' })
-    questions!:MongooseSchema.Types.ObjectId[];
+  @Prop({ type: [Types.ObjectId], ref:() => 'Question' })
+  questions!:MongooseSchema.Types.ObjectId[];
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);
+

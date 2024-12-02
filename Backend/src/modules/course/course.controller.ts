@@ -1,16 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put } from '@nestjs/common';
 import { CourseService } from './course.service';
-import { Course } from './schemas/course.schema';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { Course } from './schemas/course.schema';
 
-@Controller('Course')
+@Controller('courses')
 export class CourseController {
-    constructor(private courseService: CourseService) { }
+  constructor(private readonly courseService: CourseService) {}
 
-    //see course details
-    @Get(':id')// /courses/:id   // Get a single course by ID
-    async getCourseById(@Param('id') id: string) {
-        const course = await this.courseService.findById(id);
-        return course;
+    // Delete a course by ID
+    @Delete(':id')
+    async deleteCourse(@Param('id') id: string) {
+        const result = await this.courseService.deleteCourseById(id);
+        if (!result) {
+            throw new NotFoundException(`Course not found`);
+        }
+        return { message: `Course successfully deleted` };
     }
+
+    @Put(':id/finish')
+    async markAsFinished(@Param('id') lessonId: string, @Body('userId') userId: string) {
+        return this.courseService.markLessonAsCompleted(lessonId, userId);
+    }
+
 }
