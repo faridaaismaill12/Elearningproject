@@ -1,11 +1,17 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+    Injectable,
+    BadRequestException,
+    NotFoundException,
+    ForbiddenException,
+    UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { Course } from '../course/schemas/course.schema';
 import { calculatePasswordEntropy } from '../security/password.utils';
@@ -14,198 +20,170 @@ import { v2 as cloudinary } from 'cloudinary';
 
 @Injectable()
 export class UserService {
-
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @InjectModel(Course.name) private readonly courseModel: Model<Course>,
-        private readonly jwtService: JwtService
+        private readonly jwtService: JwtService,
     ) { }
 
+    /**
+     * Registers a new user.
+     */
     async register(createUserDto: CreateUserDto) {
         console.log('Register API invoked with DTO:', createUserDto);
-    
-        const { email, passwordHash } = createUserDto;  // `passwordHash` here is actually the raw password
-    
+
+        const { email, passwordHash } = createUserDto;
+
         try {
-            // Check if the user already exists
             console.log('Checking if a user with the email already exists...');
-            const existingUser = await this.userModel.findOne({ email });
+            const existingUser = await this.userModel.findOne({ email }).exec();
             if (existingUser) {
-                console.error('Error: Email already registered:', email);
-                throw new BadRequestException('Email already registered');
+                throw new BadRequestException('Email is already registered.');
             }
-            console.log('No existing user found for email:', email);
-    
-            // Check password strength
+
             console.log('Calculating password entropy...');
-            const entropy = calculatePasswordEntropy(passwordHash);  // Use the raw password here
-            console.log('Password entropy:', entropy);
+            const entropy = calculatePasswordEntropy(passwordHash);
             if (entropy < 50) {
-                console.error('Error: Password is weak, entropy:', entropy);
-                throw new BadRequestException('Password is weak');
+                throw new BadRequestException('Password is too weak.');
             }
-    
-           const hashedPassword = await bcrypt.hash(passwordHash , 10);
-    
-            // Create and save the user
+
+            console.log('Hashing the password...');
+            const hashedPassword = await bcrypt.hash(passwordHash, 10);
+
             console.log('Creating user object for database...');
-            const user = new this.userModel({ ...createUserDto, passwordHash: hashedPassword });  // Store the hashed password as `passwordHash`
+            const user = new this.userModel({
+                ...createUserDto,
+                passwordHash: hashedPassword,
+            });
+
             console.log('Saving user to database...');
             await user.save();
             console.log('User saved successfully with ID:', user._id);
-    
+
             return { message: 'User registered successfully', userId: user._id };
-    
         } catch (error) {
-            console.error('An error occurred during user registration:', error);
+            console.error('Error during registration:', error);
             throw error;
         }
-    }    
+    }
 
+    /**
+     * Logs in a user and generates a JWT token.
+     */
     async login(loginUserDto: LoginUserDto) {
         const { email, passwordHash } = loginUserDto;
-    
+
         const user = await this.userModel.findOne({ email });
         if (!user) {
             throw new NotFoundException('User not found');
         }
-    
-        // Validate the entered password against the stored hashed password
+
         const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
-        
         if (!isPasswordValid) {
             throw new BadRequestException('Invalid credentials');
         }
-    
+
         const token = this.generateJwt(user);
-    
+
         return {
             message: 'Login successful',
-            token
+            token,
         };
-    }       
+    }
 
-    /////////HEGAB//////////
-    
-    generateJwt(user: any): string {
-        const payload = { email: user.email, sub: user.userId };
+    /**
+     * Generates a JWT token for a user.
+     */
+    private generateJwt(user: any): string {
+        const payload = { email: user.email, sub: user._id.toString() };
         return this.jwtService.sign(payload);
     }
 
-
-    async validateUser(email: string, password: string): Promise<User | null> {
-        // Find the user by email
-        const user = await this.userModel.findOne({ email });
-        if (user && (await bcrypt.compare(password, user.passwordHash))) {
-            return user;
-        }
-        return null;
-    }
-
+    /**
+     * Validates a JWT token.
+     */
     async validateToken(token: string): Promise<any> {
         try {
-            const payload = this.jwtService.verify(token, {
-                secret: process.env.JWT_SECRET, // Ensure this matches the secret used to sign tokens
-            });
-
-            return payload; // Return payload if token is valid
+            return this.jwtService.verify(token);
         } catch (error) {
-            throw new BadRequestException('Invalid or expired token');
+            throw new UnauthorizedException('Invalid token');
         }
     }
 
+    /**
+     * Initiates password reset by generating a reset token.
+     */
     async forgetPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
         const { email } = forgotPasswordDto;
+
         const user = await this.userModel.findOne({ email });
         if (!user) {
-            throw new BadRequestException('No user found with this email');
+            throw new NotFoundException('No user found with this email');
         }
 
-        // Generate a reset token (valid for 15 minutes)
         const resetToken = this.jwtService.sign(
-            { sub: user.id, email: user.email },
+            { sub: user._id, email: user.email },
             { secret: process.env.JWT_SECRET, expiresIn: '15m' },
         );
 
-        // Send token to the user's email (mocked)
-        console.log(`Send this reset link to the user's email: http://localhost:3000/doNotForgetAgain/reset-password?token=${resetToken}`);
+        console.log(`Password reset link: http://localhost:${process.env.PORT}/users/reset-password?token=${resetToken}`);
 
-        // deploy: fix link
-
-        return { message: 'Password reset link has been sent to your email' };
+        return { message: 'Password reset link sent to your email' };
     }
 
+    /**
+     * Resets the user's password.
+     */
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
-            // Verify the token
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
-            const user = await this.userModel.findOne({ where: { id: payload.sub } });
+            const user = await this.userModel.findById(payload.sub);
 
             if (!user) {
-                throw new UnauthorizedException('Invalid token');
+                throw new NotFoundException('User not found');
             }
 
-            // Check password strength (optional but recommended)
             const entropy = calculatePasswordEntropy(newPassword);
             if (entropy < 60) {
-                throw new BadRequestException('You want to get hacked? Use a stronger password');
+                throw new BadRequestException('Weak password. Please use a stronger password.');
             }
 
-            // Hash the new password
             const hashedPassword = await bcrypt.hash(newPassword, 10);
             user.passwordHash = hashedPassword;
 
-            // Save the updated user to the database
             await user.save();
 
             return { message: 'Password reset successfully' };
         } catch (error) {
-            throw new BadRequestException((error as Error).message);
+            if (error instanceof Error) {
+                throw new BadRequestException(error.message);
+            }
+            throw new BadRequestException('An unknown error occurred');
         }
     }
 
-    private async uploadToCloudinary(base64Image: string): Promise<any> {
-        try {
-            // Upload to Cloudinary
-            const result = await cloudinary.uploader.upload(base64Image, {
-                folder: 'profile-pictures',
-                public_id: `user_${Date.now()}`, // Unique identifier
-                resource_type: 'image',
-            });
-            return result; // Result contains secure_url, public_id, etc.
-        } catch (error) {
-            throw new BadRequestException('Failed to upload image to Cloudinary');
-        }
-    }
+    /**
+     * Updates a user's profile.
+     */
+    async updateProfile(updateUserDto: UpdateUserDto, userId: string) {
 
-    async updateProfile(
-        updateUserDto: UpdateUserDto,
-        userId: string,
-        token: string
-    ) {
-        // Ensure only authenticated users can update their own profiles
-        const decodedToken = await this.validateToken(token);
-    
-        if (decodedToken.sub !== userId) {
-            throw new ForbiddenException('You can only update your own profile');
-        }
-    
-        // Handle profile picture upload logic
         if (updateUserDto.profilePictureUrl) {
             const uploadResult = await this.uploadToCloudinary(updateUserDto.profilePictureUrl);
-            updateUserDto.profilePictureUrl = uploadResult.secure_url; // Use Cloudinary's secure URL
+            updateUserDto.profilePictureUrl = uploadResult.secure_url;
         }
-    
+
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
             throw new NotFoundException('User not found');
         }
-    
-        return { message: 'Profile updated successfully', user: updatedUser };
-    }    
 
-    async deleteProfile(userId: string , token: string) {
-        // Ensure only the authenticated user can delete their profile
+        return { message: 'Profile updated successfully', user: updatedUser };
+    }
+
+    /**
+     * Deletes a user's profile.
+     */
+    async deleteProfile(userId: string, token: string) {
         const decodedToken = await this.validateToken(token);
 
         if (decodedToken.sub !== userId) {
@@ -220,135 +198,75 @@ export class UserService {
         return { message: 'User profile deleted successfully' };
     }
 
-    async viewProfile(userId: string , token: string) {
-        // Validate user identity
-        const decodedToken = await this.validateToken(token);
-
-        if (decodedToken.sub !== userId) {
-            throw new ForbiddenException('You can only view your own profile');
+    /**
+     * Helper to upload profile picture to Cloudinary.
+     */
+    private async uploadToCloudinary(base64Image: string): Promise<any> {
+        try {
+            return await cloudinary.uploader.upload(base64Image, {
+                folder: 'profile-pictures',
+                resource_type: 'image',
+            });
+        } catch (error) {
+            throw new BadRequestException('Failed to upload image');
         }
+    }
+
+    async viewProfile(userId: string): Promise<User> {
         const user = await this.userModel
             .findById(userId)
-            .select('-passwordHash')
+            .select('-passwordHash') // Exclude the password hash from the result
             .populate({
                 path: 'enrolledCourses',
-                select: 'title description difficultyLevel instructor',
-                populate: {
-                    path: 'instructor',
-                    select: 'name email profilePictureUrl'
-                }
+                select: 'title description difficultyLevel',
             });
-
+    
         if (!user) {
             throw new NotFoundException('User not found');
         }
-
+    
         return user;
-
     }
 
-    // Helper to get userRole
-    private async getUserRole(userId?: string): Promise<string> {
-        const user = await this.userModel.findById(userId);
+    
+    // async assignCourses(instructorId: string, assignCoursesDto: { studentId: string; courseIds: string[] }) {
+    //     const instructor = await this.userModel.findById(instructorId);
+    //     if (!instructor || instructor.role !== 'instructor') {
+    //         throw new ForbiddenException('Only instructors can assign courses');
+    //     }
+    
+    //     const student = await this.userModel.findById(assignCoursesDto.studentId);
+    //     if (!student) {
+    //         throw new NotFoundException('Student not found');
+    //     }
+    
+    //     student.enrolledCourses = [...new Set([...student.enrolledCourses, ...assignCoursesDto.courseIds])];
+    //     await student.save();
+    
+    //     return { message: 'Courses assigned successfully', student };
+    // }
+
+    
+
+    async deleteUser(userId: string): Promise<{ message: string }> {
+        const user = await this.userModel.findByIdAndDelete(userId);
+    
         if (!user) {
-            throw new ForbiddenException('User not found');
-        }
-        return user.role;
-    }
-
-    async assignCourses(userId: string, assignCoursesDto: any) {
-        const userRole = await this.getUserRole(userId);
-        if (userRole !== 'instructor') {
-            throw new ForbiddenException('Only instructors can assign courses');
-        }
-
-        const student = await this.userModel.findById(assignCoursesDto.studentId).populate({ path: 'enrolledCourses', select: 'title difficultyLevel' });
-        if (!student) {
-            throw new NotFoundException('Student not found');
-        }
-
-        // Check if the courses to be assigned exist
-        const courses = await this.courseModel.find({ _id: { $in: assignCoursesDto.courseIds } });
-        if (courses.length !== assignCoursesDto.courseIds.length) {
-            throw new NotFoundException('Some courses were not found');
-        }
-
-        if (!student.enrolledCourses) {
-            student.enrolledCourses = [];
-        }
-
-        // Adding the course IDs to the student's enrolledCourses array
-        student.enrolledCourses = [...student.enrolledCourses, ...assignCoursesDto.courseIds];
-
-        await student.save();
-
-        return { message: 'Courses assigned successfully' };
-    }
-
-    async createAccount(createUserDto: CreateUserDto) {
-        const userRole = await this.getUserRole(createUserDto.userId)
-        if (userRole !== 'instructor') {
-            throw new ForbiddenException('Only instructors can create student accounts');
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(createUserDto.passwordHash, salt);
-        const user = new this.userModel({ ...createUserDto, passwordHash: hashedPassword });
-        await user.save();
-
-        return { message: 'Student account created successfully', userId: user._id };
-
-    }
-
-    async deleteUser(userId: string , token: string) {
-        // Validate the JWT token and extract the user's role
-        const decodedToken = await this.validateToken(token);
-        const userRole = await this.getUserRole(decodedToken.sub);
-
-        if (userRole !== 'admin') {
-            throw new ForbiddenException('Only admins can delete users');
-        }
-
-        const deletedUser = await this.userModel.findByIdAndDelete(userId);
-
-        if (!deletedUser) {
             throw new NotFoundException('User not found');
         }
-
+    
         return { message: 'User deleted successfully' };
     }
 
-    async getAllUsers(token: string) {
-         // Validate the JWT token and extract the user's role
-        const decodedToken = await this.validateToken(token); 
-        const userRole = await this.getUserRole(decodedToken.sub);
-        
-        if (userRole !== 'admin') {
-            throw new ForbiddenException('Only admins can view all users');
+    
+
+    async getAllUsers(): Promise<User[]> {
+        const users = await this.userModel.find().select('-passwordHash'); // Exclude password hashes
+        if (!users || users.length === 0) {
+            throw new NotFoundException('No users found');
         }
-
-        const users = await this.userModel.find().select('-passwordHash').populate({ path: 'enrolledCourses', select: 'title difficultyLevel' });
-
-        if (!users) {
-            throw new NotFoundException('User not found');
-        }
-
+    
         return users;
     }
-
-    async getUserById(userId: string) {
-        const userRole = await this.getUserRole();
-        if (userRole !== 'admin') {
-            throw new ForbiddenException('Only admins can view all users by a certain id');
-        }
-
-        const user = await this.userModel.findById(userId).select('-passwordHash').populate({ path: 'enrolledCourses', select: 'title difficultyLevel' });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        return user;
-    }
-
+    
 }
