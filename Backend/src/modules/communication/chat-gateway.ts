@@ -1,91 +1,44 @@
-import {
+import { 
     WebSocketGateway,
     OnGatewayConnection,
-    OnGatewayDisconnect,
+    OnGatewayDisconnect, 
     WebSocketServer,
     MessageBody,
-    SubscribeMessage,
-} from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
-import { NotificationService } from '../communication/services/notification.service';
-import { SavedConversationService } from '../communication/services/saved-conversation.service';
-import { Types } from 'mongoose';
+    SubscribeMessage} from '@nestjs/websockets'; 
+    import { Socket, Server } from 'socket.io';
+    // import { CommunicationService } from './services/communication.service';
+    import { NotificationService } from '../communication/services/notification.service';
 
-@WebSocketGateway(3002, {})
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer()
-    server!: Server;
+    
+    @WebSocketGateway(3002, {})
+    export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
-    // Array to store connected clients
-    clients: { clientId: string; userId: string | null }[] = [];
-
-    constructor(
-        private readonly notificationService: NotificationService,
-        private readonly savedConversationService: SavedConversationService // Inject SavedConversationService
-    ) {
-        console.log('Chat Gateway is ready!');
-    }
-
-    handleConnection(client: Socket) {
-        console.log('New client connected', client.id);
-
-        // Add client to the `clients` array with default userId as `null`
-        this.clients.push({ clientId: client.id, userId: null });
-
+        @WebSocketServer()
+        server!: Server;
+    
+    handleConnection(client: Socket) { // we need to log the connection
+        console.log("New client connected", client.id); 
+    
         this.server.emit('user-joined', {
-            message: `New user joined the chat: ${client.id}`,
+            message: `New user joined the Chat': ${client.id},`
         });
     }
-
-    handleDisconnect(client: Socket) {
-        console.log('Client disconnected', client.id);
-
-        // Remove client from the `clients` array
-        this.clients = this.clients.filter((c) => c.clientId !== client.id);
-
+    
+    handleDisconnect(client: Socket) { // we need to log the disconnection
+        console.log("Client disconnected", client.id);
+    
         this.server.emit('user-left', {
-            message: `User left the chat: ${client.id}`,
+            message: `User left the Chat': ${client.id},`
         });
     }
+    // this method is used to make sure that every client in a groupchat sees that message
+        @SubscribeMessage('newMessage')
+        handleNewMessage(@MessageBody() message: string) {
+            this.server.emit('newMessage', message); // we need to broadcast the message to all clients
+            console.log('New message:', message);
 
-    @SubscribeMessage('identify')
-    handleIdentify(client: Socket, userId: string) {
-        console.log('Identifying user:', client.id, userId);
-
-        // Update the user's information in the `clients` array
-        const user = this.clients.find((c) => c.clientId === client.id);
-        if (user) {
-            user.userId = userId;
+            // socket.on() //listen to the event
+            // io.emit() //broadcast
+            // socket.emit()
         }
     }
-
-    @SubscribeMessage('newMessage')
-    async handleNewMessage(
-        @MessageBody() data: { message: string; userId: string }
-    ) {
-        const { message, userId } = data;
-
-        console.log('New message received:', data);
-
-        let conversation;
-
-        const conversationId = new Types.ObjectId();
-
-        // Create a new conversation if none exists
-        console.log('Creating a new conversation...');
-        conversation = await this.savedConversationService.createConversation({
-            userId,
-            title: 'New Conversation',
-            messages: [],
-        });
-
-        // Save the message to the conversation
-        await this.savedConversationService.saveMessage(conversationId.toString(), {
-            sender: userId,
-            message,
-        });
-
-        // Broadcast the message to all connected clients
-        this.server.emit('newMessage', { ...data, conversationId: conversation._id });
-    }
-}

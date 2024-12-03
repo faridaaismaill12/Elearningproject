@@ -38,6 +38,7 @@ import { UserSchema } from '../user/schemas/user.schema';
     SavedConversationController, // Ensure this is added
   ],
   providers: [
+    
     ForumService,
     NotificationService, // Ensure this is included
     SavedConversationService, // Ensure this is included
