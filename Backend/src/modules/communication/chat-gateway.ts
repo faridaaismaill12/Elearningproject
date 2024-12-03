@@ -7,8 +7,7 @@ import {
     SubscribeMessage} from '@nestjs/websockets'; 
     import { Socket, Server } from 'socket.io';
     // import { CommunicationService } from './services/communication.service';
-    import { NotificationService } from '../communication/services/notification.service';
-
+    //import { NotificationService } from '../communication/services/notification.service';
     
     @WebSocketGateway(3002, {})
     export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -36,7 +35,6 @@ import {
         handleNewMessage(@MessageBody() message: string) {
             this.server.emit('newMessage', message); // we need to broadcast the message to all clients
             console.log('New message:', message);
-
             // socket.on() //listen to the event
             // io.emit() //broadcast
             // socket.emit()
