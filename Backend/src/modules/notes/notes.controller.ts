@@ -19,12 +19,24 @@ export class NotesController {
        );
      }
    }
+
+   @Get()
+   async getNotes(): Promise<Note[]>{
+    try{
+      return await this.notesService.getNotes();
+    }catch(error: any){
+      throw new HttpException(
+        { message: 'Failed to fetch notes', error: error.message },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+   }
  
    // See all your notes
    @Get()
-   async getAllNotes(@Query('userId') userId: string): Promise<Note[]> {
+   async getAllNotes(@Query('creator') creator: string,): Promise<Note[]> {
      try {
-       return await this.notesService.getAllNotes(userId);
+       return await this.notesService.getAllNotes(creator);
      } catch (error: any) {
        throw new HttpException(
          { message: 'Failed to fetch notes', error: error.message },

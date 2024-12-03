@@ -21,8 +21,4 @@ export class CreateNoteDto {
   @IsString()
   @IsNotEmpty()
   content!: string;
-
-  @IsDate()
-  @IsNotEmpty()
-  lastModified!: Date;
 }

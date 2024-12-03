@@ -11,7 +11,7 @@ export class NoteService {
   constructor(@InjectModel(Note.name) private readonly noteModel: Model<Note>) {}
 
   async create(createNoteDto: CreateNoteDto): Promise<Note> {
-    const { creator, course, module, lesson, content, lastModified } = createNoteDto;
+    const { creator, course, module, lesson, content } = createNoteDto;
 
     const newNote = new this.noteModel({
       creator,
@@ -19,7 +19,6 @@ export class NoteService {
       module,
       lesson,
       content,
-      lastModified,
     });
 
     // Validate the new note object
@@ -44,17 +43,29 @@ export class NoteService {
     }
   }
 
+  async getNotes(): Promise<Note[]>{
+    const notes = await this.noteModel.find().exec();
+    return notes;
+  }
+
 
   // See all your notes
-  async getAllNotes(userId: string): Promise<Note[]> {
+  async getAllNotes(creator: string): Promise<Note[]> {
     try {
-      const notes = await this.noteModel.find({ creator: new Types.ObjectId(userId) }).exec();
+      if (!Types.ObjectId.isValid(creator)) {
+        throw new HttpException(
+          { message: 'Invalid ID' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      const notes = await this.noteModel.find({ "creator": new Types.ObjectId(creator) }).exec();
       return notes;
     } catch (error: any) {
       throw new HttpException(
-        { message: 'Failed to fetch notes', error: error.message },
+        { message: 'Failed to fetch notes' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    
     }
   }
 
@@ -63,8 +74,8 @@ export class NoteService {
     try {
       const notes = await this.noteModel
         .find({
-          creator: new Types.ObjectId(userId),
-          module: new Types.ObjectId(moduleId),
+          "creator": new Types.ObjectId(userId),
+          "module": new Types.ObjectId(moduleId),
         })
         .exec();
       return notes;
@@ -81,8 +92,8 @@ export class NoteService {
     try {
       const notes = await this.noteModel
         .find({
-          creator: new Types.ObjectId(userId),
-          course: new Types.ObjectId(subjectId), // Assuming 'subject' maps to 'course'
+          "creator": new Types.ObjectId(userId),
+          'course': new Types.ObjectId(subjectId), // Assuming 'subject' maps to 'course'
         })
         .exec();
       return notes;
