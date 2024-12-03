@@ -45,38 +45,6 @@ export class NotesController {
      }
    }
  
-   // See your notes based on Module
-   @Get('module/:moduleId')
-   async getNotesByModule(
-     @Query('userId') userId: string,
-     @Param('moduleId') moduleId: string,
-   ): Promise<Note[]> {
-     try {
-       return await this.notesService.getNotesByModule(userId, moduleId);
-     } catch (error: any) {
-       throw new HttpException(
-         { message: 'Failed to fetch notes by module', error: error.message },
-         HttpStatus.BAD_REQUEST,
-       );
-     }
-   }
- 
-   // See your notes based on Subject
-   @Get('subject/:subjectId')
-   async getNotesBySubject(
-     @Query('userId') userId: string,
-     @Param('subjectId') subjectId: string,
-   ): Promise<Note[]> {
-     try {
-       return await this.notesService.getNotesBySubject(userId, subjectId);
-     } catch (error: any) {
-       throw new HttpException(
-         { message: 'Failed to fetch notes by subject', error: error.message },
-         HttpStatus.BAD_REQUEST,
-       );
-     }
-   }
- 
    // Update a note
    @Patch(':noteId')
    async updateNote(

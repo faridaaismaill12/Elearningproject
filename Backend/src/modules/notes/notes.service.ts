@@ -69,41 +69,7 @@ export class NoteService {
     }
   }
 
-  // See your notes based on Module
-  async getNotesByModule(userId: string, moduleId: string): Promise<Note[]> {
-    try {
-      const notes = await this.noteModel
-        .find({
-          "creator": new Types.ObjectId(userId),
-          "module": new Types.ObjectId(moduleId),
-        })
-        .exec();
-      return notes;
-    } catch (error: any) { //404 error
-      throw new HttpException(
-        { message: 'Failed to fetch notes by module', error: error.message },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 
-  // See your notes based on Subject
-  async getNotesBySubject(userId: string, subjectId: string): Promise<Note[]> {
-    try {
-      const notes = await this.noteModel
-        .find({
-          "creator": new Types.ObjectId(userId),
-          'course': new Types.ObjectId(subjectId), // Assuming 'subject' maps to 'course'
-        })
-        .exec();
-      return notes;
-    } catch (error: any) {
-      throw new HttpException(
-        { message: 'Failed to fetch notes by subject', error: error.message },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 
   // Update a Note
   
