@@ -72,7 +72,7 @@ export class ForumService {
                 { $push: { replies: reply } },
                 { new: true },
             )
-            .populate('replies.user') // Populate users in top-level replies
+            // .populate('replies.user') // Populate users in top-level replies
             .populate('replies.replies.user') // Populate users in nested replies
             .exec();
     
