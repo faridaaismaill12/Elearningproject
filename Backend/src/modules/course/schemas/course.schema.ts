@@ -31,9 +31,9 @@ export class Course {
         content: { type: String, required: true },
         difficultyLevel: {
           type: String,
-          enum: ['high', 'medium', 'low'],
+          enum: ['hard', 'medium', 'easy'], // Use consistent values
           required: true,
-          default: 'medium', // Default value for existing and new modules
+          default: 'medium',
         },
         lessons: [
           {
@@ -49,13 +49,14 @@ export class Course {
     _id?: string;
     title: string;
     content: string;
-    difficultyLevel: 'high' | 'medium' | 'low';
+    difficultyLevel: 'hard' | 'medium' | 'easy';
     lessons: Array<{
-      _id?: string
+      _id?: string;
       title: string;
       content: string;
     }>;
   }>;
+  
   
 }
 

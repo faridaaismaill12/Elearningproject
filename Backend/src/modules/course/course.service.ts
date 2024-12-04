@@ -1,12 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from './schemas/course.schema';
+import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
+import { Question } from '../quizzes/schemas/question.schema';
 
 @Injectable()
 export class CourseService {
   constructor(
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
+    @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
   ) {}
 
   // Create a course
@@ -43,40 +46,62 @@ export class CourseService {
   }
 
   // Create a module for a specific course using MongoDB _id
-  // Create a module for a specific course using MongoDB _id
   async createModuleForCourse(
     courseId: string,
-    moduleData: { title: string; content: string; difficultyLevel: 'high' | 'medium' | 'low' },
+    moduleData: { title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard' ,questions:Types.Array<Question & Document>;},
   ): Promise<any> {
+    // Validate course ID
     if (!Types.ObjectId.isValid(courseId)) {
       throw new BadRequestException('Invalid course ID format.');
     }
   
-    // Find the course by _id
+    // Ensure the course exists
     const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException('Course with ID ${courseId} not found');
+      throw new NotFoundException('Course with ID ${courseId} not found.');
     }
   
     // Validate difficultyLevel
-    if (!['high', 'medium', 'low'].includes(moduleData.difficultyLevel)) {
-      throw new BadRequestException('Invalid difficultyLevel. Valid options are: high, medium, low.');
+    if (!['easy', 'medium', 'hard'].includes(moduleData.difficultyLevel)) {
+      throw new BadRequestException('Invalid difficultyLevel. Valid options are: easy, medium, hard.');
     }
   
-    // Add the new module to the modules array
-    const newModule = {
-      title: moduleData.title,
-      content: moduleData.content,
-      difficultyLevel: moduleData.difficultyLevel, // Include difficultyLevel explicitly
+    // Create and save the module in the modules collection
+    const newModule = new this.moduleModel({
+      ...moduleData,
+      courseId,
       lessons: [], // Default empty lessons
+    });
+  
+    const savedModule = await newModule.save();
+  
+    // Add the module reference to the modules array in the course document
+    const moduleForCourse = {
+      _id: savedModule._id.toHexString(), // Safely cast _id to string
+      title: savedModule.title,
+      content: savedModule.content,
+      difficultyLevel: savedModule.difficultyLevel,
+      lessons: savedModule.lessons, // Add lessons array
     };
-    course.modules.push(newModule);
-    await course.save();
+  
+    course.modules.push(moduleForCourse); // Add to course's modules array
+    await course.save(); // Save the updated course document
   
     // Return the newly created module
-    return course.modules[course.modules.length - 1];
+    return savedModule;
   }
   
+
+
+  // Find all modules for a specific course
+  async findModulesByCourseId(courseId: string): Promise<ModuleSchema[]> {
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new BadRequestException('Invalid course ID format.');
+    }
+    return this.moduleModel.find({ courseId }).exec();
+  }
+
+
 
 
   // Create a lesson for a specific module in a course using MongoDB _id

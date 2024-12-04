@@ -9,6 +9,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
+import { Types } from 'mongoose';
+import { Question } from '../quizzes/schemas/question.schema';
 
 @Controller('courses')
 export class CourseController {
@@ -30,25 +32,17 @@ export class CourseController {
   }
 
   // Create a module for a specific course using MongoDB _id
-// Create a module for a specific course using MongoDB _id
+// Create a module for a specific course
 @Post(':id/modules')
-async createModule(
-  @Param('id') courseId: string,
-  @Body()
-  moduleData: { title: string; content: string; difficultyLevel: 'high' | 'medium' | 'low' },
-): Promise<any> {
-  console.log(moduleData); // Check if difficultyLevel is present
-  if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
-    throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
+  async createModule(
+    @Param('id') courseId: string,
+    @Body() moduleData: { title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard',questions:Types.Array<Question & Document>;},
+  ): Promise<any> {
+    if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
+      throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
+    }
+    return await this.courseService.createModuleForCourse(courseId, moduleData);
   }
-
-  return await this.courseService.createModuleForCourse(courseId, moduleData);
-}
-
-
-
-  
-
 
 
   // Create a lesson for a specific module using MongoDB _id
