@@ -41,6 +41,14 @@ export class User {
   })
   enrolledCourses?: MongooseSchema.Types.ObjectId[];
 
+  @Prop({
+    type: String , 
+    enum: ['beginner' , 'average' , 'advanced'] ,
+    required: true ,
+    default: 'beginner'
+  })
+  studentLevel!: string;
+
   @Prop({ default: '', trim: true })
   bio?: string;
 

@@ -25,4 +25,8 @@ export class CreateStudentDto {
   @IsString({ each: true })
   enrolledCourses?: string[] = [];
 
+  @IsString({ each: true })
+  @IsNotEmpty()
+  studentLevel!: string;
+
 }

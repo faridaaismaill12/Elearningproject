@@ -36,6 +36,12 @@ export class CreateUserDto {
   enrolledCourses?: string[] = [];
 
   @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(['beginner' , 'average' , 'advanced'])
+  studentLevel?: string;
+
+  @IsOptional()
   @IsString()
   bio?: string;
 
