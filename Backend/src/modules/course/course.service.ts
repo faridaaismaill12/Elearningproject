@@ -43,28 +43,41 @@ export class CourseService {
   }
 
   // Create a module for a specific course using MongoDB _id
+  // Create a module for a specific course using MongoDB _id
   async createModuleForCourse(
     courseId: string,
-    moduleData: { title: string; content: string },
+    moduleData: { title: string; content: string; difficultyLevel: 'high' | 'medium' | 'low' },
   ): Promise<any> {
     if (!Types.ObjectId.isValid(courseId)) {
       throw new BadRequestException('Invalid course ID format.');
     }
-
+  
     // Find the course by _id
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course with ID ${courseId} not found');
     }
-
+  
+    // Validate difficultyLevel
+    if (!['high', 'medium', 'low'].includes(moduleData.difficultyLevel)) {
+      throw new BadRequestException('Invalid difficultyLevel. Valid options are: high, medium, low.');
+    }
+  
     // Add the new module to the modules array
-    const newModule = { ...moduleData, lessons: [] }; // MongoDB will generate _id
+    const newModule = {
+      title: moduleData.title,
+      content: moduleData.content,
+      difficultyLevel: moduleData.difficultyLevel, // Include difficultyLevel explicitly
+      lessons: [], // Default empty lessons
+    };
     course.modules.push(newModule);
     await course.save();
-
+  
     // Return the newly created module
     return course.modules[course.modules.length - 1];
   }
+  
+
 
   // Create a lesson for a specific module in a course using MongoDB _id
   async createLessonForModule(

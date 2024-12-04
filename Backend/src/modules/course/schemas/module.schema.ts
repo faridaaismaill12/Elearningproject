@@ -20,6 +20,10 @@ export class Module {
     title: string;
     content: string;
   }>;
+
+  @Prop({ required: true, enum: ['high', 'medium', 'low'], default: 'medium' })
+difficultyLevel!: string; // high, medium, low
+
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);

@@ -1,4 +1,3 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -30,6 +29,12 @@ export class Course {
       {
         title: { type: String, required: true },
         content: { type: String, required: true },
+        difficultyLevel: {
+          type: String,
+          enum: ['high', 'medium', 'low'],
+          required: true,
+          default: 'medium', // Default value for existing and new modules
+        },
         lessons: [
           {
             title: { type: String, required: true },
@@ -41,15 +46,17 @@ export class Course {
     default: [],
   })
   modules!: Array<{
-    _id?: string; // MongoDB _id for each module
+    _id?: string;
     title: string;
     content: string;
+    difficultyLevel: 'high' | 'medium' | 'low';
     lessons: Array<{
-      _id?: string; // MongoDB _id for each lesson
+      _id?: string
       title: string;
       content: string;
     }>;
   }>;
+  
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);

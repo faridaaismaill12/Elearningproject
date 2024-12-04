@@ -30,17 +30,23 @@ export class CourseController {
   }
 
   // Create a module for a specific course using MongoDB _id
-  @Post(':id/modules')
-  async createModule(
-    @Param('id') courseId: string,
-    @Body() moduleData: { title: string; content: string },
-  ): Promise<any> {
-    if (!moduleData.title || !moduleData.content) {
-      throw new BadRequestException('title and content are required to create a module.');
-    }
-  
-    return await this.courseService.createModuleForCourse(courseId, moduleData);
+// Create a module for a specific course using MongoDB _id
+@Post(':id/modules')
+async createModule(
+  @Param('id') courseId: string,
+  @Body()
+  moduleData: { title: string; content: string; difficultyLevel: 'high' | 'medium' | 'low' },
+): Promise<any> {
+  console.log(moduleData); // Check if difficultyLevel is present
+  if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
+    throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
   }
+
+  return await this.courseService.createModuleForCourse(courseId, moduleData);
+}
+
+
+
   
 
 
