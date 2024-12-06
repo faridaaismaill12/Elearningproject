@@ -39,7 +39,7 @@ export class User {
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }],
     default: [],
   })
-  enrolledCourses?: MongooseSchema.Types.ObjectId[];
+  enrolledCourses?: Types.ObjectId[];
 
   @Prop({
     type: String , 

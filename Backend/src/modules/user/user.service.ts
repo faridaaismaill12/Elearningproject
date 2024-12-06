@@ -227,45 +227,48 @@ export class UserService {
         return user;
     }
 
-
     async assignCourse(instructorId: string, studentId: string, courseId: string) {
-        // Step 1: Check if the instructor exists and their role is 'instructor'
+        // Validate instructor
         const instructor = await this.userModel.findById(instructorId);
         if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('Only instructors can assign courses');
+          throw new ForbiddenException('Only instructors can assign courses');
         }
-    
-        // Step 2: Check if the student exists
+      
+        // Validate student
         const student = await this.userModel.findById(studentId);
         if (!student) {
-            throw new NotFoundException('Student not found');
+          throw new NotFoundException('Student not found');
         }
-    
-        // Step 3: Ensure that `enrolledCourses` is initialized (in case it's undefined)
+      
+        // Validate course
+        const course = await this.courseModel.findById(courseId);
+        if (!course) {
+          throw new NotFoundException('Course not found');
+        }
+      
+        // Ensure `enrolledCourses` is initialized
         if (!student.enrolledCourses) {
-            student.enrolledCourses = []; // Initialize as an empty array if undefined
+          student.enrolledCourses = [];
         }
-    
-        // Step 4: Validate and convert courseId to Mongoose ObjectId
-        let courseObjectId;
-        try {
-            courseObjectId = new MongooseSchema.Types.ObjectId(courseId);
-        } catch (error) {
-            throw new BadRequestException('Invalid course ID');
+      
+        // Safely check if already enrolled using `ObjectId.equals`
+        const isAlreadyEnrolled = student.enrolledCourses.some((enrolledCourse) =>
+          enrolledCourse.equals(course._id),
+        );
+      
+        if (isAlreadyEnrolled) {
+          throw new BadRequestException('Student is already enrolled in this course');
         }
-    
-        // Step 5: Check if the course is already in the student's enrolled courses
-        if (student.enrolledCourses.includes(courseObjectId)) {
-            throw new BadRequestException('Student is already enrolled in this course');
-        }
-    
-        // Step 6: Assign the course to the student (push the courseId as ObjectId)
-        student.enrolledCourses.push(courseObjectId);
+      
+        // Push the course ObjectId directly without converting to string
+        student.enrolledCourses.push(course._id);
+      
+        // Save the changes
         await student.save();
-    
+      
         return { message: 'Course assigned successfully', student };
-    }    
-
+      }              
+         
     async createStudentAccount(instructorId: string , createStudentDto: CreateStudentDto) {
         const instructor = await this.userModel.findById(instructorId);
         if (!instructor || instructor.role !== 'instructor') {
