@@ -1,24 +1,23 @@
-import { IsArray , IsMongoId , ValidateNested , IsString , IsOptional, IsNotEmpty } from 'class-validator';
+import { IsArray, IsMongoId, ValidateNested, IsOptional, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export class MessageDto {
-  @IsMongoId()
-  @IsNotEmpty()
-  sender!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  content!: string;
-}
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { MessageDto } from './message.dto'
 
 export class CreateChatDto {
+  @ApiProperty({ type: [String] })
   @IsArray()
   @IsNotEmpty()
   @IsMongoId({ each: true })
   participants!: string[];
 
+  @ApiPropertyOptional({ type: [MessageDto] })
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MessageDto)
   messages?: MessageDto[];
+
+  @ApiProperty()
+  @IsMongoId()
+  @IsNotEmpty()
+  courseId!: string;
 }
