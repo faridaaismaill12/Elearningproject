@@ -4,6 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
+import { DatabaseConfig } from './config/database.config';
+import { CommunicationModule } from './modules/communication/communication.module';
+import { CourseModule } from './modules/course/course.module'; 
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -37,7 +40,12 @@ dotenv.config();
       inject: [ConfigService],
     }),
     UserModule,
+    DatabaseConfig,
+        CommunicationModule,
+        CourseModule,
+        UserModule
   ],
 
 })
 export class AppModule {}
+

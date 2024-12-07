@@ -1,5 +1,7 @@
+
 import {
     Controller,
+    HttpCode,
     Post,
     Body,
     Patch,
@@ -74,6 +76,19 @@ export class UserController {
     
         return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
     } // tested
+  
+  
+      @Post(':id/enroll/:courseId')
+      @HttpCode(200)
+      async enrollUser(
+        @Param('id') userId: string,
+        @Param('courseId') courseId: string,
+      ): Promise<any> {
+        if (!userId || !courseId) {
+          throw new BadRequestException('User ID and Course ID are required.');
+        }
+        return await this.userService.enrollUser(userId, courseId);
+      }
     
 
     /**
@@ -172,3 +187,4 @@ export class UserController {
     } // tested
 
 }
+
