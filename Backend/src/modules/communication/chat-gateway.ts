@@ -1,42 +1,33 @@
-import { 
-    WebSocketGateway,
-    OnGatewayConnection,
-    OnGatewayDisconnect, 
-    WebSocketServer,
-    MessageBody,
-    SubscribeMessage} from '@nestjs/websockets'; 
-    import { Socket, Server } from 'socket.io';
-    // import { CommunicationService } from './services/communication.service';
-    //import { NotificationService } from '../communication/services/notification.service';
-    
-    @WebSocketGateway(3002, {})
-    export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
+import { ChatsService } from './services/communication.service';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { Server, Socket } from 'socket.io';
+import { UseGuards } from '@nestjs/common';
 
-        @WebSocketServer()
-        server!: Server;
-    
-    handleConnection(client: Socket) { // we need to log the connection
-        console.log("New client connected", client.id); 
-    
-        this.server.emit('user-joined', {
-            message: `New user joined the Chat': ${client.id},`
-        });
-    }
-    
-    handleDisconnect(client: Socket) { // we need to log the disconnection
-        console.log("Client disconnected", client.id);
-    
-        this.server.emit('user-left', {
-            message: `User left the Chat': ${client.id},`
-        });
-    }
-    // this method is used to make sure that every client in a groupchat sees that message
-        @SubscribeMessage('newMessage')
-        handleNewMessage(@MessageBody() message: string) {
-            this.server.emit('newMessage', message); // we need to broadcast the message to all clients
-            console.log('New message:', message);
-            // socket.on() //listen to the event
-            // io.emit() //broadcast
-            // socket.emit()
-        }
-    }
+
+@WebSocketGateway(3002, {
+namespace: '/chats',
+})
+//@UseGuards(WsJwtAuthGuard)
+export class ChatsGateway {
+
+constructor(private readonly chatsService: ChatsService) { }
+
+@WebSocketServer()
+private server!: Server;
+
+@SubscribeMessage('create')
+async create(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() createChatDto: CreateChatDto
+) {
+    const senderId = client.handshake.user._id.toString();
+    const chat = await this.chatsService.create(senderId, createChatDto);
+
+    this.server.emit('new-chat', chat);
+}
+
+afterInit(client: Socket) {
+   // client.use((socket, next) => wsAuthMiddleware(socket, next));
+}
+}

@@ -10,20 +10,20 @@ import { ForumController } from './controllers/forum.controller';
 // Services
 import { ForumService } from './services/forum.service';
 import { NotificationService } from './services/notification.service';
+import { ChatsService } from './services/communication.service';
 // import { SavedConversationService } from './services/saved-conversation.service';
 
 // Schemas
 import { ForumThread, ForumThreadSchema } from './schemas/forum-thread.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
-import { SavedConversation, SavedConversationSchema } from './schemas/saved-conversation.schema';
 import { Chat, ChatSchema } from './schemas/chat-schema';
+
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ForumThread.name, schema: ForumThreadSchema },
       { name: Notification.name, schema: NotificationSchema },
-      { name: SavedConversation.name, schema: SavedConversationSchema },
       { name: Chat.name, schema: ChatSchema },
     ]),
   ],
@@ -35,6 +35,7 @@ import { Chat, ChatSchema } from './schemas/chat-schema';
   providers: [
     ForumService,
     NotificationService, // Ensure this is included
+    ChatsService 
     // SavedConversationService, // Ensure this is included
   ],
   exports: [
