@@ -1,8 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
+
+export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User extends Document {
+  @Prop({ type: Types.ObjectId, required: true, unique: true, default: () => new Types.ObjectId() })
+  userId!: Types.ObjectId;
+
   @Prop({ required: true, trim: true })
   name!: string;
 
@@ -30,10 +36,18 @@ export class User extends Document {
   birthday?: Date;
 
   @Prop({
-    type: [{ type: String }], // Store an array of MongoDB _id strings
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }],
     default: [],
   })
-  enrolledCourses?: string[];
+  enrolledCourses?: Types.ObjectId[];
+
+  @Prop({
+    type: String,
+    enum: ['beginner', 'average', 'advanced'],
+    required: true,
+    default: 'beginner',
+  })
+  studentLevel!: string;
 
   @Prop({ default: '', trim: true })
   bio?: string;
@@ -52,5 +66,3 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-export type UserDocument = User & Document;
