@@ -94,12 +94,12 @@ export class UserService {
     }
   
     // Check if the course title is already in the enrolledCourses array
-    if (user.enrolledCourses.includes(course.title)) {
+    if (user.enrolledCourses.some((enrolledCourse) => enrolledCourse.equals(course._id))) {
       throw new BadRequestException('User is already enrolled in course "${course.title}"');
     }
   
     // Add the course title to the user's enrolledCourses array
-    user.enrolledCourses.push(course.title);
+    user.enrolledCourses.push(course._id);
     await user.save();
   
     return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
