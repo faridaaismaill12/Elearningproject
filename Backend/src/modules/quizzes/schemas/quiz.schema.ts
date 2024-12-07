@@ -1,20 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Schema as MongooseSchema } from 'mongoose';  // Import MongooseSchema to correctly reference ObjectId
+import { Document, Schema as MongooseSchema } from 'mongoose';  // Import MongooseSchema to correctly reference ObjectId
 import { Module } from '../../course/schemas/module.schema';
-
-export type QuizDocument = HydratedDocument<Quiz>
+export type QuizDocument = Quiz & Document;
 
 @Schema({ timestamps: true })
 export class Quiz {
+    @Prop({ required: true, unique: true })
+    quizId!: string;
+
     @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'Module' })
     moduleId!: MongooseSchema.Types.ObjectId;
 
     @Prop({
         type: [{
-            questionId: { type: String, required: true },
-            question: { type: String, required: true },
-            options: [{ type: String, required: true }],
-            correctAnswer: { type: String, required: true },
+            question: String, options: [String], correctAnswer: String,
             difficultyLevel: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' }
         }]
     })
