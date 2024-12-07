@@ -12,10 +12,15 @@ export class CourseService {
         //delete course by id
         async deleteCourseByInstructor(courseId: string): Promise<string> {
         // Find the course by ID
-        const course = await this.courseModel.findById(courseId);
+        const course = await this.courseModel.findOne({ courseId });
     
         if (!course) {
           throw new NotFoundException(`Course not found`);
+        }
+
+        // Check if the instructor exists
+        if (!course.instructor) {
+          throw new ForbiddenException('The course does not have an instructor assigned.');
         }
     
         // Check if the course belongs to the instructor
@@ -24,7 +29,7 @@ export class CourseService {
         }
     
         // Delete the course
-        await this.courseModel.findByIdAndDelete(courseId);
+        await this.courseModel.deleteOne({ courseId });
     
         return `Course has been deleted successfully.`;
       }

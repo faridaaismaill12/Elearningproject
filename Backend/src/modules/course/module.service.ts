@@ -17,7 +17,7 @@ export class ModuleService {
 
     //get module by id
     async findModuleById(moduleId: string): Promise<Module> {
-        let module= await this.moduleModel.findOne({ moduleId }).exec(); 
+        const module= await this.moduleModel.findOne({ moduleId }); 
         if(!module){
             throw new NotFoundException('module not found');
         }

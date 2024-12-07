@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param } from "@nestjs/common";
 import { ModuleService } from "./module.service";
 import { Module } from "./schemas/module.schema";
 
@@ -15,6 +15,10 @@ export class ModuleController {
     //get module by id
     @Get(':id')
     async getModuleById(@Param('id') moduleId: string) {
-        return this.moduleService.findModuleById(moduleId);
+        const module= await this.moduleService.findModuleById(moduleId);
+        if (!module) {
+            throw new NotFoundException('module not found');
+          }
+          return module;
   }
 }

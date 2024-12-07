@@ -4,6 +4,7 @@ import { DatabaseConfig } from './config/database.config';
 // import { CartModule } from './modules/cart/cart.module';
 import { CommunicationModule } from './modules/communication/communication.module';
 // import { UserModule } from './modules/user/user.module';
+import{ CourseModule} from './modules/course/course.module'
 
 @Module({
     imports: [
@@ -12,7 +13,7 @@ import { CommunicationModule } from './modules/communication/communication.modul
         }),
         DatabaseConfig,
         // CartModule,
-        CommunicationModule,
+        CommunicationModule,CourseModule
         // UserModule,
         // other modules...
     ],
