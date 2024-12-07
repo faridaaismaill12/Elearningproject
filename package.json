@@ -22,25 +22,38 @@
     "@nestjs/mongoose": "^10.1.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.8",
+
+    "@nestjs/platform-socket.io": "^10.4.12",
     "@nestjs/throttler": "^6.2.1",
     "@nestjs/websockets": "^10.4.12",
+
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cloudinary": "^2.5.1",
+
+    "cookie": "^1.0.2",
     "cors": "^2.8.5",
+
     "dotenv": "^16.4.6",
     "elearningproject": "file:",
+
+    "express": "^4.21.1",
+
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.11.0",
     "mongoose": "^8.8.2",
     "nest": "^0.1.6",
+
+    "nodemon": "^3.1.7",
+
     "next-cloudinary": "^6.16.0",
     "nodemailer": "^6.9.16",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "socket.io": "^4.8.1",
     "websockets": "^0.2.0"
+
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
