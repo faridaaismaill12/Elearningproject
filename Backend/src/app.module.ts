@@ -5,7 +5,7 @@ import { DatabaseConfig } from './config/database.config';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { ChatSchema } from './modules/communication/schemas/chat-schema';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatGateway } from './modules/communication/chat-gateway';
+import { ChatsGateway } from './modules/communication/chat-gateway';
 // import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -17,6 +17,6 @@ import { ChatGateway } from './modules/communication/chat-gateway';
         DatabaseConfig,
         CommunicationModule,
         
-    ],providers: [ChatGateway],
+    ],providers: [ChatsGateway],
 })
 export class AppModule { }
