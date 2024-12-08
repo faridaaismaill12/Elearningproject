@@ -16,5 +16,6 @@ import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schem
   ],
   controllers: [CourseController],
   providers: [CourseService],
+  exports: [CourseService,MongooseModule],
 })
 export class CourseModule {}

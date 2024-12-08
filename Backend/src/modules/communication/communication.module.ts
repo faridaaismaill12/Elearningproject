@@ -19,6 +19,8 @@ import { CourseService } from '../course/course.service';
 import { ForumThread, ForumThreadSchema } from './schemas/forum-thread.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { Chat, ChatSchema } from './schemas/chat-schema';
+import { CourseModule } from '../course/course.module';
+import { UserModule } from '../user/user.module';
 
 
 @Module({
@@ -28,6 +30,8 @@ import { Chat, ChatSchema } from './schemas/chat-schema';
       { name: Notification.name, schema: NotificationSchema },
       { name: Chat.name, schema: ChatSchema },
     ]),
+    CourseModule,
+    UserModule
   ],
   controllers: [
     ForumController,
@@ -40,7 +44,7 @@ import { Chat, ChatSchema } from './schemas/chat-schema';
     ForumService,
     NotificationService, // Ensure this is included
     ChatsService,
-    CourseService                                          
+    CourseService
     // SavedConversationService, // Ensure this is included
   ],
   exports: [

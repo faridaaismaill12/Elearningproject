@@ -16,7 +16,8 @@ import { JwtModule } from '@nestjs/jwt'; // Optional: for JWT authentication
     JwtModule.register({})  // Optional: for JWT token setup if needed
   ] ,
   controllers: [UserController] ,
-  providers: [UserService]
+  providers: [UserService],
+  exports: [UserService,MongooseModule]
 
 })
 
