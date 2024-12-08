@@ -18,6 +18,8 @@ import { calculatePasswordEntropy } from '../security/password.utils';
 import { JwtService } from '@nestjs/jwt';
 import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { SearchStudentDto } from './dto/search-student.dto';
+import { SearchInstructorDto } from './dto/search-instructor.dto';
 
 @Injectable()
 export class UserService {
@@ -326,5 +328,55 @@ export class UserService {
     
         return users;
     }
+
+    async searchStudents(searchStudentDto: SearchStudentDto , instructorId: string) {
+        const instructor = await this.userModel.findById(instructorId).exec();
+        
+        if (!instructor || instructor.role !== 'instructor') {
+            throw new ForbiddenException('Only instructors can search for students');
+        }
+    
+        const query: Record<string , any> = { role: 'student' };
+
+        if (searchStudentDto.name) {
+            query.name = { $regex: searchStudentDto.name , $options: 'i' };
+        }
+
+        if (searchStudentDto.email) {
+            query.email = searchStudentDto.email;
+        }
+
+        if (searchStudentDto.studentLevel) {
+            query.studentLevel = searchStudentDto.studentLevel;
+        }
+
+        if (searchStudentDto.enrolledCourseId) {
+            query.enrolledCourses = searchStudentDto.enrolledCourseId;
+        }
+
+        if (searchStudentDto.bio) {
+            query.bio = searchStudentDto.bio;
+        }
+    
+        return this.userModel.find(query).exec();
+    }
+    
+    async searchInstructors(searchInstructorDto: SearchInstructorDto) {
+        const query: Record<string, any> = { role: 'instructor' };
+
+        if (searchInstructorDto.name) {
+            query.name = { $regex: searchInstructorDto.name, $options: 'i' };
+        }
+
+        if (searchInstructorDto.email) {
+            query.email = searchInstructorDto.email;
+        }
+
+        if (searchInstructorDto.bio) {
+            query.bio = { $regex: searchInstructorDto.bio, $options: 'i' };
+        }
+    
+        return this.userModel.find(query).exec();
+    }    
     
 }

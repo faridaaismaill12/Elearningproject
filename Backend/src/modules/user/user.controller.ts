@@ -1,5 +1,7 @@
+
 import {
     Controller,
+    HttpCode,
     Post,
     Body,
     Patch,
@@ -21,6 +23,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserService } from './user.service';
 import { ResetPasswordDto } from './dto/password-reset.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { SearchStudentDto } from './dto/search-student.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 
 @Controller('users')
@@ -74,7 +78,19 @@ export class UserController {
     
         return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
     } // tested
-    
+  
+  
+    //   @Post(':id/enroll/:courseId')
+    //   @HttpCode(200)
+    //   async enrollUser(
+    //     @Param('id') userId: string,
+    //     @Param('courseId') courseId: string,
+    //   ): Promise<any> {
+    //     if (!userId || !courseId) {
+    //       throw new BadRequestException('User ID and Course ID are required.');
+    //     }
+    //     return await this.userService.enrollUser(userId, courseId);
+    //   }
 
     /**
      * Update user profile
@@ -170,5 +186,25 @@ export class UserController {
         const adminId = req.user.sub;
         return this.userService.getAllUsers(adminId);
     } // tested
-
+    
+     /**
+     * Search for students (Instructor only)
+     */
+    @UseGuards(JwtAuthGuard)
+    @Get('search-students')
+    async searchStudents(@Query() searchStudentDto: SearchStudentDto , @Req() req: any) {
+        const instructorId = req.user.sub;
+        console.log('Search Students endpoint invoked.');
+        return this.userService.searchStudents(searchStudentDto , instructorId);
+    }
+    
+    /**
+     * Search for instructors
+     */
+    @UseGuards(JwtAuthGuard)
+    @Get('search-instructors')
+    async searchInstructors(@Query() searchInstructorDto: SearchInstructorDto) {
+        console.log('Search Instructors endpoint invoked.');
+        return this.userService.searchInstructors(searchInstructorDto);
+    }
 }
