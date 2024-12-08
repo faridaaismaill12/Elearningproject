@@ -3,28 +3,31 @@ import { ChatsService } from './services/communication.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { Server, Socket } from 'socket.io';
 import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 
 @WebSocketGateway(3002, {
 namespace: '/chats',
 })
-//@UseGuards(WsJwtAuthGuard)
 export class ChatsGateway {
 
-constructor(private readonly chatsService: ChatsService) { }
+
+constructor(private readonly chatsService: ChatsService,
+    private readonly jwtService: JwtService,
+) { }
 
 @WebSocketServer()
 private server!: Server;
 
 @SubscribeMessage('create')
+@UseGuards(JwtAuthGuard)
 async create(
     @ConnectedSocket() client: Socket,
     @MessageBody() createChatDto: CreateChatDto
 ) {
-    const senderId = client.handshake.user._id.toString();
-    const chat = await this.chatsService.create(senderId, createChatDto);
-
-    this.server.emit('new-chat', chat);
+    const senderId = this.jwtService.decode(client.handshake.auth.token)['sub'];
+    return this.chatsService.create(senderId, createChatDto);
 }
 
 afterInit(client: Socket) {
