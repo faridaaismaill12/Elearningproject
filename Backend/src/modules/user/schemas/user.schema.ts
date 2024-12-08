@@ -19,6 +19,9 @@ export class User extends Document {
     })
     email!: string;
 
+    @Prop({required: true , type:String, enum:['beginner', 'average','advanced']})
+    studentLevel!:string;
+
     @Prop({ required: true })
     passwordHash!: string;
 
@@ -54,6 +57,9 @@ export class User extends Document {
 
     @Prop({ default: null })
     lastChangedPassword?: Date;
+
+    
+
 
 }
 

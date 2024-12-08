@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { Quiz } from '../../quizzes/schemas/quiz.schema';
 import { Lesson } from '../../course/schemas/lesson.schema'
+import { Question } from '../../quizzes/schemas/question.schema';
 
 export type ModuleDocument = Module & Document;
 
@@ -28,6 +29,16 @@ export class Module {
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Quiz' }] })
   quizzes?: MongooseSchema.Types.ObjectId[];
+
+  @Prop({
+    type: String,
+    enum: ['easy', 'medium', 'hard'],
+    default: 'easy',
+})
+difficultyLevel!: 'easy' | 'medium' | 'hard';   
+
+ @Prop({ type: [Types.ObjectId], ref: 'Question' })
+questions!:Types.Array<Question & Document>;
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);
