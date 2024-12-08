@@ -196,15 +196,32 @@ export class UserController {
         const instructorId = req.user.sub;
         console.log('Search Students endpoint invoked.');
         return this.userService.searchStudents(searchStudentDto , instructorId);
-    }
+    } // tested
     
     /**
      * Search for instructors
      */
-    @UseGuards(JwtAuthGuard)
     @Get('search-instructors')
     async searchInstructors(@Query() searchInstructorDto: SearchInstructorDto) {
         console.log('Search Instructors endpoint invoked.');
         return this.userService.searchInstructors(searchInstructorDto);
+    } // tested
+
+    @Get('get-role/:id')
+    async getUserRole(@Param('id') userId: string) {
+        console.log('Get User Role endpoint invoked.');
+
+        if(!userId){
+            throw new BadRequestException('User Id is required');
+        }
+
+        const role = await this.userService.getUserRole(userId);
+
+        if(!role){
+            throw new BadRequestException('User not found');
+        }
+
+        return { role };
     }
+
 }

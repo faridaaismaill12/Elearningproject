@@ -378,5 +378,10 @@ export class UserService {
     
         return this.userModel.find(query).exec();
     }    
+
+    async getUserRole(userId: string) {
+        const user = await this.userModel.findById(userId).select('role').exec();
+        return user ? user.role : null;
+    }
     
 }
