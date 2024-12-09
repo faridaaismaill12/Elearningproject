@@ -18,8 +18,19 @@ export class ForumService {
     }
 
     // Find all forum threads
-    async findAll(): Promise<ForumThread[]> {
-        return this.forumThreadModel.find().populate('replies').exec();
+    async findAll(): Promise<(ForumThread & { replies: Reply[] })[]> {
+        const forums = await this.forumThreadModel.find().exec();
+
+        const forumsWithReplies = await Promise.all(
+            forums.map(async (forum) => ({
+                ...forum.toObject(),
+                replies: await this.populateRepliesRecursively(
+                    (forum.replies || []) as (Types.ObjectId | Reply)[],
+                ),
+            })),
+        );
+
+        return forumsWithReplies as (ForumThread & { replies: Reply[] })[];
     }
 
     // Find a specific forum thread by ID and load replies hierarchically

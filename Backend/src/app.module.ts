@@ -12,7 +12,7 @@ import { NoteModule } from './modules/notes/notes.module';
 
 import * as dotenv from 'dotenv';
 // import { ChatGateway } from './modules/communication/chat-gateway';
-import { CommunicationModule } from './modules/communication/communication.module';
+
 
 dotenv.config();
 
