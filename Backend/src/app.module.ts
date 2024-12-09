@@ -30,6 +30,7 @@ dotenv.config();
       }),
       inject: [ConfigService],
     }),
+    
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {

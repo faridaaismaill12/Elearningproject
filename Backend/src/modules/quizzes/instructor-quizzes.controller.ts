@@ -88,7 +88,7 @@ async getQuestionsByModule(
 }
 
 @Get('/quiz-responses/:userId/:quizId')
-async findResponsesForQuiz(@Param('userId') userId: string,@Param('quizId') quizId:string): Promise<Response[]> {
+async findResponsesForQuiz(@Param('userId') userId: string,@Param('quizId') quizId:string): Promise<QuizResponse[]> {
     return await this.instructorQuizzesService.findResponsesForQuiz(userId,quizId);
 }
 
