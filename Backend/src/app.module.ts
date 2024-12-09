@@ -4,6 +4,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
+
+import { DatabaseConfig } from './config/database.config';
+import { CommunicationModule } from './modules/communication/communication.module';
+import { CourseModule } from './modules/course/course.module'; 
+import { NoteModule } from './modules/notes/notes.module';
+
 import * as dotenv from 'dotenv';
 // import { ChatGateway } from './modules/communication/chat-gateway';
 import { CommunicationModule } from './modules/communication/communication.module';
@@ -39,9 +45,16 @@ dotenv.config();
       inject: [ConfigService],
     }),
     UserModule,
+
     CommunicationModule,
+    DatabaseConfig,
+    NoteModule,
+    CommunicationModule,
+    CourseModule,
+
   ],
   providers: [],
 
 })
 export class AppModule {}
+

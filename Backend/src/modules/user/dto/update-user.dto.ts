@@ -40,6 +40,11 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @IsEnum(['beginner' , 'average' , 'advanced'])
+  studentLevel?: string
+
+  @IsOptional()
+  @IsString()
   @Length(0 , 200)
   bio?: string;
 

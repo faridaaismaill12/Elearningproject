@@ -2,8 +2,6 @@ import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray
 import { Type } from 'class-transformer';
 
 export class CreateUserDto {
-    
-
 
   @IsString()
   @IsNotEmpty()
@@ -36,6 +34,12 @@ export class CreateUserDto {
   @IsArray()
   @IsString({ each: true })
   enrolledCourses?: string[] = [];
+
+  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(['beginner' , 'average' , 'advanced'])
+  studentLevel?: string;
 
   @IsOptional()
   @IsString()
