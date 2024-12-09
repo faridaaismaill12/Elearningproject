@@ -11,6 +11,8 @@ import { CourseModule } from './modules/course/course.module';
 import { NoteModule } from './modules/notes/notes.module';
 
 import * as dotenv from 'dotenv';
+// import { ChatGateway } from './modules/communication/chat-gateway';
+import { CommunicationModule } from './modules/communication/communication.module';
 
 dotenv.config();
 
@@ -44,12 +46,14 @@ dotenv.config();
     }),
     UserModule,
 
+    CommunicationModule,
     DatabaseConfig,
     NoteModule,
-        CommunicationModule,
-        CourseModule,
-        UserModule
+    CommunicationModule,
+    CourseModule,
+
   ],
+  providers: [],
 
 })
 export class AppModule {}
