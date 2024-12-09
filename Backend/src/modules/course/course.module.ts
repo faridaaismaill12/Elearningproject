@@ -5,6 +5,10 @@ import { CourseService } from './course.service';
 import { Course, CourseSchema } from './schemas/course.schema';
 import { LessonSchema } from './schemas/lesson.schema';
 import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
+import { ModuleService } from './module.service';
+import { LessonService } from './lesson.service';
+import { ModuleController } from './module.controller';
+import { LessonController } from './lesson.controller';
 
 @Module({
   imports: [
@@ -14,7 +18,7 @@ import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schem
       {name: 'Lesson', schema:LessonSchema},
     ]),
   ],
-  controllers: [CourseController],
-  providers: [CourseService],
+  controllers: [CourseController,ModuleController,LessonController],
+  providers: [CourseService,ModuleService,LessonService],
 })
 export class CourseModule {}
