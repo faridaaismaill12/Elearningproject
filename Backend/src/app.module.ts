@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
-import { ChatGateway } from './modules/communication/chat-gateway';
+// import { ChatGateway } from './modules/communication/chat-gateway';
 import { CommunicationModule } from './modules/communication/communication.module';
 
 dotenv.config();
@@ -41,7 +41,7 @@ dotenv.config();
     UserModule,
     CommunicationModule,
   ],
-  providers: [ChatGateway],
+  providers: [],
 
 })
 export class AppModule {}
