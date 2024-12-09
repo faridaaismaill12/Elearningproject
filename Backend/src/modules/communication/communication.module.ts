@@ -14,11 +14,12 @@ import { NotificationService } from './services/notification.service';
 import { SavedConversationService } from './services/saved-conversation.service';
 
 // Schemas
-import { ForumThread, ForumThreadSchema } from './schemas/forum-thread.schema';
+import { ForumThread, ForumThreadSchema, Reply, ReplySchema } from './schemas/forum-thread.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { SavedConversation, SavedConversationSchema } from './schemas/saved-conversation.schema';
 import { Chat, ChatSchema } from './schemas/chat-schema';
 import { UserSchema } from '../user/schemas/user.schema';
+import { repl } from '@nestjs/core';
 
 
 @Module({
@@ -26,7 +27,7 @@ import { UserSchema } from '../user/schemas/user.schema';
     MongooseModule.forFeature([
       { name: ForumThread.name, schema: ForumThreadSchema },
       { name: Notification.name, schema: NotificationSchema },
-      // { name: SavedConversation.name, schema: SavedConversationSchema },
+      {name:Reply.name, schema: ReplySchema},
       { name: Chat.name, schema: ChatSchema },
       { name: 'User', schema: UserSchema },
       { name: SavedConversation.name, schema: SavedConversationSchema },

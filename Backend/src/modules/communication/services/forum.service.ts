@@ -1,14 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
-import { ForumThread } from '../schemas/forum-thread.schema';
+import { ForumThread, Reply } from '../schemas/forum-thread.schema';
 import { CreateForumThreadDto } from '../dto/create-forum-thread.dto';
 
 @Injectable()
 export class ForumService {
     constructor(
         @InjectModel(ForumThread.name) private forumThreadModel: Model<ForumThread>,
-    ) {}
+        @InjectModel(Reply.name) private replyModel: Model<Reply>,
+    ) { }
 
     // Create a new forum thread
     async create(createForumThreadDto: CreateForumThreadDto): Promise<ForumThread> {
@@ -18,34 +19,68 @@ export class ForumService {
 
     // Find all forum threads
     async findAll(): Promise<ForumThread[]> {
-        return this.forumThreadModel
-            .find()
-            .populate('course') // Populate course reference
-            .populate('createdBy') // Populate user reference
-            .populate('replies.user') // Populate users in top-level replies
-            .populate('replies.replies.user') // Populate users in nested replies
-            .exec();
+        return this.forumThreadModel.find().populate('replies').exec();
     }
 
-    // Find a specific forum thread by ID
-    async findOne(id: string): Promise<ForumThread> {
-        if (!isValidObjectId(id)) {
-            throw new BadRequestException(`Invalid ID: ${id}`);
+    // Find a specific forum thread by ID and load replies hierarchically
+    async findOneWithReplies(threadId: string): Promise<ForumThread & { replies: Reply[] }> {
+        if (!isValidObjectId(threadId)) {
+            throw new BadRequestException(`Invalid thread ID: ${threadId}`);
         }
 
-        const forum = await this.forumThreadModel
-            .findById(id)
-            .populate('course')
-            .populate('createdBy')
-            .populate('replies.user')
-            .populate('replies.replies.user')
-            .exec();
+        // Fetch the forum thread
+        const forumThread = await this.forumThreadModel.findById(threadId).exec();
 
-        if (!forum) {
-            throw new BadRequestException(`Forum thread not found with ID: ${id}`);
+        if (!forumThread) {
+            throw new BadRequestException(`Forum thread not found with ID: ${threadId}`);
         }
 
-        return forum;
+        // Populate top-level replies hierarchically
+        const populatedReplies = await this.populateRepliesRecursively(
+            (forumThread.replies || []) as (Types.ObjectId | Reply)[],
+        );
+
+        return { ...forumThread.toObject(), replies: populatedReplies } as ForumThread & { replies: Reply[] };
+    }
+
+    // Helper: Populate replies recursively
+    private async populateRepliesRecursively(
+        replies: (Types.ObjectId | Reply)[],
+    ): Promise<Reply[]> {
+        const populatedReplies: Reply[] = [];
+
+        for (const reply of replies) {
+            // Fetch the reply if it's an ObjectId, or use it directly if it's already a Reply
+            const populatedReply =
+                typeof reply === 'object' && 'message' in reply
+                    ? reply
+                    : await this.replyModel
+                        .findById(reply)
+                        .populate({
+                            path: 'replies',
+                            model: 'Reply',
+                            select: '_id message user replies',
+                        })
+                        .populate('user', 'name')
+                        .exec();
+
+            if (!populatedReply) {
+                continue; // Skip if the reply could not be populated
+            }
+
+            // Recursively populate nested replies
+            const nestedReplies =
+                (populatedReply.replies ?? []).length > 0
+                    ? await this.populateRepliesRecursively(
+                        (populatedReply.replies || []) as (Types.ObjectId | Reply)[],
+                    )
+                    : [];
+
+            populatedReply.replies = nestedReplies;
+            populatedReplies.push(populatedReply as Reply);
+        }
+
+        return populatedReplies;
     }
 
     // Delete a forum thread by ID
@@ -53,80 +88,123 @@ export class ForumService {
         await this.forumThreadModel.findByIdAndDelete(id).exec();
     }
 
-    // Add a reply to a forum thread
-    async addReply(
+    // Add a reply to a forum thread (Top-Level Reply)
+    async addReplyToThread(
         threadId: string,
         userId: string,
         message: string,
-    ): Promise<ForumThread> {
-        const reply = {
+    ): Promise<Reply> {
+        if (!isValidObjectId(threadId)) {
+            throw new BadRequestException(`Invalid thread ID: ${threadId}`);
+        }
+
+        const reply = new this.replyModel({
             user: new Types.ObjectId(userId),
             message,
-            timestamp: new Date(),
-            replies: [], // Initialize an empty array for nested replies
-        };
-    
-        const updatedThread = await this.forumThreadModel
-            .findByIdAndUpdate(
-                threadId,
-                { $push: { replies: reply } },
-                { new: true },
-            )
-            // .populate('replies.user') // Populate users in top-level replies
-            .populate('replies.replies.user') // Populate users in nested replies
-            .exec();
-    
-        if (!updatedThread) {
-            throw new Error('Thread not found');
-        }
-        return updatedThread;
+            forumThread: new Types.ObjectId(threadId),
+            parent: null,
+        });
+
+        const savedReply = await reply.save();
+
+        // Add reply to thread's reply array
+        await this.forumThreadModel.findByIdAndUpdate(threadId, {
+            $push: { replies: savedReply._id },
+        });
+
+        return savedReply;
     }
-    
-    
-    async addNestedReply(
-        threadId: string,
-        pathToReply: number[],
+
+    // Add a reply to another reply (Nested Reply)
+    async addReplyToReply(
+        replyId: string,
         userId: string,
         message: string,
-    ): Promise<ForumThread> {
-        if (!Types.ObjectId.isValid(threadId)) {
-            throw new BadRequestException('Invalid threadId');
+    ): Promise<Reply> {
+        if (!isValidObjectId(replyId)) {
+            throw new BadRequestException(`Invalid reply ID: ${replyId}`);
         }
-    
-        const thread = await this.forumThreadModel.findById(threadId);
-        if (!thread) {
-            throw new BadRequestException('Thread not found');
+
+        const parentReply = await this.replyModel.findById(replyId);
+        if (!parentReply) {
+            throw new BadRequestException(`Parent reply not found with ID: ${replyId}`);
         }
-    
-        // Initialize `replies` if undefined
-        thread.replies = thread.replies || [];
-    
-        // Recursive helper function to traverse and add the reply
-        function addReply(replies: any[], path: number[]): any[] {
-            if (path.length === 0) {
-                replies.push({
-                    user: new Types.ObjectId(userId),
-                    message,
-                    timestamp: new Date(),
-                    replies: [],
-                });
-                return replies;
-            }
-            const index = path[0];
-            if (!replies[index]) {
-                throw new BadRequestException('Invalid path to reply');
-            }
-            replies[index].replies = replies[index].replies || [];
-            replies[index].replies = addReply(replies[index].replies, path.slice(1));
-            return replies;
-        }
-    
-        thread.replies = addReply(thread.replies, [...pathToReply]);
-    
-        await thread.save();
-        return thread;
+
+        const reply = new this.replyModel({
+            user: new Types.ObjectId(userId),
+            message,
+            forumThread: parentReply.forumThread,
+            parent: new Types.ObjectId(replyId),
+        });
+
+        const savedReply = await reply.save();
+
+        // Add reply to the parent reply's replies array
+        await this.replyModel.findByIdAndUpdate(replyId, {
+            $push: { replies: savedReply._id },
+        });
+
+        return savedReply;
     }
-    
-    
-    
+
+    // Get all top-level replies for a thread
+    async getTopLevelReplies(threadId: string): Promise<Reply[]> {
+        if (!isValidObjectId(threadId)) {
+            throw new BadRequestException(`Invalid thread ID: ${threadId}`);
+        }
+
+        const forumThread = await this.forumThreadModel
+            .findById(threadId)
+            .populate({
+                path: 'replies',
+                model: 'Reply',
+            })
+            .exec();
+
+        if (!forumThread) {
+            throw new BadRequestException(`Forum thread not found with ID: ${threadId}`);
+        }
+
+        return forumThread.replies as unknown as Reply[];
+    }
+
+    // Get nested replies for a specific reply
+    async getNestedReplies(replyId: string): Promise<Reply[]> {
+        if (!isValidObjectId(replyId)) {
+            throw new BadRequestException(`Invalid reply ID: ${replyId}`);
+        }
+
+        const parentReply = await this.replyModel
+            .findById(replyId)
+            .populate({
+                path: 'replies',
+                model: 'Reply',
+            })
+            .exec();
+
+        if (!parentReply) {
+            throw new BadRequestException(`Reply not found with ID: ${replyId}`);
+        }
+
+        return parentReply.replies as unknown as Reply[];
+    }
+
+    // Get a single reply with its parent and forum information
+    async getReply(replyId: string): Promise<Reply> {
+        if (!isValidObjectId(replyId)) {
+            throw new BadRequestException(`Invalid reply ID: ${replyId}`);
+        }
+
+        const reply = await this.replyModel
+            .findById(replyId)
+            .populate('forumThread', '_id title')
+            .populate('parent', '_id message user')
+            .exec();
+
+        if (!reply) {
+            throw new BadRequestException(`Reply not found with ID: ${replyId}`);
+        }
+
+        return reply;
+    }
 }
