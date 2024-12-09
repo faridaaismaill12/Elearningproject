@@ -14,26 +14,37 @@ export class Quiz {
     @Prop({ type:Number, default:10})
     numberOfQuestions!:number;
 
+
+    @Prop({type:String, enum:['MCQ', 'TorF','Both']})
+    quizType!: string;
+
+
     @Prop({ required: true, type: Types.ObjectId, ref: 'Module' })
     moduleId!: Types.ObjectId;
 
     // Update to reference the Question schema
-    @Prop({ type: [Types.ObjectId], ref: 'Question' })
-    questions!:Types.Array<Question & Document>;
+]
+    //@Prop({ type: [Types.ObjectId], ref: 'Question' })
+    //questions!:Types.Array<Question & Document>;
+
 
     @Prop({ required: true, default: 30 }) // Duration in minutes
     duration!: number;
 
-    @Prop({ type: Number, default: 1 }) 
-    attemptsAllowedPerStudent!: number;
+
 
     @Prop({ type: Types.ObjectId, ref:"User"}) 
     attemptedUsers!:[{
         user:Types.ObjectId;
-        attempsLeft:number;} ]
+
+       }]
+
+
 
     @Prop({ type: Types.ObjectId, ref:"User"})
     createdBy!:Types.ObjectId;
 }
 
+
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
+

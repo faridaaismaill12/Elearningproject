@@ -1,8 +1,18 @@
-import { IsArray, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Length, ValidateNested } from 'class-validator';
+import { IsArray, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Length, ValidateNested, IsMongoId} from 'class-validator';
 import { Type } from 'class-transformer';
-import { Types,Document, Schema as MongooseSchema } from 'mongoose';
 
+import {Schema as MongooseSchema } from 'mongoose';
+
+// DTO for creating a Question
 export class CreateQuestionDto {
+    @IsString()
+    @IsNotEmpty()
+    moduleId!:string;
+
+    @IsNotEmpty()
+    @IsEnum(['MCQ', 'TorF'])
+    questionType!: string;
+
     @IsString()
     @IsNotEmpty()
     @Length(1, 255)
@@ -18,34 +28,35 @@ export class CreateQuestionDto {
     correctAnswer!: string;
 
     @IsEnum(['easy', 'medium', 'hard'])
+    @IsNotEmpty()
     difficultyLevel!: 'easy' | 'medium' | 'hard';
-
-    @IsString()
-    @IsOptional() 
-    questionId?: string;
 }
 
+// DTO for creating a Quiz
 export class CreateQuizDto {
     @IsString()
     @IsNotEmpty()
-    @Length(1, 50)
-    quizId!: string;
+    name!:string;
 
     @IsString()
     @IsNotEmpty()
-    moduleId!: string; // Ensure this aligns with Mongoose ObjectId
+    moduleId!: string; // Ensure this aligns with Mongoose ObjectId for the module reference
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateQuestionDto)
-    questions!: CreateQuestionDto[];
+    @IsNumber()
+    @IsNotEmpty()
+    numberOfQuestions!:number;
+
 
     @IsNumber()
     @IsNotEmpty()
     duration!: number;
 
-    @IsOptional()
-    @IsDate()
-    @Type(() => Date)
-    startTime!: Date | null;
+    @IsMongoId()  // userId should be MongoDB ObjectId
+    @IsNotEmpty()
+    createdBy!:string;
+
+    @IsNotEmpty()
+    @IsEnum(['MCQ', 'TorF','Both'])
+    quizType!: string;
+
 }

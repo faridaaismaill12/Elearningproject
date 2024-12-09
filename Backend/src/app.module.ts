@@ -4,9 +4,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
-
+import { QuizzesModule } from './modules/quizzes/quizzes.module';
 import { DatabaseConfig } from './config/database.config';
 import { CommunicationModule } from './modules/communication/communication.module';
+
 import { CourseModule } from './modules/course/course.module'; 
 import { NoteModule } from './modules/notes/notes.module';
 
@@ -51,9 +52,11 @@ dotenv.config();
     NoteModule,
     CommunicationModule,
     CourseModule,
+    QuizzesModule,
 
   ],
   providers: [],
+
 
 })
 export class AppModule {}
