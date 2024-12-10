@@ -1,10 +1,12 @@
-import {IsArray, IsMongoId, IsNotEmpty, IsNumber, IsString, ValidateNested,} from 'class-validator';
+import {  IsArray,  IsMongoId, IsNotEmpty, IsNumber, IsString, IsEnum, IsOptional, IsDate, ValidateNested 
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import {Types} from 'mongoose'
+import { Types } from 'mongoose';
+
 class AnswerDto {
-  @IsString()
+  @IsMongoId()  // MongoDB ObjectId for questionId
   @IsNotEmpty()
-  questionId!: string;
+  question!: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
@@ -12,17 +14,13 @@ class AnswerDto {
 }
 
 export class SubmitResponseDto {
-  @IsString()
+  @IsMongoId()  
   @IsNotEmpty()
-  responseId!: string;
+  user!: Types.ObjectId;
 
-  @IsMongoId()
+  @IsMongoId()  
   @IsNotEmpty()
-  userId!: Types.ObjectId;
-
-  @IsMongoId()
-  @IsNotEmpty()
-  quizId!: Types.ObjectId;
+  quiz!: Types.ObjectId;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -32,4 +30,19 @@ export class SubmitResponseDto {
   @IsNumber()
   @IsNotEmpty()
   score!: number;
+
+  // New attributes based on schema
+  @IsNumber()
+  @IsNotEmpty()
+  correctAnswers!: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  totalAnswered!: number;
+
+
+  @IsOptional()  
+  @IsDate()
+  @Type(() => Date)  
+  startTime!: Date | null;
 }

@@ -1,34 +1,50 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';  // Import MongooseSchema to correctly reference ObjectId
+import { Document, HydratedDocument, Mongoose, Types } from 'mongoose';  // Import MongooseSchema for ObjectId
 import { Module } from '../../course/schemas/module.schema';
-export type QuizDocument = Quiz & Document;
+import { Question } from './question.schema';  // Import the Question schema
+
+export type QuizDocument = HydratedDocument<Quiz>;
 
 @Schema({ timestamps: true })
 export class Quiz {
-    @Prop({ required: true, unique: true })
-    quizId!: string;
 
-    @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'Module' })
-    moduleId!: MongooseSchema.Types.ObjectId;
+    @Prop({ type:String, required: true})
+    name!:string;
 
-    @Prop({
-        type: [{
-            question: String, options: [String], correctAnswer: String,
-            difficultyLevel: { type: String, enum: ['easy', 'medium', 'hard'], default: 'easy' }
-        }]
-    })
-    questions!: Array<{
-        questionId:string;
-        question: string;
-        options: string[];
-        correctAnswer: string;
-        difficultyLevel: 'easy' | 'medium' | 'hard';
-    }>;
+    @Prop({ type:Number, default:10})
+    numberOfQuestions!:number;
+
+
+    @Prop({type:String, enum:['MCQ', 'TorF','Both']})
+    quizType!: string;
+
+
+    @Prop({ required: true, type: Types.ObjectId, ref: 'Module' })
+    moduleId!: Types.ObjectId;
+
+    // Update to reference the Question schema
+
+    //@Prop({ type: [Types.ObjectId], ref: 'Question' })
+    //questions!:Types.Array<Question & Document>;
+
 
     @Prop({ required: true, default: 30 }) // Duration in minutes
     duration!: number;
 
-    @Prop({ type: Date, default: null }) 
-    startTime!: Date | null;
+
+
+    @Prop({ type: Types.ObjectId, ref:"User"}) 
+    attemptedUsers!:[{
+        user:Types.ObjectId;
+
+       }]
+
+
+
+    @Prop({ type: Types.ObjectId, ref:"User"})
+    createdBy!:Types.ObjectId;
 }
+
+
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
+

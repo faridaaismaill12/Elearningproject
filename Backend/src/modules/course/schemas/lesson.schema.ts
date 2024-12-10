@@ -29,6 +29,22 @@ export class Lesson {
 
   @Prop({type: MongooseSchema.Types.ObjectId, ref:"Note"})
   noteId?:MongooseSchema.Types.ObjectId[];
+
+  // Track lesson completion for users
+  @Prop({
+    type: [
+      {
+        userId: { type: String, ref: "User" },
+        completedAt: { type: Date },
+      },
+    ],
+    default: [],
+  })
+  completions!: {
+    userId: String;
+    completedAt: Date;
+  }[];
+  
 }
 
 

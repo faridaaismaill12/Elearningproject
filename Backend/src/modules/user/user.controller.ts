@@ -80,17 +80,19 @@ export class UserController {
     } // tested
   
   
-    //   @Post(':id/enroll/:courseId')
-    //   @HttpCode(200)
-    //   async enrollUser(
-    //     @Param('id') userId: string,
-    //     @Param('courseId') courseId: string,
-    //   ): Promise<any> {
-    //     if (!userId || !courseId) {
-    //       throw new BadRequestException('User ID and Course ID are required.');
-    //     }
-    //     return await this.userService.enrollUser(userId, courseId);
-    //   }
+
+      @Post(':id/enroll/:courseId')
+      @HttpCode(200)
+      async enrollUser(
+        @Param('id') userId: string,
+        @Param('courseId') courseId: string,
+      ): Promise<any> {
+        if (!userId || !courseId) {
+          throw new BadRequestException('User ID and Course ID are required.');
+        }
+        return await this.userService.enrollUser(userId, courseId);
+      }
+
 
     /**
      * Update user profile
@@ -225,3 +227,4 @@ export class UserController {
     }
 
 }
+

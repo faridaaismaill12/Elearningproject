@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Body, Param, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { ForumService } from '../services/forum.service';
 import { CreateForumThreadDto } from '../dto/create-forum-thread.dto';
 
@@ -21,7 +21,7 @@ export class ForumController {
     // Get a specific forum thread by ID
     @Get(':id')
     async findOne(@Param('id') id: string) {
-        return this.forumService.findOne(id);
+        return this.forumService.findOneWithReplies(id);
     }
 
     // Delete a forum thread by ID
@@ -30,28 +30,39 @@ export class ForumController {
         return this.forumService.delete(id);
     }
 
-    // Add a reply to a forum thread
-    @Put(':id/replies')
-    async addReply(
-        @Param('id') threadId: string,
-        @Body() replyData: { userId: string; message: string },
+    // Add a reply to a forum thread (Top-Level Reply)
+    @Post(':threadId/replies')
+    async addReplyToThread(
+        @Param('threadId') threadId: string,
+        @Body() body: { userId: string; message: string },
     ) {
-        const { userId, message } = replyData;
-        return this.forumService.addReply(threadId, userId, message);
-    }
-    
-    @Put(':id/replies/nested')
-    async addNestedReply(
-        @Param('id') threadId: string,
-        @Body() body: {
-            pathToReply: number[]; // Path to the nested reply (array of indices)
-            userId: string; // User ID of the person replying
-            message: string; // Reply message
-        },
-    ) {
-        const { pathToReply, userId, message } = body;
-        return this.forumService.addNestedReply(threadId, pathToReply, userId, message);
+        return this.forumService.addReplyToThread(threadId, body.userId, body.message);
     }
 
-    
+    // Add a reply to another reply (Nested Reply)
+    @Post('replies/:replyId')
+    async addReplyToReply(
+        @Param('replyId') replyId: string,
+        @Body() body: { userId: string; message: string },
+    ) {
+        return this.forumService.addReplyToReply(replyId, body.userId, body.message);
+    }
+
+    // Get all top-level replies for a thread
+    @Get(':threadId/replies')
+    async getTopLevelReplies(@Param('threadId') threadId: string) {
+        return this.forumService.getTopLevelReplies(threadId);
+    }
+
+    // Get nested replies for a specific reply
+    @Get('replies/:replyId/nested')
+    async getNestedReplies(@Param('replyId') replyId: string) {
+        return this.forumService.getNestedReplies(replyId);
+    }
+
+    // Get a single reply with its parent and forum information
+    @Get('replies/:replyId')
+    async getReply(@Param('replyId') replyId: string) {
+        return this.forumService.getReply(replyId);
+    }
 }
