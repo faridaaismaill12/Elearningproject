@@ -1,36 +1,45 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
-import { ChatsService } from './services/communication.service';
-import { CreateChatDto } from './dto/create-chat.dto';
+import {
+    WebSocketGateway,
+    WebSocketServer,
+    OnGatewayInit,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    SubscribeMessage,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
-import { JwtService } from '@nestjs/jwt';
+import { ChatService } from './services/communication.service';
 
-
-@WebSocketGateway(3002, {
-namespace: '/chats',
+@WebSocketGateway({
+    namespace: 'chat',
+    cors: {
+    origin: '*',
+    },
 })
-export class ChatsGateway {
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer() server!: Server;
 
+    constructor(private readonly chatService: ChatService) {}
 
-constructor(private readonly chatsService: ChatsService,
-    private readonly jwtService: JwtService,
-) { }
+    afterInit(server: Server) {
+    console.log('WebSocket initialized');
+    }
 
-@WebSocketServer()
-private server!: Server;
+    handleConnection(client: Socket) {
+    console.log(`Client connected: ${client.id}`);
+    }
 
-@SubscribeMessage('create')
-@UseGuards(JwtAuthGuard)
-async create(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() createChatDto: CreateChatDto
-) {
-    const senderId = this.jwtService.decode(client.handshake.auth.token)['sub'];
-    return this.chatsService.create(senderId, createChatDto);
-}
+    handleDisconnect(client: Socket) {
+    console.log(`Client disconnected: ${client.id}`);
+    }
 
-afterInit(client: Socket) {
-   // client.use((socket, next) => wsAuthMiddleware(socket, next));
-}
+    @SubscribeMessage('joinRoom')
+    async handleJoinRoom(client: Socket, chatId: string): Promise<void> {
+    client.join(chatId);
+    console.log(`Client ${client.id} joined room ${chatId}`);
+    }
+    @SubscribeMessage('sendMessage')
+    async handleMessage(client: Socket, payload: { chatId: string; senderId: string; content: string }): Promise<void> {
+    const message = await this.chatService.createMessage(payload.chatId, payload.senderId, payload.content);
+    this.server.to(payload.chatId).emit('message', message);
+    }
 }

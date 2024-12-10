@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import {ChatGateway} from './chat-gateway';
 
 // Controllers
 import { ForumController } from './controllers/forum.controller';
@@ -11,7 +12,7 @@ import { CourseController } from '../course/course.controller';
 // Services
 import { ForumService } from './services/forum.service';
 import { NotificationService } from './services/notification.service';
-import { ChatsService } from './services/communication.service';
+import { ChatService  } from './services/communication.service';
 import { CourseService } from '../course/course.service';
 // import { SavedConversationService } from './services/saved-conversation.service';
 
@@ -31,7 +32,7 @@ import { UserModule } from '../user/user.module';
       { name: Chat.name, schema: ChatSchema },
     ]),
     CourseModule,
-    UserModule
+    UserModule,
   ],
   controllers: [
     ForumController,
@@ -43,8 +44,9 @@ import { UserModule } from '../user/user.module';
   providers: [
     ForumService,
     NotificationService, // Ensure this is included
-    ChatsService,
-    CourseService
+    ChatService,
+    CourseService,
+    ChatGateway
     // SavedConversationService, // Ensure this is included
   ],
   exports: [

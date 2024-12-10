@@ -16,7 +16,6 @@ export class ForumService {
         const forumThread = new this.forumThreadModel(createForumThreadDto);
         return forumThread.save();
     }
-
     // Find all forum threads
     async findAll(): Promise<ForumThread[]> {
         return this.forumThreadModel

@@ -5,7 +5,7 @@ import { DatabaseConfig } from './config/database.config';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { ChatSchema } from './modules/communication/schemas/chat-schema';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatsGateway } from './modules/communication/chat-gateway';
+import {ChatGateway} from './modules/communication/chat-gateway';
 import { UserModule } from './modules/user/user.module';
 import { CourseModule } from './modules/course/course.module';
 // import { UserModule } from './modules/user/user.module';
@@ -20,7 +20,6 @@ import { CourseModule } from './modules/course/course.module';
         CommunicationModule,
         UserModule,
         CourseModule
-
         
     ],providers: [],
 })

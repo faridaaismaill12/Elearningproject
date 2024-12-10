@@ -63,6 +63,8 @@ lastLogin?: Date;
 
 @Prop({ default: null })
 lastChangedPassword?: Date;
-}
 
+@Prop({ type: [{ type: Types.ObjectId, ref: 'Message' }] })
+messages!: Types.ObjectId[];
+}
 export const UserSchema = SchemaFactory.createForClass(User);
