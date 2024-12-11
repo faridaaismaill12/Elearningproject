@@ -22,6 +22,7 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
 import { Chat, ChatSchema } from './schemas/chat-schema';
 import { CourseModule } from '../course/course.module';
 import { UserModule } from '../user/user.module';
+import { Message, MessageSchema } from './schemas/message-schema';
 
 
 @Module({
@@ -30,6 +31,7 @@ import { UserModule } from '../user/user.module';
       { name: ForumThread.name, schema: ForumThreadSchema },
       { name: Notification.name, schema: NotificationSchema },
       { name: Chat.name, schema: ChatSchema },
+      { name: Message.name, schema: MessageSchema }
     ]),
     CourseModule,
     UserModule,
