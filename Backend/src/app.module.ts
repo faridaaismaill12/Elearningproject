@@ -12,6 +12,7 @@ import { CourseModule } from './modules/course/course.module';
 import { NoteModule } from './modules/notes/notes.module';
 
 import * as dotenv from 'dotenv';
+import { SecurityModule } from './modules/security/security.module';
 // import { ChatGateway } from './modules/communication/chat-gateway';
 
 
@@ -31,23 +32,8 @@ dotenv.config();
       inject: [ConfigService],
     }),
     
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const jwtSecret = configService.get<string>('JWT_SECRET');
-        console.log('JWT_SECRET from ConfigService' , jwtSecret);
-        if (!jwtSecret) {
-          throw new Error('JWT_SECRET is not defined in the .env file');
-        }
-        return {
-          secret: jwtSecret,
-          signOptions: { expiresIn: '1h' },
-        };
-      },
-      inject: [ConfigService],
-    }),
     UserModule,
-
+    SecurityModule,
     CommunicationModule,
     DatabaseConfig,
     NoteModule,

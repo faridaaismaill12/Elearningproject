@@ -29,6 +29,8 @@ export class AdminQuizzesService {
       throw new NotFoundException('Quiz not found');
     }
 
+
     await quiz.deleteOne(); // Properly await the deletion
   }
 }
+

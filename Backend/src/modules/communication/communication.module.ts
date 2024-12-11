@@ -22,10 +22,26 @@ import { SavedConversation, SavedConversationSchema } from './schemas/saved-conv
 import { Chat, ChatSchema } from './schemas/chat-schema';
 import { UserSchema } from '../user/schemas/user.schema';
 import { repl } from '@nestjs/core';
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { JwtModule } from '@nestjs/jwt/dist/jwt.module';
+import { ConfigModule } from '@nestjs/config/dist/config.module';
+import { ConfigService } from '@nestjs/config/dist/config.service';
+import { UserModule } from '../user/user.module';
 
 
 @Module({
   imports: [
+    UserModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1d',
+        },
+      }),
+      inject: [ConfigService],
+    }),
     MongooseModule.forFeature([
       { name: ForumThread.name, schema: ForumThreadSchema },
       { name: Notification.name, schema: NotificationSchema },
