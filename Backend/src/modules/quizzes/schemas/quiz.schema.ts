@@ -23,7 +23,7 @@ export class Quiz {
     moduleId!: Types.ObjectId;
 
     // Update to reference the Question schema
-]
+
     //@Prop({ type: [Types.ObjectId], ref: 'Question' })
     //questions!:Types.Array<Question & Document>;
 

@@ -23,4 +23,4 @@ import { AdminQuizzesController } from './admin-quiz.controller';
   controllers: [InstructorQuizController,StudentQuizzesController,AdminQuizzesController],  // Make sure the controller is correct
   providers: [InstructorQuizzesService,StudentQuizzesService,AdminQuizzesService],
 })
-export class QuizzesModule {}
+export class QuizzesModule {}

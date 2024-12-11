@@ -24,7 +24,7 @@ export class InstructorQuizzesService {
 async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promise<Question> {
   const { moduleId, questionType, options, correctAnswer, difficultyLevel, question } = createQuestionDto;
 
-  // Validate `moduleId`
+  // Validate moduleId
   if (!Types.ObjectId.isValid(moduleId)) {
     throw new BadRequestException('Invalid Module Id');
   }
@@ -399,62 +399,3 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
 
 
 }
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

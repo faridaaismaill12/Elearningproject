@@ -8,7 +8,6 @@ export default {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
 
- 
   theme: {
   	extend: {
   		colors: {
@@ -23,7 +22,9 @@ export default {
   				foreground: 'hsl(var(--popover-foreground))'
   			},
   			primary: {
+
   				DEFAULT: '#800080',
+
   				foreground: 'hsl(var(--primary-foreground))'
   			},
   			secondary: {

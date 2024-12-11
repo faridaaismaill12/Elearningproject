@@ -1,14 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import { ForumThread, Reply } from '../schemas/forum-thread.schema';
 import { CreateForumThreadDto } from '../dto/create-forum-thread.dto';
+import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class ForumService {
     constructor(
         @InjectModel(ForumThread.name) private forumThreadModel: Model<ForumThread>,
         @InjectModel(Reply.name) private replyModel: Model<Reply>,
+        private userService: UserService, // Add this line
     ) { }
 
     // Create a new forum thread
@@ -16,6 +18,7 @@ export class ForumService {
         const forumThread = new this.forumThreadModel(createForumThreadDto);
         return forumThread.save();
     }
+    
 
     // Find all forum threads
     async findAll(): Promise<(ForumThread & { replies: Reply[] })[]> {
@@ -95,10 +98,6 @@ export class ForumService {
     }
 
     // Delete a forum thread by ID
-    async delete(id: string): Promise<void> {
-        await this.forumThreadModel.findByIdAndDelete(id).exec();
-    }
-
     // Add a reply to a forum thread (Top-Level Reply)
     async addReplyToThread(
         threadId: string,
@@ -218,4 +217,164 @@ export class ForumService {
 
         return reply;
     }
+
+
+    private async verifyForumOwnership(threadId: string, userId: string): Promise<void> {
+        const forumThread = await this.forumThreadModel.findById(threadId).exec();
+        if (!forumThread) {
+            throw new BadRequestException(`Forum thread not found with ID: ${threadId}`);
+        }
+        if (forumThread.createdBy.toString() !== userId) {
+            throw new ForbiddenException('You do not have permission to modify this forum thread.');
+        }
+    }
+
+    // Verify ownership of a reply
+    private async verifyReplyOwnership(replyId: string, userId: string): Promise<void> {
+        const reply = await this.replyModel.findById(replyId).exec();
+        if (!reply) {
+            throw new BadRequestException(`Reply not found with ID: ${replyId}`);
+        }
+        if (reply.user.toString() !== userId) {
+            throw new ForbiddenException('You do not have permission to modify this reply.');
+        }
+    }
+
+    // Delete a forum thread by ID with ownership check
+    async delete(threadId: string, userId: string): Promise<void> {
+        await this.verifyForumOwnership(threadId, userId);
+        await this.forumThreadModel.findByIdAndDelete(threadId).exec();
+    }
+
+    // Update a forum thread (Ownership verified)
+    async updateForum(threadId: string, userId: string, updateData: Partial<ForumThread>): Promise<ForumThread> {
+        await this.verifyForumOwnership(threadId, userId);
+        const updatedForumThread = await this.forumThreadModel.findByIdAndUpdate(threadId, updateData, { new: true }).exec();
+        if (!updatedForumThread) {
+            throw new BadRequestException(`Forum thread not found with ID: ${threadId}`);
+        }
+        return updatedForumThread;
+    }
+
+    // Update a reply (Ownership verified)
+    async updateReply(replyId: string, userId: string, updateData: Partial<Reply>): Promise<Reply> {
+        await this.verifyReplyOwnership(replyId, userId);
+        const updatedReply = await this.replyModel.findByIdAndUpdate(replyId, updateData, { new: true }).exec();
+        if (!updatedReply) {
+            throw new BadRequestException(`Reply not found with ID: ${replyId}`);
+        }
+        return updatedReply;
+    }
+
+    async findAllByUserId(userId: string): Promise<(ForumThread & { replies: Reply[] })[]> {
+        if (!isValidObjectId(userId)) {
+            throw new BadRequestException(`Invalid user ID: ${userId}`);
+        }
+    
+        console.log('User ID:', userId);
+    
+        // Convert userId to ObjectId before querying
+        const threads = await this.forumThreadModel.find({ createdBy: new Types.ObjectId(userId) }).exec();
+    
+        const threadsWithReplies = await Promise.all(
+            threads.map(async (thread) => ({
+                ...thread.toObject(),
+                replies: await this.populateRepliesRecursively(
+                    (thread.replies || []) as (Types.ObjectId | Reply)[],
+                ),
+            })),
+        );
+    
+        return threadsWithReplies as (ForumThread & { replies: Reply[] })[];
+    }
+    
+    async deleteForumThread(threadId: string, userId: string): Promise<void> {
+        if (!isValidObjectId(threadId)) {
+            throw new BadRequestException('Invalid thread ID');
+        }
+    
+        const thread = await this.forumThreadModel.findById(threadId).exec();
+    
+        if (!thread) {
+            throw new BadRequestException('Forum thread not found');
+        }
+    
+        // Fetch the user's role
+        const userRole = await this.userService.getUserRole(userId);
+    
+        // Check permissions
+        if (
+            thread.createdBy.toString() !== userId &&
+            userRole !== 'admin' &&
+            userRole !== 'instructor'
+        ) {
+            throw new UnauthorizedException('You do not have permission to delete this thread');
+        }
+    
+        // Delete all associated replies
+        await this.replyModel.deleteMany({ forumThread: threadId }).exec();
+    
+        // Delete the thread
+        await this.forumThreadModel.findByIdAndDelete(threadId).exec();
+    }
+
+    async deleteReply(replyId: string, userId: string): Promise<void> {
+        if (!isValidObjectId(replyId)) {
+            throw new BadRequestException('Invalid reply ID');
+        }
+    
+        const reply = await this.replyModel.findById(replyId).exec();
+    
+        if (!reply) {
+            throw new BadRequestException('Reply not found');
+        }
+    
+        // Fetch the user's role
+        const userRole = await this.userService.getUserRole(userId);
+    
+        // Check permissions
+        if (
+            reply.user.toString() !== userId &&
+            userRole !== 'admin' &&
+            userRole !== 'instructor'
+        ) {
+            throw new UnauthorizedException('You do not have permission to delete this reply');
+        }
+    
+        // Delete all nested replies
+        const deleteNestedReplies = async (replyId: string) => {
+            const nestedReplies = await this.replyModel.find({ parent: replyId }).exec();
+            for (const nestedReply of nestedReplies) {
+                await deleteNestedReplies((nestedReply._id as Types.ObjectId).toString());
+            }
+            await this.replyModel.findByIdAndDelete(replyId).exec();
+        };
+    
+        await deleteNestedReplies(replyId);
+    
+        // Delete the top-level reply
+        await this.replyModel.findByIdAndDelete(replyId).exec();
+    }
+    
+    
+
+    async findAllByCourseId(courseId: string): Promise<(ForumThread & { replies: Reply[] })[]> {
+        if (!isValidObjectId(courseId)) {
+            throw new BadRequestException(`Invalid course ID: ${courseId}`);
+        }
+
+        const threads = await this.forumThreadModel.find({ course: courseId }).exec();
+
+        const threadsWithReplies = await Promise.all(
+            threads.map(async (thread) => ({
+                ...thread.toObject(),
+                replies: await this.populateRepliesRecursively(
+                    (thread.replies || []) as (Types.ObjectId | Reply)[],
+                ),
+            })),
+        );
+
+        return threadsWithReplies as (ForumThread & { replies: Reply[] })[];
+    }
 }
+
