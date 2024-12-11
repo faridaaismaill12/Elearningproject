@@ -16,8 +16,8 @@ export const DatabaseConfig = MongooseModule.forRootAsync({
 
         return {
             uri,
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            // useNewUrlParser: true,
+            // useUnifiedTopology: true,
             connectionFactory: (connection) => {
                 console.log('Attaching Mongoose connection listeners...');
 

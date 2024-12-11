@@ -7,6 +7,7 @@ import {
   Param,
   BadRequestException,
   NotFoundException,
+  Delete,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { Types } from 'mongoose';
@@ -90,4 +91,12 @@ export class CourseController {
   ) {
     return await this.courseService.updateCourse(courseId, updatedData);
   }
+
+  @Delete(':id')
+  async deleteCourseByInstructor(
+    @Param('id') courseId: string,) {
+    return this.courseService.deleteCourseByInstructor(courseId);
+  }
+
+  
 }

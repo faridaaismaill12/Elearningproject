@@ -6,6 +6,7 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User extends Document {
+
   @Prop({ type: Types.ObjectId, required: true, unique: true, default: () => new Types.ObjectId() })
   userId!: Types.ObjectId;
 
@@ -63,6 +64,7 @@ export class User extends Document {
 
   @Prop({ default: null })
   lastChangedPassword?: Date;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
