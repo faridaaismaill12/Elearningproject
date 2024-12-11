@@ -4,10 +4,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
+import { QuizzesModule } from './modules/quizzes/quizzes.module';
 import { DatabaseConfig } from './config/database.config';
 import { CommunicationModule } from './modules/communication/communication.module';
+
 import { CourseModule } from './modules/course/course.module'; 
+import { NoteModule } from './modules/notes/notes.module';
+
 import * as dotenv from 'dotenv';
+import { SecurityModule } from './modules/security/security.module';
+// import { ChatGateway } from './modules/communication/chat-gateway';
+
 
 dotenv.config();
 
@@ -24,27 +31,19 @@ dotenv.config();
       }),
       inject: [ConfigService],
     }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const jwtSecret = configService.get<string>('JWT_SECRET');
-        console.log('JWT_SECRET from ConfigService' , jwtSecret);
-        if (!jwtSecret) {
-          throw new Error('JWT_SECRET is not defined in the .env file');
-        }
-        return {
-          secret: jwtSecret,
-          signOptions: { expiresIn: '1h' },
-        };
-      },
-      inject: [ConfigService],
-    }),
+    
     UserModule,
+    SecurityModule,
+    CommunicationModule,
     DatabaseConfig,
-        CommunicationModule,
-        CourseModule,
-        UserModule
+    NoteModule,
+    CommunicationModule,
+    CourseModule,
+    QuizzesModule,
+
   ],
+  providers: [],
+
 
 })
 export class AppModule {}

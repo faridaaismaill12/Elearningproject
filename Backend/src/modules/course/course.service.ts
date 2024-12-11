@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from './schemas/course.schema';
@@ -44,6 +44,33 @@ export class CourseService {
 
     return course;
   }
+
+
+  async deleteCourseByInstructor(courseId: string): Promise<string> {
+    // Find the course by ID
+    const course = await this.courseModel.findOne({ courseId });
+
+    if (!course) {
+      throw new NotFoundException(`Course not found`);
+    }
+
+    // Check if the instructor exists
+    if (!course.instructor) {
+      throw new ForbiddenException('The course does not have an instructor assigned.');
+    }
+
+    // Check if the course belongs to the instructor
+    if (course.instructor.toString() !== 'instructor') {
+      throw new ForbiddenException('You are not authorized to delete this course',);
+    }
+
+    // Delete the course
+    await this.courseModel.deleteOne({ courseId });
+
+    return `Course has been deleted successfully.`;
+  }
+
+  
 
   // Create a module for a specific course using MongoDB _id
   async createModuleForCourse(
