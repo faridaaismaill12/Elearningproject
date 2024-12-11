@@ -1,24 +1,13 @@
-import { IsArray , IsMongoId , ValidateNested , IsString , IsOptional, IsNotEmpty } from 'class-validator';
-import { Type } from 'class-transformer';
-
-export class MessageDto {
-  @IsMongoId()
-  @IsNotEmpty()
-  sender!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  content!: string;
-}
+import { IsEnum, IsArray, IsString } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateChatDto {
-  @IsArray()
-  @IsNotEmpty()
-  @IsMongoId({ each: true })
-  participants!: string[];
+  @IsString()
+  @IsEnum(['private', 'group'])
+  type!: 'private' | 'group';
 
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => MessageDto)
-  messages?: MessageDto[];
+  @IsArray()
+  participants!: Types.ObjectId[];
+
+  courseId!: Types.ObjectId;
 }
