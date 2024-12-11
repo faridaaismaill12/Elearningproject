@@ -1,5 +1,7 @@
+
 import {
     Controller,
+    HttpCode,
     Post,
     Body,
     Patch,
@@ -21,6 +23,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserService } from './user.service';
 import { ResetPasswordDto } from './dto/password-reset.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { SearchStudentDto } from './dto/search-student.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 
 @Controller('users')
@@ -67,14 +71,28 @@ export class UserController {
     async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
         console.log('Token:', token);
         console.log('New Password DTO:', resetPasswordDto);
-    
+
         if (!token || !resetPasswordDto.newPassword) {
             throw new BadRequestException('Token and new password are required');
         }
-    
+
         return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
     } // tested
-    
+
+
+
+    @Post(':id/enroll/:courseId')
+    @HttpCode(200)
+    async enrollUser(
+        @Param('id') userId: string,
+        @Param('courseId') courseId: string,
+    ): Promise<any> {
+        if (!userId || !courseId) {
+            throw new BadRequestException('User ID and Course ID are required.');
+        }
+        return await this.userService.enrollUser(userId, courseId);
+    }
+
 
     /**
      * Update user profile
@@ -140,14 +158,14 @@ export class UserController {
     ) {
         const instructorId = req.user.sub;  // Instructor ID from token
         return this.userService.assignCourse(instructorId, studentId, courseId);
-    }    
+    }
 
     // create account for student (instructor only)
     @UseGuards(JwtAuthGuard)
     @Post('create-student')
     async createStudentAccount(@Body() createStudentDto: CreateStudentDto, @Req() req: any) {
         const instructorId = req.user.sub;
-        return this.userService.createStudentAccount(instructorId , createStudentDto);
+        return this.userService.createStudentAccount(instructorId, createStudentDto);
     } // tested
 
     // /**
@@ -156,8 +174,8 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     @Delete('delete-user/:id')
     async deleteUser(@Param('id') id: string, @Req() req: any) {
-        const adminId = req.user.sub;  
-        const userId = id;          
+        const adminId = req.user.sub;
+        const userId = id;
         return this.userService.deleteUser(adminId, userId);
     } // tested
 
@@ -171,4 +189,42 @@ export class UserController {
         return this.userService.getAllUsers(adminId);
     } // tested
 
+    /**
+    * Search for students (Instructor only)
+    */
+    @UseGuards(JwtAuthGuard)
+    @Get('search-students')
+    async searchStudents(@Query() searchStudentDto: SearchStudentDto, @Req() req: any) {
+        const instructorId = req.user.sub;
+        console.log('Search Students endpoint invoked.');
+        return this.userService.searchStudents(searchStudentDto, instructorId);
+    } // tested
+
+    /**
+     * Search for instructors
+     */
+    @Get('search-instructors')
+    async searchInstructors(@Query() searchInstructorDto: SearchInstructorDto) {
+        console.log('Search Instructors endpoint invoked.');
+        return this.userService.searchInstructors(searchInstructorDto);
+    } // tested
+
+    @Get('get-role/:id')
+    async getUserRole(@Param('id') userId: string) {
+        console.log('Get User Role endpoint invoked.');
+
+        if (!userId) {
+            throw new BadRequestException('User Id is required');
+        }
+
+        const role = await this.userService.getUserRole(userId);
+
+        if (!role) {
+            throw new BadRequestException('User not found');
+        }
+
+        return { role };
+    }
+
 }
+

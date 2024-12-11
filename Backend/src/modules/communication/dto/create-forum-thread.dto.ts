@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { IsString, IsMongoId, IsArray, IsOptional, ValidateNested, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -16,9 +17,9 @@ export class CreateForumThreadDto {
   @IsNotEmpty()
   course!: string;
 
-  @IsMongoId()
-  @IsNotEmpty()
-  createdBy!: string;
+  // Allow Types.ObjectId in addition to string
+  @IsOptional()
+  createdBy?: Types.ObjectId | string;
 
   @IsString()
   @IsNotEmpty()

@@ -5,7 +5,8 @@ import { Document, Schema as MongooseSchema } from 'mongoose';
 export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
-export class User {
+export class User extends Document {
+
   @Prop({ type: Types.ObjectId, required: true, unique: true, default: () => new Types.ObjectId() })
   userId!: Types.ObjectId;
 
@@ -42,10 +43,10 @@ export class User {
   enrolledCourses?: Types.ObjectId[];
 
   @Prop({
-    type: String , 
-    enum: ['beginner' , 'average' , 'advanced'] ,
-    required: true ,
-    default: 'beginner'
+    type: String,
+    enum: ['beginner', 'average', 'advanced'],
+    required: true,
+    default: 'beginner',
   })
   studentLevel!: string;
 
@@ -63,6 +64,7 @@ export class User {
 
   @Prop({ default: null })
   lastChangedPassword?: Date;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
