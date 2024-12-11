@@ -17,8 +17,10 @@ export class AdminQuizzesController {
   @Delete('/:quizId')
   async deleteQuiz(@Param('quizId') quizId: string) {
     await this.adminQuizzesService.deleteQuiz(quizId);
+
     return { message: 'Quiz deleted successfully' };
   }
+
 
 
 }
