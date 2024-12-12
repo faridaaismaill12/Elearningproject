@@ -9,6 +9,8 @@ import { InstructorQuizController } from './instructor-quizzes.controller';  // 
 import { InstructorQuizzesService } from './instructor-quizzes.service';
 import { StudentQuizzesController } from './student-quizzes.controller';
 import { StudentQuizzesService } from './student-quizzes.service';
+import { AdminQuizzesService } from './admin-quiz.service';
+import { AdminQuizzesController } from './admin-quiz.controller';
 
 @Modules({
   imports: [
@@ -18,7 +20,7 @@ import { StudentQuizzesService } from './student-quizzes.service';
     MongooseModule.forFeature([{ name: Module.name, schema: ModuleSchema }]),
     MongooseModule.forFeature([{ name: QuizResponse.name, schema: ResponseSchema}]),
   ],
-  controllers: [InstructorQuizController,StudentQuizzesController],  // Make sure the controller is correct
-  providers: [InstructorQuizzesService,StudentQuizzesService],
+  controllers: [InstructorQuizController,StudentQuizzesController,AdminQuizzesController],  // Make sure the controller is correct
+  providers: [InstructorQuizzesService,StudentQuizzesService,AdminQuizzesService],
 })
 export class QuizzesModule {}

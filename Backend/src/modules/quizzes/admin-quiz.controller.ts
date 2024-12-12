@@ -1,11 +1,5 @@
 import { Body, Controller, Post, Put, Param,Get, Patch, Delete } from '@nestjs/common';
 import { AdminQuizzesService } from './admin-quiz.service'
-import { CreateQuizDto } from './dto/create-quiz.dto';
-import { UpdateQuestionDto, UpdateQuizDto } from './dto/update-quiz.dto';
-import { Quiz } from './schemas/quiz.schema';
-import { CreateQuestionDto } from './dto/create-quiz.dto';
-import { Question } from './schemas/question.schema';
-import { NotFoundException , BadRequestException} from '@nestjs/common';
 
 
 //admin logic :)
@@ -14,8 +8,17 @@ export class AdminQuizzesController {
   constructor(private readonly adminQuizzesService: AdminQuizzesService) {}
 
 
+  @Get()
+  async getQuizzes() {
+    return this.adminQuizzesService.getQuizzes();
+  }
 
-
+  // Corrected: Renamed method to deleteQuiz and ensured a success response
+  @Delete('/:quizId')
+  async deleteQuiz(@Param('quizId') quizId: string) {
+    await this.adminQuizzesService.deleteQuiz(quizId);
+    return { message: 'Quiz deleted successfully' };
+  }
 
 
 }

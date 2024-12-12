@@ -11,7 +11,6 @@ import { Types } from 'mongoose';
 export class StudentQuizzesController {
   constructor(private readonly studentQuizzesService: StudentQuizzesService) {}
 
-  // Endpoint to start the quiz
   @Post('start/:quizId')
 async startQuiz(
   @Param('quizId') quizId: string,

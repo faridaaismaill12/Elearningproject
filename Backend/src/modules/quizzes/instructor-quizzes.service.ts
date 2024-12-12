@@ -14,7 +14,7 @@ import { UpdateQuestionDto } from './dto/update-quiz.dto';
 export class InstructorQuizzesService {
   constructor(@InjectModel(Quiz.name) private quizModel: Model<Quiz>,
   @InjectModel(Question.name) private questionModel: Model<Question>,
-  @InjectModel(Response.name) private responseModel: Model<Response>,
+  @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
   @InjectModel(User.name) private userModel: Model<User>,
 @InjectModel(Module.name) private moduleModel: Model<Module>,) {}
 
@@ -374,18 +374,20 @@ if (!question) {
 
 
 //THIS API DOES NOT WORK
-async findResponsesForQuiz(userId: string, quizId: string): Promise<Response[]> {
-  
+async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse[]> {
+
   const instructor = await this.userModel.findById(new Types.ObjectId(userId));
 
   if (!instructor || instructor.role !== 'instructor') {
     throw new NotFoundException('Instructor not found or not authorized');
-  }
+  }  
 
   const quiz = await this.quizModel.findOne({ 
     _id: new Types.ObjectId(quizId), 
-    createdBy: new Types.ObjectId(userId) 
+    createdBy: userId
+    
   });
+
 
   if (!quiz) {
     throw new NotFoundException('Quiz not found or you are not the creator of this quiz');
