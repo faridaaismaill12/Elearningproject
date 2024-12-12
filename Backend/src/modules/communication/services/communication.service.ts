@@ -121,4 +121,9 @@ export class CommunicationService {
     }
         
 
+    //get all chats of a user
+    async getUserChats(userId: Types.ObjectId): Promise<ChatDocument[]> {
+        return this.chatModel.find({ participants: userId });
+    }
+
 }
