@@ -4,6 +4,8 @@ export type QuestionDocument = HydratedDocument<Question>;
 
 @Schema({ timestamps: true })
 export class Question {
+
+
     @Prop({required:true, type:Types.ObjectId, ref:"Module"})
     moduleId!:Types.ObjectId;
 
@@ -26,6 +28,7 @@ export class Question {
     })
     difficultyLevel!: 'easy' | 'medium' | 'hard';
 }
+
 
 export const QuestionSchema = SchemaFactory.createForClass(Question);
 

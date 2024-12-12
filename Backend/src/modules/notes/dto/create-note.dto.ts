@@ -1,28 +1,24 @@
 import { IsNotEmpty, IsString, IsOptional, IsDate, IsMongoId } from 'class-validator';
-import {Types} from 'mongoose'
+import { Types } from 'mongoose';
 
 export class CreateNoteDto {
   @IsMongoId()
   @IsNotEmpty()
-  creator !: Types.ObjectId;
+  creator!: Types.ObjectId;
 
   @IsMongoId()
   @IsNotEmpty()
-  course !: Types.ObjectId;
+  course!: Types.ObjectId;
 
   @IsMongoId()
   @IsOptional()
-  module?: Types.ObjectId;
+  module?: Types.ObjectId; // Fixed casing
 
   @IsMongoId()
-  @IsNotEmpty()
-  lesson!: Types.ObjectId
+  @IsOptional() // Made optional to align with schema
+  lesson?: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
-  content !: string;
-
-  @IsDate()
-  @IsNotEmpty()
-  lastModified !: Date;
+  content!: string;
 }
