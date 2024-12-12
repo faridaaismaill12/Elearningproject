@@ -40,6 +40,7 @@ export class CommunicationService {
             type: createChatDto.type,
             participants: createChatDto.participants.map((id) => new Types.ObjectId(id)),
             courseId: new Types.ObjectId(createChatDto.courseId),
+            title: createChatDto.title,
         });
     
         const savedChat = await chat.save();

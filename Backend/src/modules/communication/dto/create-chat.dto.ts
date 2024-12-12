@@ -9,5 +9,8 @@ export class CreateChatDto {
   @IsArray()
   participants!: Types.ObjectId[];
 
+  @IsString()
+  title!: string;
+
   courseId!: Types.ObjectId;
 }

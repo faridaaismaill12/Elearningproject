@@ -116,7 +116,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
 
             console.log('Constructed participantsArray:', participantsArray);
 
-            let type = participantsArray.length > 2 ? 'group' : 'private';
+            const type = participantsArray.length > 2 ? 'group' : 'private';
 
             // Validate course enrollment
             const courseId = body.courseId;
@@ -146,10 +146,27 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
                 }
                 
             }
+
+            let title = course.courseId;
+            if (participantsArray.length === 2) {
+                
+                for (const participant of participantsArray) {
+                    // Get username by id
+                    const username = await this.userService.getUserName(participant);
+                    if (username) {
+                        title += '_' + username; // Safely concatenate usernames
+                    }
+                }
+            }else{
+                title += '_' + body.title; 
+            }
             
+            const roomName= title || 'Chat Room';
+
 
             const createChatDto: CreateChatDto = {
                 type: type as 'private' | 'group',
+                title:roomName,
                 participants: participantsArray.map((participant: Types.ObjectId) => new Types.ObjectId(participant)),
                 courseId,
             };
@@ -196,7 +213,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
     /**
      * Handle send message event.
      */
-    
+
     @SubscribeMessage('sendMessage')
     async handleSendMessage(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         try {

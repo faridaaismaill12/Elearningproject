@@ -22,6 +22,7 @@ export class ForumService {
 
     // Create a new forum thread
     async create(createForumThreadDto: CreateForumThreadDto): Promise<ForumThread> {
+
         const forumThread = new this.forumThreadModel(createForumThreadDto);
         return forumThread.save();
     }
@@ -338,6 +339,20 @@ async updateReply(replyId: string, userId: string, updateData: Partial<Reply>): 
 
     return updatedReply;
 }
+
+
+    async findReplysForumById(replyId: string): Promise<Types.ObjectId> {
+
+    // Implement the logic to find a reply by its ID
+    const reply = await this.replyModel.findById
+    (replyId).exec();
+
+    if (!reply || !reply.forumThread) {
+        throw new NotFoundException('Forum thread not found for this reply');
+    }
+    return reply.forumThread;
+
+    }
 
 }
 

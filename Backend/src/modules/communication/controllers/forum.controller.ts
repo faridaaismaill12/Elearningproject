@@ -6,20 +6,53 @@ import { ForumThread, Reply } from '../schemas/forum-thread.schema';
 import { RolesGuard } from '../../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../../decorators/roles.decorator'; // Import Roles decorator
 import { Types } from 'mongoose';
+import { UserService } from '../../user/user.service';
+import { CourseService } from '../../course/course.service';
 @Controller('forums')
 @UseGuards(JwtAuthGuard, RolesGuard) // Apply both guards to all routes
 export class ForumController {
-    constructor(private readonly forumService: ForumService) {}
+    constructor(private readonly forumService: ForumService,
+                private readonly userService: UserService,
+                private readonly courseService: CourseService,
+    ) {}
 
     @Roles('student', 'instructor') // Allow all roles to create a forum thread
     @Post('create')
     async create(@Body() createForumThreadDto: CreateForumThreadDto, @Req() req: any) {
-        const userId = req.user.id; // Extract user ID from token
-        const forumData = {
-            ...createForumThreadDto,
-            createdBy: new Types.ObjectId(userId), // Ensure it's a valid ObjectId
-        };
-        return this.forumService.create(forumData);
+
+        
+        // console.log(isEnrolled);
+        
+        // console.log(user);
+        // const userCourses = user.enrolledCourses;
+        // console.log(userCourses);
+        // const isEnrolled = userCourses?.includes(new Types.ObjectId(courseId)) ?? false;
+        // console.log(isEnrolled);
+        try{
+                const userId = req.user.id; // Extract user ID from token
+            const courseId = createForumThreadDto.course;
+            // Check that the user is enrolled in the course
+            const user = await this.userService.viewProfile(userId);
+            const course = await this.courseService.findCourseById(courseId); 
+            // console.log( );
+                const isEnrolled = course.enrolledStudents?.includes(userId) ?? false;
+
+            if(!isEnrolled) {
+                throw new Error('You are not enrolled in this course');
+
+            }
+
+            const forumData = {
+                ...createForumThreadDto,
+                createdBy: new Types.ObjectId(userId), // Ensure it's a valid ObjectId
+            };
+            return this.forumService.create(forumData);
+
+            
+        } catch (error) {
+            throw new Error('You are not enrolled in this course');
+        }
+        
     }
 
     @Roles('student', 'instructor', 'admin') // Allow all roles to view forum threads
@@ -59,8 +92,33 @@ export class ForumController {
         @Body() body: { message: string },
         @Req() req: any,
     ) {
-        const userId = req.user.id; // Extract user ID from token
-        return this.forumService.addReplyToThread(threadId, userId, body.message);
+        
+
+        try{
+
+            const userId = req.user.id; // Extract user ID from token
+            
+            const courseId = (await this.forumService.findOneWithReplies(threadId)).course;
+            // Check that the user is enrolled in the course
+            const user = await this.userService.viewProfile(userId);
+            const course = await this.courseService.findCourseById(courseId.toString());
+
+            // console.log( );
+            const isEnrolled = course.enrolledStudents?.includes(userId) ?? false;
+
+
+            if(!isEnrolled) {
+                throw new Error('You are not enrolled in this course');
+            }
+
+            return this.forumService.addReplyToThread(threadId, userId, body.message);
+        } catch (error) {
+            throw new Error('You are not enrolled in this course');
+        }
+        
+        
+        // Extract user ID from token
+        
     }
 
     @Roles('student', 'instructor', 'admin') // Allow all roles to add nested replies
@@ -70,8 +128,29 @@ export class ForumController {
         @Body() body: { message: string },
         @Req() req: any,
     ) {
-        const userId = req.user.id; // Extract user ID from token
-        return this.forumService.addReplyToReply(replyId, userId, body.message);
+        try{
+
+            const userId = req.user.id; // Extract user ID from token
+            const forum = await this.forumService.findReplysForumById(replyId);
+            const courseId = (await this.forumService.findOneWithReplies(forum._id.toString())).course;
+            // Check that the user is enrolled in the course
+            const user = await this.userService.viewProfile(userId);
+            const course = await this.courseService.findCourseById(courseId.toString());
+
+            // console.log( );
+            const isEnrolled = course.enrolledStudents?.includes(userId) ?? false;
+
+
+            if(!isEnrolled) {
+                throw new Error('You are not enrolled in this course');
+            }
+
+            return this.forumService.addReplyToReply(replyId, userId, body.message);
+        } catch (error) {
+            throw new Error('You are not enrolled in this course');
+        }
+        
+        
     }
 
     @Roles('student', 'instructor', 'admin') // Allow all roles to update their own forum threads

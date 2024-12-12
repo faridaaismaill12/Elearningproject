@@ -6,6 +6,10 @@ export class Chat {
   @Prop({ required: true })
   type!: 'private' | 'group';
 
+
+  @Prop({ required: true })
+  title!: string;
+
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
     required: true,
