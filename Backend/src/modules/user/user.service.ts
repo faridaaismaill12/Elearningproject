@@ -104,6 +104,14 @@ export class UserService {
         user.enrolledCourses.push(course._id);
         await user.save();
 
+        // add the user to the course's enrolledStudents array
+        if (!course.enrolledStudents) {
+            course.enrolledStudents = [];
+        }
+        course.enrolledStudents.push(new Types.ObjectId(user._id as Types.ObjectId));
+        await course.save();
+
+
         return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
     }
 

@@ -30,11 +30,13 @@ import { UserModule } from '../user/user.module';
 import { CommunicationGateway } from './communication.chatgateway';
 import { CommunicationController } from './controllers/communication.controller';
 import { CommunicationService } from './services/communication.service';
+import { CourseModule } from '../course/course.module';
 
 
 @Module({
   imports: [
     UserModule,
+    CourseModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
