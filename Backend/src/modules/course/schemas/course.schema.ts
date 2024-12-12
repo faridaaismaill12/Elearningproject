@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type CourseDocument = Course & Document;
 
@@ -56,6 +56,20 @@ export class Course {
       content: string;
     }>;
   }>;
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Chat' }],
+    default: [],
+  })
+  chats?: Types.ObjectId[];
+
+  // add enrolledStudents field
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  enrolledStudents?: Types.ObjectId[];
   
   
 }

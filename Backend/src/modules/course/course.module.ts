@@ -20,5 +20,6 @@ import { LessonController } from './lesson.controller';
   ],
   controllers: [CourseController,ModuleController,LessonController],
   providers: [CourseService,ModuleService,LessonService],
+  exports: [CourseService,ModuleService,LessonService, MongooseModule],
 })
 export class CourseModule {}
