@@ -1,18 +1,19 @@
-
+// module.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Question } from '../../quizzes/schemas/question.schema';
 import { Quiz } from '../../quizzes/schemas/quiz.schema';
 
-
 export type ModuleDocument = Module & Document;
+
+
 
 @Schema({ timestamps: true })
 export class Module {
-  _id!: Types.ObjectId; // Explicitly type _id
+  _id!: Types.ObjectId;
 
   @Prop({ required: true })
-  courseId!: string; // MongoDB _id of the parent course
+  courseId!: string;
 
   @Prop({ required: true })
   title!: string;
@@ -22,7 +23,7 @@ export class Module {
 
   @Prop({
     type: String,
-    enum: ['easy', 'medium', 'hard'], // Ensure consistent enum values
+    enum: ['easy', 'medium', 'hard'],
     default: 'easy',
   })
   difficultyLevel!: 'easy' | 'medium' | 'hard';
@@ -41,18 +42,17 @@ export class Module {
     content: string;
   }>;
 
-  @Prop({ unique: true, default: () => new Types.ObjectId().toString() }) // Auto-generate unique moduleId
+  @Prop({ unique: true, default: () => new Types.ObjectId().toString() })
   moduleId?: string;
 
   @Prop({ type: [Types.ObjectId], ref: 'Question' })
-    questions!:Types.Array<Question & Document>;
+  questions!: Types.Array<Question & Document>;
 
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Quiz' }] })
-    quizzes?: Types.ObjectId[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Quiz' }] })
+  quizzes?: Types.ObjectId[];
+
+  @Prop({ type: [String], default: [] }) // Array of strings for file locations
+  locations!: string[];
 }
-
-
-
-
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);
