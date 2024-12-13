@@ -1,21 +1,21 @@
 
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from './schemas/course.schema';
 import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
+import { Lesson, LessonDocument } from './schemas/lesson.schema';
 
 @Injectable()
 export class CourseService {
   constructor(
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
+    @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
   ) {}
+
+  // Other service methods
+
 
   // Create a course
   async createCourse(courseData: Partial<Course>): Promise<Course> {
@@ -23,7 +23,7 @@ export class CourseService {
       // Check if courseId already exists
       const existingCourse = await this.courseModel.findOne({ courseId: courseData.courseId });
       if (existingCourse) {
-        throw new BadRequestException('Course with ID ${courseData.courseId} already exists.');
+        throw new BadRequestException(`Course with ID ${courseData.courseId} already exists.`);
       }
     }
 
@@ -44,7 +44,7 @@ export class CourseService {
 
     const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException('Course with ID ${courseId} not found.');
+      throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
 
     return course;
@@ -88,7 +88,7 @@ export class CourseService {
 
     const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException('Course with ID ${courseId} not found.');
+      throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
 
     const newModule = new this.moduleModel({
@@ -121,7 +121,7 @@ export class CourseService {
     // Find the module by ID
     const module = await this.moduleModel.findById(moduleId);
     if (!module || module.courseId !== courseId) {
-      throw new NotFoundException('Module with ID ${moduleId} not found in course ${courseId}.');
+      throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
     }
 
     // Add the new file locations to the locations array
@@ -150,7 +150,7 @@ export class CourseService {
 
     const module = await this.moduleModel.findById(moduleId);
     if (!module || module.courseId !== courseId) {
-      throw new NotFoundException('Module with ID ${moduleId} not found.');
+      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
     }
 
     return module;
@@ -165,23 +165,62 @@ export class CourseService {
     if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
       throw new BadRequestException('Invalid course or module ID format.');
     }
-
+  
+    // Find the course
     const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException('Course with ID ${courseId} not found.');
+      throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
-
-    const module = course.modules.find((mod) => mod._id?.toString() === moduleId);
-    if (!module) {
-      throw new NotFoundException('Module with ID ${moduleId} not found.');
+  
+    // Find the module
+    const module = await this.moduleModel.findById(moduleId);
+    if (!module || module.courseId !== courseId) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
     }
-
-    const newLesson = { ...lessonData };
-    module.lessons.push(newLesson);
-    await course.save();
-
-    return module.lessons[module.lessons.length - 1];
+  
+    // Generate a unique lesson ID
+    const lessonId = new Types.ObjectId().toString();
+  
+    // Create the new lesson document
+    const newLesson = {
+      lessonId,
+      title: lessonData.title,
+      content: lessonData.content,
+      moduleId: moduleId,
+      order: module.lessons.length + 1, // Assuming order is incremental
+      objectives: [],
+      completions: [],
+      resources: [],
+    };
+  
+    // Save the lesson in the Lesson collection
+    const createdLesson = new this.lessonModel(newLesson);
+    await createdLesson.save();
+  
+    // Add the lesson to the lessons array in the Module collection
+    module.lessons.push({
+      title: lessonData.title,
+      content: lessonData.content,
+    });
+    await module.save();
+  
+    // Add the lesson to the lessons array in the Course collection
+    const courseModule = course.modules.find(
+      (mod) => mod._id?.toString() === moduleId,
+    );
+    if (courseModule) {
+      courseModule.lessons.push({
+        title: lessonData.title,
+        content: lessonData.content,
+      });
+      await course.save();
+    }
+  
+    return createdLesson;
   }
+  
+
+
 
   // Update a course by MongoDB _id
   async updateCourse(courseId: string, updatedData: Partial<Course>): Promise<Course> {
@@ -198,7 +237,7 @@ export class CourseService {
       .exec();
 
     if (!updatedCourse) {
-      throw new NotFoundException('Course with ID ${courseId} not found.');
+      throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
 
     return updatedCourse;
