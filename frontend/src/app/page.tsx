@@ -5,7 +5,6 @@ import Home from "./routes/home/HomePage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 export default function App() {
-  const shouldShowSidebar = !location.pathname.startsWith('/messages');
   return (
     <Router>
     <Layout>
