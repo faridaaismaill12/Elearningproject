@@ -147,15 +147,21 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
                 
             }
 
-            let title = course.courseId;
+            let title = course.courseId+':';
             if (participantsArray.length === 2) {
+                let i=0;
                 
                 for (const participant of participantsArray) {
                     // Get username by id
                     const username = await this.userService.getUserName(participant);
                     if (username) {
-                        title += '_' + username; // Safely concatenate usernames
+                        if( i===1)
+                        {
+                            title += '+'
+                        }
+                        title +=username; // Safely concatenate usernames
                     }
+                    i++;
                 }
             }else{
                 title += '_' + body.title; 
