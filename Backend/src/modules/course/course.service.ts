@@ -6,6 +6,7 @@ import { Course, CourseDocument } from './schemas/course.schema';
 import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
 import { Lesson, LessonDocument } from './schemas/lesson.schema';
 
+
 @Injectable()
 export class CourseService {
   constructor(
@@ -19,17 +20,23 @@ export class CourseService {
 
   // Create a course
   async createCourse(courseData: Partial<Course>): Promise<Course> {
-    if (courseData.courseId) {
-      // Check if courseId already exists
-      const existingCourse = await this.courseModel.findOne({ courseId: courseData.courseId });
-      if (existingCourse) {
-        throw new BadRequestException(`Course with ID ${courseData.courseId} already exists.`);
-      }
+    // Validate keywords
+    if (
+      courseData.keywords &&
+      (!Array.isArray(courseData.keywords) ||
+        courseData.keywords.some((kw) => typeof kw !== 'string' || kw.trim() === ''))
+    ) {
+      throw new BadRequestException('Keywords must be an array of non-empty strings.');
     }
 
-    const newCourse = new this.courseModel(courseData);
+    const newCourse = new this.courseModel({
+      ...courseData,
+      keywords: courseData.keywords || [], // Default to an empty array if not provided
+    });
+
     return newCourse.save();
   }
+  
 
   // Get all courses
   async findAll(): Promise<Course[]> {

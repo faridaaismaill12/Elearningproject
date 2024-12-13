@@ -8,29 +8,46 @@ import {
   BadRequestException,
   NotFoundException,
   Delete,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { Types } from 'mongoose';
 import { Question } from '../quizzes/schemas/question.schema';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+
+// Multer storage configuration for file upload
+const storage = diskStorage({
+  destination: './uploads', // Folder to store files
+  filename: (req, file, callback) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = extname(file.originalname);
+    callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+  },
+});
 
 @Controller('courses')
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
   // Create a course with optional courseId
-  @Post()
-  async createCourse(
-    @Body()
-    courseData: {
-      courseId?: string; // Optional course ID
-      title: string;
-      description: string;
-      instructor: string;
-      difficultyLevel: string;
-    },
-  ) {
-    return await this.courseService.createCourse(courseData);
-  }
+    // Create a course
+    @Post()
+    async createCourse(
+      @Body()
+      courseData: {
+        title: string;
+        description: string;
+        instructor: string;
+        difficultyLevel: string;
+        keywords?: string[]; // Optional keywords array
+      },
+    ) {
+      return await this.courseService.createCourse(courseData);
+    }
+
 
   // Create a module for a specific course using MongoDB _id
 // Create a module for a specific course
@@ -44,6 +61,26 @@ export class CourseController {
     }
     return await this.courseService.createModuleForCourse(courseId, moduleData);
   }
+
+
+  @Post(':id/modules/:moduleId/files')
+  @UseInterceptors(FilesInterceptor('files', 10, { storage })) // Allow up to 10 files
+  async uploadFilesToModule(
+    @Param('id') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @UploadedFiles() files: Express.Multer.File[], // Handle multiple files
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one file must be uploaded.');
+    }
+
+    const fileLocations = files.map((file) => `uploads/${file.filename}`); // Extract file paths
+
+    // Call the service to update the module
+    return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
+  }
+
+
 
 
   // Create a lesson for a specific module using MongoDB _id
