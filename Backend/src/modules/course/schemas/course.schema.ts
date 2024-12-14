@@ -5,9 +5,6 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: false, unique: true }) // Optional courseId
-  courseId?: string;
-
   @Prop({ required: true })
   title!: string;
 
@@ -25,13 +22,19 @@ export class Course {
   difficultyLevel!: string;
 
   @Prop({
+    type: [String],
+    default: [],
+  })
+  keywords!: string[];
+
+  @Prop({
     type: [
       {
         title: { type: String, required: true },
         content: { type: String, required: true },
         difficultyLevel: {
           type: String,
-          enum: ['hard', 'medium', 'easy'], // Use consistent values
+          enum: ['hard', 'medium', 'easy'],
           required: true,
           default: 'medium',
         },
@@ -56,8 +59,6 @@ export class Course {
       content: string;
     }>;
   }>;
-  
-  
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
