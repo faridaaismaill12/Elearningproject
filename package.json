@@ -25,8 +25,12 @@
     "@nestjs/platform-socket.io": "^10.4.12",
     "@nestjs/throttler": "^6.2.1",
     "@nestjs/websockets": "^10.4.13",
+
     "@Types/express": "npm:@types/express@^5.0.0",
     "axios": "^1.7.9",
+
+    "archiver": "^7.0.1",
+
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
@@ -52,9 +56,11 @@
     "websockets": "^0.2.0"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.9.1",
     "@types/socket.io": "^3.0.2",
     "ts-node": "^10.9.2",
