@@ -9,8 +9,8 @@ import { RolesGuard } from '../../security/guards/role.guard';
 export class CommunicationController {
   constructor(private readonly communicationService: CommunicationService) {}
 
-  @Get('chat-history/:chatRoomId')
-  async getChatHistory(@Param('chatRoomId') chatRoomId: string) {
+  @Get('chat-history/:chatId')
+  async getChatHistory(@Param('chatId') chatRoomId: string) {
     return this.communicationService.getChatHistory(new Types.ObjectId(chatRoomId));
   }
 
