@@ -44,6 +44,15 @@ export class Lesson {
     userId: String;
     completedAt: Date;
   }[];
+
+  @Prop({ type: [Date] })
+  createdAt?: Date;
+
+  @Prop({ type: [Date] })
+  updatedAt?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  isOutdated!: boolean;
   
 }
 

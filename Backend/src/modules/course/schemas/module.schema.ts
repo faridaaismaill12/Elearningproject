@@ -39,6 +39,15 @@ export class Module {
     
   @Prop({ type: [Types.ObjectId], ref:() => 'Question' })
   questions!:MongooseSchema.Types.ObjectId[];
+
+  @Prop({ type: [Date] })
+  createdAt?: Date;
+
+  @Prop({ type: [Date] })
+  updatedAt?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  isOutdated!: boolean;
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);
