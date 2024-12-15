@@ -17,50 +17,42 @@ export class LessonService {
 
     //get lesson by id
     async findLessonById(lessonId: string): Promise<LessonDocument> {
-        const lesson= await this.lessonModel.findOne({ lessonId }).exec(); 
+        const lesson= await this.lessonModel.findOne({_id: lessonId }).exec(); 
         if(!lesson){
             throw new NotFoundException('lesson not found');
         }
         return lesson;
     }
 
-    async markLessonAsCompleted(lessonId: string, userId: string): Promise<{ message: string }> {
-        const lesson = await this.lessonModel.findOne({ lessonId });
-        
-          if (!lesson) {
-            throw new NotFoundException(`Lesson not found`);
-          }
-        
-          // Check if the user already marked this lesson as finished
-          const alreadyCompleted = lesson.completions.some(
-            (completion) => completion?.userId?.toString() === userId
-          );
-        
-          if (alreadyCompleted) {
-            throw new Error('Lesson already marked as completed by this user');
-          }
-        
-          // Add the user's completion record
-          lesson.completions.push({
-            userId,
-            completedAt: new Date(),
-          });
-        
-          await lesson.save();
-          return { message: 'Lesson successfully marked as completed' };
-        }
+    // Mark lesson as completed, using Mongo _id as lessonId
+async markLessonAsCompleted(lessonId: string, userId: string): Promise<{ message: string, lesson: any }> {
+  // Convert lessonId to ObjectId (MongoDB's default _id is ObjectId type)
+  const lessonObjectId = new Object(lessonId);
 
-        async createLesson(createLessonDto: CreateLessonDto): Promise<LessonDocument> {
-          const { lessonId } = createLessonDto;
-      
-          // Check if a lesson with the same `lessonId` already exists
-          const existingLesson = await this.lessonModel.findOne({ lessonId });
-          if (existingLesson) {
-            throw new BadRequestException('Lesson with this ID already exists');
-          }
-      
-          // Create and save the new lesson
-          const newLesson = new this.lessonModel(createLessonDto);
-          return newLesson.save();
-        }
+  // Find the lesson by its MongoDB _id
+  const lesson = await this.lessonModel.findById(lessonObjectId); // Use findById to query by MongoDB _id
+  
+  if (!lesson) {
+      throw new NotFoundException(`Lesson not found`);
+  }
+
+  // Check if the user already marked this lesson as finished
+  const alreadyCompleted = lesson.completions.some(
+      (completion) => completion?.userId?.toString() === userId
+  );
+
+  if (alreadyCompleted) {
+      throw new Error('Lesson already marked as completed by this user');
+  }
+
+  // Add the user's completion record
+  lesson.completions.push({
+      userId,
+      completedAt: new Date(),
+  });
+
+  await lesson.save();
+  
+  return { message: 'Lesson successfully marked as completed', lesson };
+}
 }

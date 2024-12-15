@@ -9,6 +9,8 @@ export type ModuleDocument = Module & Document;
 @Schema({ timestamps: true })
 export class Module {
 
+  _id!: Types.ObjectId;
+
   @Prop({required:true, unique:true})
   moduleId!:string;
 

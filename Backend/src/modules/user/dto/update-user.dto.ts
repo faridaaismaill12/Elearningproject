@@ -1,4 +1,4 @@
-import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray } from 'class-validator';
+import { IsString , IsEmail , IsEnum , IsOptional , IsBoolean , IsDate , IsArray , Length } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateUserDto {
@@ -9,6 +9,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @Length(3 , 50)
   name?: string;
 
   @IsOptional()
@@ -39,6 +40,12 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @IsEnum(['beginner' , 'average' , 'advanced'])
+  studentLevel?: string
+
+  @IsOptional()
+  @IsString()
+  @Length(0 , 200)
   bio?: string;
 
   @IsOptional()

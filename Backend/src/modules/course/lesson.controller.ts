@@ -1,7 +1,8 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Get, NotFoundException, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
 import { LessonService } from "./lesson.service";
 import { Lesson } from "./schemas/lesson.schema";
 import { CreateLessonDto } from "./dto/create-lesson.dto";
+import { JwtAuthGuard } from "../security/guards/jwt-auth.guard";
 
 @Controller('lessons')
 export class LessonController {
@@ -22,15 +23,14 @@ export class LessonController {
         }
         return lesson;
     }
-    @Put(':id')
-    async markLessonAsFinished(@Param('id') lessonId: string, @Body('userId') userId: string) {
-        return this.lessonService.markLessonAsCompleted(lessonId, userId);
-    }
-    
-    @Post()
-    async createLesson(@Body() createLessonDto: CreateLessonDto) {
-        return this.lessonService.createLesson(createLessonDto);
-}
+    @Put(':id/complete')
+@UseGuards(JwtAuthGuard) // Ensure the request is authenticated with a valid JWT token
+async markLessonAsFinished(@Param('id') lessonId: string, @Req() req: any) {
+    const userId = req.user.id; // Get the userId from the JWT token
 
+    // Call the service method to mark the lesson as completed
+    return this.lessonService.markLessonAsCompleted(lessonId, userId);
+}
+    
 
 }

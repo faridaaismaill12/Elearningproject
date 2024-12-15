@@ -1,22 +1,37 @@
 import { Module } from '@nestjs/common';
-import { CourseService } from './course.service';
-import { CourseController } from './course.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CourseSchema } from './schemas/course.schema';
-import { ModuleService } from './module.service';
-import { ModuleController } from './module.controller';
-import { ModuleSchema } from './schemas/module.schema';
+import { CourseController } from './course.controller';
+import { CourseService } from './course.service';
+import { Course, CourseSchema } from './schemas/course.schema';
 import { LessonSchema } from './schemas/lesson.schema';
+import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
+import { ModuleService } from './module.service';
 import { LessonService } from './lesson.service';
+import { ModuleController } from './module.controller';
 import { LessonController } from './lesson.controller';
-import { SecurityModule } from '../security/security.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
-  imports:[  MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema} , 
-    {name: 'Module', schema:ModuleSchema},
-    {name: 'Lesson', schema:LessonSchema}
-  ]),SecurityModule],
+  imports: [
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1d',
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    MongooseModule.forFeature([
+      { name: Course.name, schema: CourseSchema },
+      { name: ModuleSchema.name, schema: ModuleSchemaDef },
+      {name: 'Lesson', schema:LessonSchema},
+    ]),
+  ],
+  controllers: [CourseController,ModuleController,LessonController],
   providers: [CourseService,ModuleService,LessonService],
-  controllers: [CourseController,ModuleController,LessonController]
+  exports: [CourseService,ModuleService,LessonService, MongooseModule],
 })
 export class CourseModule {}

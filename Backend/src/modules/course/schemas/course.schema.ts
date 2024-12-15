@@ -5,8 +5,8 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: true, unique: true })
-  courseId!: string;
+
+  _id!: Types.ObjectId;
 
   @Prop({ required: true })
   title!: string;
