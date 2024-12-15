@@ -248,5 +248,45 @@ export class UserController {
         return { role };
     }
 
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('instructor')
+    @Get(':id/enrolled-courses')
+    async getUserEnrolledCourses(
+        @Param('id') userId: string,
+        @Req() req: any
+    ): Promise<any> {
+        console.log('JWT User Payload:', req.user); // Debugging
+        const { role } = req.user;
+    
+        if (role !== 'instructor') {
+            throw new ForbiddenException('Only instructors can access this endpoint');
+        }
+    
+        console.log(`Fetching enrolled courses for student ${userId}`);
+        return this.userService.getUserEnrolledCourses(userId);
+    }
+
+
+    @UseGuards(JwtAuthGuard) // JWT authentication only
+@Get('my-enrolled-courses')
+async getMyEnrolledCourses(@Req() req: any): Promise<any> {
+    // Extract the user ID and role from the token payload
+    const { id: userId, role } = req.user;
+
+    console.log('JWT Payload:', req.user); // Debugging
+
+    // Check if the logged-in user is a student
+    if (role !== 'student') {
+        throw new ForbiddenException('Only students can access this endpoint');
+    }
+
+    console.log(`Fetching enrolled courses for student with ID: ${userId}`);
+    return this.userService.getUserEnrolledCourses(userId);
+}
+
+    
+
+
+
 }
 
