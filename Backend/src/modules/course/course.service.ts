@@ -25,20 +25,10 @@ export class CourseService {
 
 
   // Create a course
-  async createCourse(courseData: Partial<Course>): Promise<Course> {
-    // Validate keywords
-    if (
-      courseData.keywords &&
-      (!Array.isArray(courseData.keywords) ||
-        courseData.keywords.some((kw) => typeof kw !== 'string' || kw.trim() === ''))
-    ) {
-      throw new BadRequestException('Keywords must be an array of non-empty strings.');
-    }
-  
-    // Create the course
+  async createCourse(courseData: Partial<Course>, instructorEmail: string): Promise<Course> {
     const newCourse = new this.courseModel({
       ...courseData,
-      keywords: courseData.keywords || [], // Default to an empty array if not provided
+      instructor: instructorEmail, // Set instructor's email
     });
   
     return newCourse.save();
@@ -66,25 +56,19 @@ export class CourseService {
 
   // Delete a course by instructor
   async deleteCourseByInstructor(courseId: string): Promise<string> {
-    const course = await this.courseModel.findOne({ courseId });
-
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new BadRequestException('Invalid course ID format.');
+    }
+  
+    const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found.');
     }
-
-    if (!course.instructor) {
-      throw new ForbiddenException('The course does not have an instructor assigned.');
-    }
-
-    // Simulate instructor verification logic (e.g., compare against authenticated user)
-    if (course.instructor.toString() !== 'instructor') {
-      throw new ForbiddenException('You are not authorized to delete this course.');
-    }
-
-    await this.courseModel.deleteOne({ courseId });
-
+  
+    await this.courseModel.deleteOne({ _id: courseId });
     return 'Course has been deleted successfully.';
   }
+  
 
   // Create a module for a specific course
   async createModuleForCourse(

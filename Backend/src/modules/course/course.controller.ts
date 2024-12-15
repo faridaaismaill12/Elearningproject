@@ -11,6 +11,7 @@ import {
   Delete,
   NotFoundException,
   Res,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -38,20 +39,21 @@ const storage = diskStorage({
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
+  
   // Create a course - Only instructors can create
-  @Roles('instructor')
+  @Roles('instructor') // Ensure only instructors can access this endpoint
   @Post()
   async createCourse(
-    @Body()
-    courseData: {
-      title: string;
-      description: string;
-      instructor: string;
-      difficultyLevel: 'easy' | 'medium' | 'hard';
-      keywords?: string[];
-    },
-  ) {
-    return await this.courseService.createCourse(courseData);
+    @Body() courseData: Partial<Course>,
+    @Req() req: any, // Extract the instructor's email from the JWT
+  ): Promise<any> {
+    const instructorEmail = req.user.email; // Get instructor's email from the JWT token
+  
+    if (!instructorEmail) {
+      throw new BadRequestException('Instructor email is required.');
+    }
+  
+    return this.courseService.createCourse(courseData, instructorEmail);
   }
 
 
@@ -137,11 +139,14 @@ async createLesson(
   }
 
   // Delete a course by instructor - Only instructors
-  @Roles('instructor')
-  @Delete(':id')
-  async deleteCourseByInstructor(@Param('id') courseId: string) {
-    return this.courseService.deleteCourseByInstructor(courseId);
-  }
+  @Roles('instructor') // Ensure only instructors can access this endpoint
+@Delete(':id')
+async deleteCourse(
+  @Param('id') courseId: string,
+): Promise<any> {
+  return this.courseService.deleteCourseByInstructor(courseId);
+}
+
 
   // Get a specific module by MongoDB _id
   @Get(':id/modules/:moduleId')
