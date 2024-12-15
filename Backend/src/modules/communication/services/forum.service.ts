@@ -18,7 +18,7 @@ export class ForumService {
         @InjectModel(ForumThread.name) private forumThreadModel: Model<ForumThread>,
         @InjectModel(Reply.name) private replyModel: Model<Reply>,
         private userService: UserService,
-    ) {}
+    ) { }
 
     // Create a new forum thread
     async create(createForumThreadDto: CreateForumThreadDto): Promise<ForumThread> {
@@ -64,22 +64,23 @@ export class ForumService {
 
     // Helper: Populate replies recursively
     private async populateRepliesRecursively(
-        replies: (Types.ObjectId | Reply)[],
+        replies: (Types.ObjectId | Reply)[]
     ): Promise<Reply[]> {
         const populatedReplies: Reply[] = [];
 
         for (const reply of replies) {
             const populatedReply =
-                typeof reply === 'object' && 'message' in reply
+                typeof reply === "object" && "message" in reply
                     ? reply
                     : await this.replyModel
                         .findById(reply)
+                        .populate("user", "name") // Populate the user with the name
                         .populate({
-                            path: 'replies',
-                            model: 'Reply',
-                            select: '_id message user replies',
+                            path: "replies",
+                            model: "Reply",
+                            select: "_id message user replies",
+                            populate: { path: "user", select: "name" }, // Populate nested user names
                         })
-                        .populate('user', 'name')
                         .exec();
 
             if (!populatedReply) {
@@ -89,7 +90,7 @@ export class ForumService {
             const nestedReplies =
                 (populatedReply.replies ?? []).length > 0
                     ? await this.populateRepliesRecursively(
-                        (populatedReply.replies || []) as (Types.ObjectId | Reply)[],
+                        (populatedReply.replies || []) as (Types.ObjectId | Reply)[]
                     )
                     : [];
 
@@ -100,20 +101,21 @@ export class ForumService {
         return populatedReplies;
     }
 
+
     // Delete a forum thread by ID with ownership check
     async deleteForumThread(threadId: string, userId: string, userRole: string): Promise<void> {
         if (!isValidObjectId(threadId)) {
             throw new BadRequestException('Invalid thread ID');
         }
-    
+
         const thread = await this.forumThreadModel.findById(threadId).populate('course').exec();
-    
+
         if (!thread) {
             throw new BadRequestException('Forum thread not found');
         }
-    
+
         const course = thread.course as unknown as Course;
-    
+
         // Check permissions: Thread creator or instructor of the course
         if (
             thread.createdBy.toString() !== userId &&
@@ -121,37 +123,37 @@ export class ForumService {
         ) {
             throw new UnauthorizedException('You do not have permission to delete this thread');
         }
-    
+
         // Delete all associated replies
         await this.replyModel.deleteMany({ forumThread: threadId }).exec();
-    
+
         // Delete the thread
         await this.forumThreadModel.findByIdAndDelete(threadId).exec();
     }
-    
+
     // Delete a reply by ID with ownership check
     async deleteReply(replyId: string, userId: string, userRole: string): Promise<void> {
         if (!isValidObjectId(replyId)) {
             throw new BadRequestException('Invalid reply ID');
         }
-    
+
         const reply = await this.replyModel
             .findById(replyId)
             .populate('forumThread')
             .exec();
-    
+
         if (!reply) {
             throw new BadRequestException('Reply not found');
         }
-    
+
         const thread = await this.forumThreadModel.findById(reply.forumThread).populate('course').exec();
-    
+
         if (!thread) {
             throw new BadRequestException('Thread for this reply not found');
         }
-    
+
         const course = thread.course as unknown as Course;
-    
+
         // Check permissions: Reply creator or instructor of the course
         if (
             reply.user.toString() !== userId &&
@@ -159,7 +161,7 @@ export class ForumService {
         ) {
             throw new UnauthorizedException('You do not have permission to delete this reply');
         }
-    
+
         // Recursively delete nested replies
         const deleteNestedReplies = async (replyId: string) => {
             const nestedReplies = await this.replyModel.find({ parent: replyId }).exec();
@@ -168,13 +170,13 @@ export class ForumService {
             }
             await this.replyModel.findByIdAndDelete(replyId).exec();
         };
-    
+
         await deleteNestedReplies(replyId);
-    
+
         // Delete the top-level reply
         await this.replyModel.findByIdAndDelete(replyId).exec();
     }
-    
+
 
     // Add a reply to a forum thread (Top-Level Reply)
     async addReplyToThread(
@@ -275,82 +277,82 @@ export class ForumService {
 
 
     // Update a forum thread (Ownership verified)
-async updateForum(threadId: string, userId: string, updateData: Partial<ForumThread>): Promise<ForumThread> {
-    if (!isValidObjectId(threadId)) {
-        throw new BadRequestException('Invalid thread ID');
+    async updateForum(threadId: string, userId: string, updateData: Partial<ForumThread>): Promise<ForumThread> {
+        if (!isValidObjectId(threadId)) {
+            throw new BadRequestException('Invalid thread ID');
+        }
+
+        const thread = await this.forumThreadModel.findById(threadId).exec();
+
+        if (!thread) {
+            throw new NotFoundException('Forum thread not found');
+        }
+
+        // Fetch the user's role
+        const userRole = await this.userService.getUserRole(userId);
+
+        // Check permissions: Instructor of the course or Admin
+        if (
+            thread.createdBy.toString() !== userId &&
+            userRole !== 'admin' &&
+            !(userRole === 'instructor' && thread.course?.toString() === userId)
+        ) {
+            throw new ForbiddenException('You do not have permission to update this forum thread');
+        }
+
+        const updatedThread = await this.forumThreadModel.findByIdAndUpdate(threadId, updateData, { new: true }).exec();
+
+        if (!updatedThread) {
+            throw new NotFoundException('Failed to update forum thread');
+        }
+
+        return updatedThread;
     }
 
-    const thread = await this.forumThreadModel.findById(threadId).exec();
+    // Update a reply (Ownership verified)
+    async updateReply(replyId: string, userId: string, updateData: Partial<Reply>): Promise<Reply> {
+        if (!isValidObjectId(replyId)) {
+            throw new BadRequestException('Invalid reply ID');
+        }
 
-    if (!thread) {
-        throw new NotFoundException('Forum thread not found');
+        const reply = await this.replyModel.findById(replyId).exec();
+
+        if (!reply) {
+            throw new NotFoundException('Reply not found');
+        }
+
+        // Fetch the user's role
+        const userRole = await this.userService.getUserRole(userId);
+
+        // Check permissions: Owner of the reply, Admin, or Instructor of the course
+        if (
+            reply.user.toString() !== userId &&
+            userRole !== 'admin' &&
+            !(userRole === 'instructor' && reply.forumThread?.toString() === userId)
+        ) {
+            throw new ForbiddenException('You do not have permission to update this reply');
+        }
+
+        const updatedReply = await this.replyModel.findByIdAndUpdate(replyId, updateData, { new: true }).exec();
+
+        if (!updatedReply) {
+            throw new NotFoundException('Failed to update reply');
+        }
+
+        return updatedReply;
     }
-
-    // Fetch the user's role
-    const userRole = await this.userService.getUserRole(userId);
-
-    // Check permissions: Instructor of the course or Admin
-    if (
-        thread.createdBy.toString() !== userId &&
-        userRole !== 'admin' &&
-        !(userRole === 'instructor' && thread.course?.toString() === userId)
-    ) {
-        throw new ForbiddenException('You do not have permission to update this forum thread');
-    }
-
-    const updatedThread = await this.forumThreadModel.findByIdAndUpdate(threadId, updateData, { new: true }).exec();
-
-    if (!updatedThread) {
-        throw new NotFoundException('Failed to update forum thread');
-    }
-
-    return updatedThread;
-}
-
-// Update a reply (Ownership verified)
-async updateReply(replyId: string, userId: string, updateData: Partial<Reply>): Promise<Reply> {
-    if (!isValidObjectId(replyId)) {
-        throw new BadRequestException('Invalid reply ID');
-    }
-
-    const reply = await this.replyModel.findById(replyId).exec();
-
-    if (!reply) {
-        throw new NotFoundException('Reply not found');
-    }
-
-    // Fetch the user's role
-    const userRole = await this.userService.getUserRole(userId);
-
-    // Check permissions: Owner of the reply, Admin, or Instructor of the course
-    if (
-        reply.user.toString() !== userId &&
-        userRole !== 'admin' &&
-        !(userRole === 'instructor' && reply.forumThread?.toString() === userId)
-    ) {
-        throw new ForbiddenException('You do not have permission to update this reply');
-    }
-
-    const updatedReply = await this.replyModel.findByIdAndUpdate(replyId, updateData, { new: true }).exec();
-
-    if (!updatedReply) {
-        throw new NotFoundException('Failed to update reply');
-    }
-
-    return updatedReply;
-}
 
 
     async findReplysForumById(replyId: string): Promise<Types.ObjectId> {
 
-    // Implement the logic to find a reply by its ID
-    const reply = await this.replyModel.findById
-    (replyId).exec();
+        // Implement the logic to find a reply by its ID
+        const reply = await this.replyModel.findById
+            (replyId).exec();
 
-    if (!reply || !reply.forumThread) {
-        throw new NotFoundException('Forum thread not found for this reply');
-    }
-    return reply.forumThread;
+        if (!reply || !reply.forumThread) {
+            throw new NotFoundException('Forum thread not found for this reply');
+        }
+        return reply.forumThread;
 
     }
 

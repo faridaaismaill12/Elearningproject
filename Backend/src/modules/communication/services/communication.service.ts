@@ -86,7 +86,7 @@ export class CommunicationService {
             chat.messages = [];
         }
         chat.messages.push({
-            sender: addMessageDto.sender.toString(),
+            sender: addMessageDto.sender,
             content: addMessageDto.content,
             timestamp: new Date(),
         });
@@ -98,16 +98,18 @@ export class CommunicationService {
 
     async getChatHistory(chatRoomId: Types.ObjectId): Promise<ChatDocument> {
         const chat = await this.chatModel
-            .findById(chatRoomId)
-            .populate('participants', '_id name')
-            .populate('courseId', '_id title');
-
+          .findById(chatRoomId) 
+          .populate('messages.sender', 'name')
+          .populate('participants', '_id name')
+          .populate('courseId', '_id title');
+      
         if (!chat) {
-            throw new NotFoundException('Chat room not found');
+          throw new NotFoundException('Chat room not found');
         }
-
+      
         return chat;
-    }
+      }
+      
 
     //isParticipantInChat to check if the participant is in the chat
     async isParticipantInChat(chatId: Types.ObjectId, userId: Types.ObjectId): Promise<boolean> {
@@ -121,4 +123,23 @@ export class CommunicationService {
     }
         
 
+    //get all chats of a user
+    async getUserChats(userId: Types.ObjectId): Promise<(ChatDocument & { lastMessage: { sender: Types.ObjectId; content: string; timestamp: Date } | null })[]> {
+        return await this.chatModel
+          .find({ participants: userId })
+          .populate('participants', 'name') 
+          .populate('messages.sender', 'name')
+          .exec()
+          .then((chats) =>
+            chats.map((chat) => ({
+              ...chat.toObject(),
+              lastMessage: chat.messages?.length ? chat.messages[chat.messages.length - 1] : null,
+            })) as (ChatDocument & { lastMessage: { sender: Types.ObjectId; content: string; timestamp: Date } | null })[]
+          );
+      }
+      
+      
+
 }
+
+
