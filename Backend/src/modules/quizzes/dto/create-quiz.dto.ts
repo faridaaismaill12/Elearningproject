@@ -1,7 +1,7 @@
 import { IsArray, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Length, ValidateNested, IsMongoId} from 'class-validator';
 import { Type } from 'class-transformer';
 
-import {Schema as MongooseSchema } from 'mongoose';
+import {Types} from 'mongoose';
 
 // DTO for creating a Question
 export class CreateQuestionDto {
@@ -30,6 +30,10 @@ export class CreateQuestionDto {
     @IsEnum(['easy', 'medium', 'hard'])
     @IsNotEmpty()
     difficultyLevel!: 'easy' | 'medium' | 'hard';
+
+    @IsMongoId()  // userId should be MongoDB ObjectId
+    @IsOptional()
+    createdBy!: Types.ObjectId;
 }
 
 // DTO for creating a Quiz
@@ -52,8 +56,8 @@ export class CreateQuizDto {
     duration!: number;
 
     @IsMongoId()  // userId should be MongoDB ObjectId
-    @IsNotEmpty()
-    createdBy!:string;
+    @IsOptional()
+    createdBy!: Types.ObjectId;
 
     @IsNotEmpty()
     @IsEnum(['MCQ', 'TorF','Both'])

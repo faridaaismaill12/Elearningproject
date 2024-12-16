@@ -1,0 +1,72 @@
+/* Add these styles to your existing quiz.css */
+
+.feedback-section {
+    margin-top: 2rem;
+    border-top: 1px solid #e9ecef;
+    padding-top: 2rem;
+  }
+  
+  .feedback-title {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  
+  .feedback-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e9ecef;
+  }
+  
+  .feedback-header {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+  
+  .feedback-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .feedback-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+  }
+  
+  .feedback-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+  
+  .feedback-value {
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+  }
+  
+  .feedback-value.correct {
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+  }
+  
+  .feedback-value.incorrect {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+  }
+  
+  .error-message {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    text-align: center;
+  }

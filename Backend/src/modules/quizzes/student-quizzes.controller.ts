@@ -1,16 +1,22 @@
-import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException, UseGuards } from '@nestjs/common';
 import { StudentQuizzesService } from './student-quizzes.service';
 import { SubmitResponseDto } from './dto/response.dto';
 import { Quiz } from './schemas/quiz.schema';
 import { Question } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { Types } from 'mongoose';
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { RolesGuard } from '../security/guards/role.guard';
+import { Roles } from '../../decorators/roles.decorators'; 
 
 
 @Controller('student/quizzes')
+@UseGuards(JwtAuthGuard,RolesGuard)
+
 export class StudentQuizzesController {
   constructor(private readonly studentQuizzesService: StudentQuizzesService) {}
 
+  @Roles('student')
   @Post('start/:quizId')
 async startQuiz(
   @Param('quizId') quizId: string,
@@ -29,7 +35,7 @@ async startQuiz(
     throw new BadRequestException('An error occurred while starting the quiz');
   }
 }
-
+@Roles('student')
 @Post('/submit/:userId/:quizId')
   async submitQuiz(
     @Param('quizId') quizId: string,
@@ -39,6 +45,7 @@ async startQuiz(
     return this.studentQuizzesService.submitQuiz(quizId, userId, submittedAnswers);
   }
 
+  @Roles('student')
   @Get('/user-response/:userId/:quizId')
   async getUserQuizResponse(
     @Param('quizId') quizId: string,

@@ -22,9 +22,6 @@ async function bootstrap() {
 
 //     app.setGlobalPrefix('api');
    
-
-
-
     const PORT = process.env.PORT || 5010;
     await app.listen(PORT);
 }

@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -11,10 +10,10 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError(""); 
 
     try {
-      const response = await fetch("http://localhost:4000/users/login", {
+      const response = await fetch("http://localhost:5616/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -30,11 +29,9 @@ export default function Login() {
       const data = await response.json();
       console.log("Login successful:", data);
 
-      // Save token to localStorage
       localStorage.setItem("authToken", data.accessToken);
 
-      // Redirect to the homepage or dashboard
-      router.push("/communication/chats/my-chats");
+      router.push("/");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);

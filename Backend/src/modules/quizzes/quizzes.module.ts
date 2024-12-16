@@ -11,9 +11,23 @@ import { StudentQuizzesController } from './student-quizzes.controller';
 import { StudentQuizzesService } from './student-quizzes.service';
 import { AdminQuizzesService } from './admin-quiz.service';
 import { AdminQuizzesController } from './admin-quiz.controller';
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
 
 @Modules({
   imports: [
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1d',
+        },
+      }),
+      inject: [ConfigService],
+    }),
     MongooseModule.forFeature([{ name: Quiz.name, schema: QuizSchema }]),
     MongooseModule.forFeature([{ name: Question.name, schema: QuestionSchema }]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
