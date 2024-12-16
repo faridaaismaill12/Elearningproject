@@ -50,17 +50,6 @@ export class LessonService {
           return { message: 'Lesson successfully marked as completed' };
         }
 
-        async createLesson(createLessonDto: CreateLessonDto): Promise<LessonDocument> {
-          const { lessonId } = createLessonDto;
-      
-          // Check if a lesson with the same `lessonId` already exists
-          const existingLesson = await this.lessonModel.findOne({ lessonId });
-          if (existingLesson) {
-            throw new BadRequestException('Lesson with this ID already exists');
-          }
-      
-          // Create and save the new lesson
-          const newLesson = new this.lessonModel(createLessonDto);
-          return newLesson.save();
-        }
+        
+        
 }
