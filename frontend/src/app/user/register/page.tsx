@@ -2,70 +2,49 @@
 
 import React, { useState } from 'react';
 import styles from './register.module.css';
+import  { registerUser } from './api';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
+        role: 'student', // default role
+        profilePictureUrl: '',
+        birthday: '',
+        bio: '',
+        studentLevel: 'beginner', // default level
+        preferences: '{}', // JSON string
     });
+
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Handle input changes
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
         });
     };
 
-    // Submit registration
+    // Handle form submission
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const response = await fetch('/api/users/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: formData.email,
-                    passwordHash: formData.password,
-                    name: formData.name,
-                }),
+            const response = await registerUser({
+                ...formData,
+                preferences: JSON.parse(formData.preferences),
+                birthday: formData.birthday ? new Date(formData.birthday).toISOString() : undefined,
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Registration failed');
-
-            setMessage('Registration successful! Please login.');
-        } catch (error: any) {
-            setMessage(`Error: ${error.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Submit login
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const response = await fetch('/api/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: formData.email,
-                    passwordHash: formData.password,
-                }),
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Login failed');
-
-            setMessage('Login successful! Token: ' + data.accessToken);
+            if (response.success) {
+                setMessage('Registration successful! Please login.');
+            } else {
+                throw new Error(response.message);
+            }
         } catch (error: any) {
             setMessage(`Error: ${error.message}`);
         } finally {
@@ -75,11 +54,8 @@ export default function RegisterPage() {
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>Register or Login</h1>
-
-            {/* Registration Form */}
+            <h1 className={styles.title}>Register</h1>
             <form className={styles.form} onSubmit={handleRegister}>
-                <h2>Register</h2>
                 <input
                     type="text"
                     name="name"
@@ -104,43 +80,46 @@ export default function RegisterPage() {
                     className={styles.input}
                     required
                 />
+                <select name="role" onChange={handleChange} className={styles.input} required>
+                    <option value="student">Student</option>
+                    <option value="admin">Admin</option>
+                    <option value="instructor">Instructor</option>
+                </select>
+                <input
+                    type="url"
+                    name="profilePictureUrl"
+                    placeholder="Profile Picture URL"
+                    onChange={handleChange}
+                    className={styles.input}
+                />
+                <input
+                    type="date"
+                    name="birthday"
+                    placeholder="Birthday"
+                    onChange={handleChange}
+                    className={styles.input}
+                />
+                <textarea
+                    name="bio"
+                    placeholder="Bio"
+                    onChange={handleChange}
+                    className={styles.input}
+                />
+                <select name="studentLevel" onChange={handleChange} className={styles.input} required>
+                    <option value="beginner">Beginner</option>
+                    <option value="average">Average</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+                <textarea
+                    name="preferences"
+                    placeholder="Preferences (JSON format)"
+                    onChange={handleChange}
+                    className={styles.input}
+                />
                 <button type="submit" className={styles.button} disabled={loading}>
                     {loading ? 'Registering...' : 'Register'}
                 </button>
             </form>
-
-            {/* Login Form */}
-            <form className={styles.form} onSubmit={handleLogin}>
-                <h2>Login</h2>
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    onChange={handleChange}
-                    className={styles.input}
-                    required
-                />
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    onChange={handleChange}
-                    className={styles.input}
-                    required
-                />
-                <button type="submit" className={styles.button} disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
-                </button>
-            </form>
-
-            {/* Forgot Password */}
-            <div className={styles.forgotPasswordContainer}>
-                <button className={styles.forgotPassword} onClick={() => alert('Redirecting to Forgot Password')}>
-                    Forgot Password?
-                </button>
-            </div>
-
-            {/* Message */}
             {message && <p className={styles.message}>{message}</p>}
         </div>
     );
