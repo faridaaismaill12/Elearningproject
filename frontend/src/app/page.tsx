@@ -1,14 +1,17 @@
+// app/page.tsx
+"use client";
 
+import React from "react";
 import Layout from "./routes/layout";
+import Home from "./routes/home/HomePage";
+// import "./app.css";
 
-export default function Home() {
+
+export default function App() {
   return (
-    <div className="flex max-w-8xl mx-auto">
-      <Layout>
-        <h1>Welcome to the Home Page</h1>
-        <p>This is some content inside the layout.</p>
-      </Layout>
-    </div>
+    <Layout>
+      <Home />
+      
+    </Layout>
   );
 }
-

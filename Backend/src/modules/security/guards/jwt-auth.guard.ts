@@ -3,14 +3,19 @@ import {
     ExecutionContext,
     Injectable,
     UnauthorizedException,
+    ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-    constructor(private readonly jwtService: JwtService) {}
+    constructor(
+        private readonly jwtService: JwtService,
+        private readonly reflector: Reflector, // Used to retrieve metadata for roles
+    ) {}
 
-    canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
 
@@ -21,12 +26,27 @@ export class JwtAuthGuard implements CanActivate {
         const token = authHeader.split(' ')[1];
 
         try {
-            const payload = this.jwtService.verify(token); // Verify and decode token
-            // console.log('Decoded Token Payload:', payload); // Debugging
-            if (!payload || !payload.id) {
+            const payload = this.jwtService.verify(token);
+            // console.log('Token payload:', payload); // Debugging
+            if (!payload || !payload.id || !payload.role) {
                 throw new UnauthorizedException('Invalid token payload');
             }
+
             request.user = payload; // Attach decoded payload to req.user
+
+            // Retrieve roles required for this route
+            const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
+
+            // If no roles are specified, grant access
+            if (!requiredRoles || requiredRoles.length === 0) {
+                return true;
+            }
+
+            // Check if the user's role matches the required roles
+            if (!requiredRoles.includes(payload.role)) {
+                throw new ForbiddenException('You do not have the required permissions');
+            }
+
             return true;
         } catch (err) {
             if (err instanceof Error) {

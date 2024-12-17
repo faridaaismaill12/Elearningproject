@@ -1,20 +1,19 @@
-import React, { ReactNode } from 'react'
-import Sidebar from './_components/sidebar/Sidebar'
-
+// app/layout.tsx
+import React, { ReactNode } from 'react';
+import Navbar from './_components/navbar/navbar';
 interface LayoutProps {
   children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="layout">
-    <Sidebar />
-    <main className="main-content">
+    <div>
+        <div className='navbar'>
+         <Navbar/>
+        </div>
       {children}
-    </main>
-  </div>
+    </div>
   );
-}
+};
 
 export default Layout;
- 

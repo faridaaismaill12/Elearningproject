@@ -18,7 +18,10 @@ import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schem
       { name: 'Module', schema: ModuleSchemaDef },
     ]),
   ],
-  controllers: [CourseController, LessonController, ModuleController],
-  providers: [CourseService, LessonService, ModuleService],
+
+  controllers: [CourseController,ModuleController,LessonController],
+  providers: [CourseService,ModuleService,LessonService],
+  exports: [CourseService,ModuleService,LessonService, MongooseModule],
+
 })
 export class CourseModule {}

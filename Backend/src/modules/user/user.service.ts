@@ -110,6 +110,14 @@ export class UserService {
         user.enrolledCourses.push(course._id);
         await user.save();
 
+        // add the user to the course's enrolledStudents array
+        if (!course.enrolledStudents) {
+            course.enrolledStudents = [];
+        }
+        course.enrolledStudents.push(new Types.ObjectId(user._id as Types.ObjectId));
+        await course.save();
+
+
         return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
     }
 
@@ -132,7 +140,7 @@ export class UserService {
             throw new BadRequestException('Invalid credentials');
         }
 
-        const payload = { id: user._id, email: user.email }; // Define payload
+        const payload = { id: user._id, email: user.email, role:user.role }; // Define payload
         const accessToken = this.jwtService.sign(payload); // Sign the token
         return { accessToken };
     }
@@ -424,6 +432,15 @@ export class UserService {
         return user ? user.role : null;
     }
 
+
+    //return user name by given user id
+    async getUserName(userId: string) {
+        const user = await this.userModel.findById(userId).select('name').exec();
+        return user ? user.name : 'null';
+    }
+
+}
+
     async getAllData(): Promise<Record<string, string[]>> {
         const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
           .select('_id enrolledCourses')
@@ -462,3 +479,4 @@ export class UserService {
         return 'exported_data.csv';
       }
 }
+

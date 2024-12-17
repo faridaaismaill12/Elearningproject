@@ -26,6 +26,8 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
+import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
 
 @Controller('users')
 export class UserController {
@@ -81,17 +83,20 @@ export class UserController {
 
 
 
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'instructor') // Only admins and instructors can enroll users
     @Post(':id/enroll/:courseId')
     @HttpCode(200)
     async enrollUser(
         @Param('id') userId: string,
-        @Param('courseId') courseId: string,
+        @Param('courseId') courseId: string
     ): Promise<any> {
         if (!userId || !courseId) {
             throw new BadRequestException('User ID and Course ID are required.');
         }
         return await this.userService.enrollUser(userId, courseId);
     }
+
 
 
     /**
@@ -149,56 +154,73 @@ export class UserController {
     /**
      * Assign courses to a student (Instructor only)
      */
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('instructor') // Only instructors can assign courses
     @Post('assign-course/:studentId/:courseId')
     async assignCourse(
         @Param('studentId') studentId: string,
         @Param('courseId') courseId: string,
         @Req() req: any
     ) {
-        const instructorId = req.user.sub;  // Instructor ID from token
+        const instructorId = req.user.sub; // Extract instructor ID from token
         return this.userService.assignCourse(instructorId, studentId, courseId);
-    }
+}
+
 
     // create account for student (instructor only)
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin') // Only admins can create student accounts
     @Post('create-student')
-    async createStudentAccount(@Body() createStudentDto: CreateStudentDto, @Req() req: any) {
-        const instructorId = req.user.sub;
+    async createStudentAccount(
+        @Body() createStudentDto: CreateStudentDto,
+        @Req() req: any
+    ) {
+        const instructorId = req.user.sub; // Extract instructor ID from token
         return this.userService.createStudentAccount(instructorId, createStudentDto);
-    } // tested
+    }
+
 
     // /**
     //  * Delete a user (Admin only)
     //  */
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin') // Only admins can delete users
     @Delete('delete-user/:id')
-    async deleteUser(@Param('id') id: string, @Req() req: any) {
-        const adminId = req.user.sub;
-        const userId = id;
-        return this.userService.deleteUser(adminId, userId);
-    } // tested
+    async deleteUser(
+        @Param('id') id: string,
+        @Req() req: any
+    ) {
+        const adminId = req.user.sub; // Extract admin ID from token
+        return this.userService.deleteUser(adminId, id);
+    }
+// tested
 
     /**
      * Get all users (Admin only)
      */
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin') // Only admins can view all users
     @Get('get-all-users')
     async getAllUsers(@Req() req: any) {
-        const adminId = req.user.sub;
+        const adminId = req.user.sub; // Extract admin ID from token
         return this.userService.getAllUsers(adminId);
-    } // tested
+    }
+
 
     /**
     * Search for students (Instructor only)
     */
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('instructor') // Only instructors can search for students
     @Get('search-students')
-    async searchStudents(@Query() searchStudentDto: SearchStudentDto, @Req() req: any) {
-        const instructorId = req.user.sub;
-        console.log('Search Students endpoint invoked.');
+    async searchStudents(
+        @Query() searchStudentDto: SearchStudentDto,
+        @Req() req: any
+    ) {
+        const instructorId = req.user.sub; // Extract instructor ID from token
         return this.userService.searchStudents(searchStudentDto, instructorId);
-    } // tested
+    }
+
 
     /**
      * Search for instructors

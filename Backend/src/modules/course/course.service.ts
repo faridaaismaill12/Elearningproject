@@ -1,3 +1,4 @@
+
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -5,7 +6,14 @@ import { Course, CourseDocument } from './schemas/course.schema';
 import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
 import { Lesson, LessonDocument } from './schemas/lesson.schema';
 
+import archiver from 'archiver';
+import { Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 
+
+
+const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
 @Injectable()
 export class CourseService {
   constructor(
@@ -15,6 +23,7 @@ export class CourseService {
   ) {}
 
   // Other service methods
+
 
 
   // Create a course
@@ -113,10 +122,32 @@ export class CourseService {
       lessons: savedModule.lessons,
     });
 
+  
     await course.save();
+
+
 
     return savedModule;
   }
+
+  async addFilesToModule(courseId: string, moduleId: string, fileLocations: string[]): Promise<ModuleSchema> {
+    if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
+      throw new BadRequestException('Invalid course or module ID format.');
+    }
+
+    // Find the module by ID
+    const module = await this.moduleModel.findById(moduleId);
+    if (!module || module.courseId !== courseId) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
+    }
+
+    // Add the new file locations to the locations array
+    module.locations = [...module.locations, ...fileLocations];
+
+    // Save the updated module
+    return module.save();
+  }
+
 
 
   async addFilesToModule(courseId: string, moduleId: string, fileLocations: string[]): Promise<ModuleSchema> {
@@ -136,6 +167,7 @@ export class CourseService {
     // Save the updated module
     return module.save();
   }
+
 
 
 
@@ -198,6 +230,7 @@ export class CourseService {
       completions: [],
       resources: [],
     };
+
   
     // Save the lesson in the Lesson collection
     const createdLesson = new this.lessonModel(newLesson);
@@ -227,7 +260,6 @@ export class CourseService {
   
 
 
-
   // Update a course by MongoDB _id
   async updateCourse(courseId: string, updatedData: Partial<Course>): Promise<Course> {
     if ('modules' in updatedData) {
@@ -248,4 +280,79 @@ export class CourseService {
 
     return updatedCourse;
   }
-}	
+
+
+
+  async getFilesForModule(
+    courseId: string,
+    moduleId: string,
+    res: Response,
+  ): Promise<void> {
+    const module = await this.findModuleById(courseId, moduleId);
+  
+    if (!module || !module.locations || module.locations.length === 0) {
+      throw new NotFoundException(`No files found for module ${moduleId}.`);
+    }
+  
+    // Resolve paths relative to the root directory
+    const filePaths = module.locations.map((location) =>
+      path.join(process.cwd(), location), // Use process.cwd() for the root project directory
+    );
+  
+    // Check that all files exist
+    filePaths.forEach((filePath) => {
+      if (!fs.existsSync(filePath)) {
+        throw new NotFoundException(`File not found: ${filePath}`);
+      }
+    });
+  
+    // Check if there are multiple files
+    if (filePaths.length > 1) {
+      // Create a ZIP archive for multiple files
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      const zipFileName = `module_${moduleId}_files.zip`;
+  
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${zipFileName}"`,
+      );
+  
+      archive.pipe(res);
+  
+      // Add files to the ZIP
+      filePaths.forEach((filePath) => {
+        archive.file(filePath, { name: path.basename(filePath) });
+      });
+  
+      // Finalize the ZIP
+      await archive.finalize();
+    } else {
+      // If there's only one file, serve it directly
+      const filePath = filePaths[0];
+      const fileName = path.basename(filePath);
+  
+      res.download(filePath, fileName); // Serve the single file for download
+    }
+  }
+
+  //get a course by name
+  async findCourseByName(courseName: string): Promise<Course> {
+    if (!courseName || courseName.trim() === '') {
+      throw new BadRequestException('Course name must be provided.');
+    }
+  
+    const course = await this.courseModel
+      .findOne({ title: { $regex: new RegExp(`^${courseName}$`, 'i') } })
+      .exec();
+  
+    if (!course) {
+      throw new NotFoundException(`Course with name "${courseName}" not found.`);
+    }
+  
+    return course;
+  }
+  
+
+}
+

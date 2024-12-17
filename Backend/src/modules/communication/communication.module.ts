@@ -27,11 +27,16 @@ import { JwtModule } from '@nestjs/jwt/dist/jwt.module';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { ConfigService } from '@nestjs/config/dist/config.service';
 import { UserModule } from '../user/user.module';
+import { CommunicationGateway } from './communication.chatgateway';
+import { CommunicationController } from './controllers/communication.controller';
+import { CommunicationService } from './services/communication.service';
+import { CourseModule } from '../course/course.module';
 
 
 @Module({
   imports: [
     UserModule,
+    CourseModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -52,15 +57,17 @@ import { UserModule } from '../user/user.module';
     ]),
   ],
   controllers: [
+    CommunicationController,
     ForumController,
     // NotificationController, // Ensure this is added
     SavedConversationController, // Ensure this is added
   ],
   providers: [
-    
+    CommunicationGateway,
     ForumService,
     NotificationService, // Ensure this is included
-    SavedConversationService, // Ensure this is included
+    SavedConversationService,
+    CommunicationService // Ensure this is included
   ],
   exports: [
     NotificationService, // Export services if needed by other modules

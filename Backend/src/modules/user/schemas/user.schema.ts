@@ -65,6 +65,14 @@ export class User extends Document {
   @Prop({ default: null })
   lastChangedPassword?: Date;
 
+  //array of chats
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Chat' }],
+    default: [],
+  })
+  chats?: Types.ObjectId[];
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
