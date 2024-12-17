@@ -49,7 +49,7 @@ const ViewMyProfile = () => {
 
   return (
     <div className={styles.container}>
-      <h2>Your Profile</h2>
+      <h2 className={styles.header}>Your Profile</h2>
       {error && <div className={styles.error}>{error}</div>}
       {profile ? (
         <div className={styles.profile}>
