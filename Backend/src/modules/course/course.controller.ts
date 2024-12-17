@@ -4,12 +4,9 @@ import {
   Body,
   Param,
   BadRequestException,
-  UploadedFiles,
-  UseInterceptors,
   Get,
   Patch,
   Delete,
-
   NotFoundException,
   Res,
   UseInterceptors,
@@ -19,14 +16,7 @@ import {
 import { Response } from 'express';
 
 import { CourseService } from './course.service';
-
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { Course } from './schemas/course.schema';
-
-// Multer storage configuration
-
 import { Types } from 'mongoose';
 import { Question } from '../quizzes/schemas/question.schema';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -111,28 +101,6 @@ async createModule(
     // Call the service to update the module
     return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
   }
-
-
-
-  @Post(':id/modules/:moduleId/files')
-  @UseInterceptors(FilesInterceptor('files', 10, { storage })) // Allow up to 10 files
-  async uploadFilesToModule(
-    @Param('id') courseId: string,
-    @Param('moduleId') moduleId: string,
-    @UploadedFiles() files: Express.Multer.File[], // Handle multiple files
-  ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one file must be uploaded.');
-    }
-
-    const fileLocations = files.map((file) => `uploads/${file.filename}`); // Extract file paths
-
-    // Call the service to update the module
-    return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
-  }
-
-
-
 
   // Create a lesson for a specific module using MongoDB _id
 
