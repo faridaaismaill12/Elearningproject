@@ -10,13 +10,15 @@ export default function RegisterPage() {
     name: "",
     email: "",
     password: "",
-    birthday: ""
+    birthday: "",
+    preferences: "",
+    role: "student"
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -26,8 +28,14 @@ export default function RegisterPage() {
     setError("");
     setSuccess("");
 
+    const payload = {
+      ...formData,
+      passwordHash: formData.password,
+    };
+    delete payload.password;
+
     try {
-      const response = await axios.post("http://localhost:5010/users/register", formData);
+      const response = await axios.post("http://localhost:5010/users/register", payload);
       setSuccess("Registration successful! Redirecting...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (err: unknown) {
@@ -46,6 +54,7 @@ export default function RegisterPage() {
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
         <form onSubmit={handleSubmit}>
+          {/* Name */}
           <div className="mb-4">
             <label htmlFor="name" className="block font-medium mb-1">
               Name
@@ -60,6 +69,8 @@ export default function RegisterPage() {
               required
             />
           </div>
+
+          {/* Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block font-medium mb-1">
               Email
@@ -74,6 +85,8 @@ export default function RegisterPage() {
               required
             />
           </div>
+
+          {/* Password */}
           <div className="mb-4">
             <label htmlFor="password" className="block font-medium mb-1">
               Password
@@ -88,6 +101,40 @@ export default function RegisterPage() {
               required
             />
           </div>
+
+          {/* Birthday */}
+          <div className="mb-4">
+            <label htmlFor="birthday" className="block font-medium mb-1">
+              Birthday
+            </label>
+            <input
+              type="date"
+              name="birthday"
+              id="birthday"
+              className="w-full p-2 border rounded"
+              value={formData.birthday}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          {/* Preferences */}
+          <div className="mb-4">
+            <label htmlFor="preferences" className="block font-medium mb-1">
+              Preferences
+            </label>
+            <textarea
+              name="preferences"
+              id="preferences"
+              rows={3}
+              className="w-full p-2 border rounded"
+              placeholder="Enter your preferences"
+              value={formData.preferences}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
