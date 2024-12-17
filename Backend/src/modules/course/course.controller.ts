@@ -202,6 +202,21 @@ async updateModule(
   return await this.courseService.updateModule(courseId, moduleId, updatedData);
 }
 
+// Fetch courses of the logged-in instructor
+@Roles('instructor') // Ensure only instructors can access this endpoint
+@Get('instructor/my-courses')
+async getCoursesOfInstructor(@Req() req: any): Promise<Course[]> {
+  const instructorEmail = req.user.email; // Extract the instructor's email from the JWT payload
+
+  if (!instructorEmail) {
+    throw new BadRequestException('Instructor email is required.');
+  }
+
+  return await this.courseService.findCoursesByInstructor(instructorEmail);
+}
+
+
+
 
 
 

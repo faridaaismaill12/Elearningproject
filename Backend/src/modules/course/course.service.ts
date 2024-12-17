@@ -350,7 +350,20 @@ export class CourseService {
   
     return updatedModule;
   }
-  
+   // Get courses by instructor email
+async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
+  if (!instructorEmail || instructorEmail.trim() === '') {
+    throw new BadRequestException('Instructor email must be provided.');
+  }
+
+  const courses = await this.courseModel.find({ instructor: instructorEmail }).exec();
+
+  if (!courses || courses.length === 0) {
+    throw new NotFoundException('No courses found for instructor with email ${instructorEmail}.');
+  }
+
+  return courses;
+}
   
 
 }
