@@ -27,6 +27,9 @@ export class Question {
         default: 'easy',
     })
     difficultyLevel!: 'easy' | 'medium' | 'hard';
+
+    @Prop({ type: Types.ObjectId, ref:"User"})
+    createdBy!:Types.ObjectId;
 }
 
 

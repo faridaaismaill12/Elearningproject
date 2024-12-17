@@ -22,7 +22,7 @@ export class InstructorQuizzesService {
 
 //done testing
 async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promise<Question> {
-  const { moduleId, questionType, options, correctAnswer, difficultyLevel, question } = createQuestionDto;
+  const { moduleId, questionType, options, correctAnswer, difficultyLevel, question ,createdBy } = createQuestionDto;
 
   // Validate moduleId
   if (!Types.ObjectId.isValid(moduleId)) {
@@ -84,6 +84,7 @@ async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promis
       options: Options,
       correctAnswer,
       difficultyLevel,
+      createdBy
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -117,7 +118,7 @@ async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promis
 //done testing
 async createQuiz(createQuizDto: CreateQuizDto): Promise<Quiz> {
   const { name, moduleId, duration, createdBy, numberOfQuestions, quizType } = createQuizDto;
-
+  console.log(CreateQuizDto)
   if (!Types.ObjectId.isValid(moduleId)) {
     throw new BadRequestException('Invalid Module Id');
   }
@@ -178,13 +179,13 @@ async getQuiz(quizId: string): Promise<Quiz> {
   return quiz;
 }
 //done testing
-async getQuizzes(moduleId: string): Promise<{ name: string }[]> {
+async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: number; quizType: string; duration: number }[]> {
   const module_id = new Types.ObjectId(moduleId);
 
   const module = await this.moduleModel.findById(module_id).populate({
     path: 'quizzes',
-    select: 'name', 
-    model: 'Quiz', 
+    select: '_id name numberOfQuestions quizType duration', 
+    model: 'Quiz',
   });
 
   if (!module) {
@@ -195,8 +196,15 @@ async getQuizzes(moduleId: string): Promise<{ name: string }[]> {
     throw new NotFoundException("Quizzes not found");
   }
 
-  return module.quizzes.map((quiz: any) => ({ name: quiz.name }));
+  return module.quizzes.map((quiz: any) => ({
+    _id:quiz.id,
+    name: quiz.name,
+    numberOfQuestions: quiz.numberOfQuestions,
+    quizType: quiz.quizType,
+    duration: quiz.duration,
+  }));
 }
+
 
 // done testing
 async deleteQuiz(quizId: string): Promise<{ message: string }> {

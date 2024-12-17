@@ -1,19 +1,14 @@
-"use client"
-import Image from "next/image";
-import Layout from "./routes/layout";
-import Home from "./routes/home/HomePage";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+"use client";
+import React from "react";
+
+import Home from "./[]/page";
 
 export default function App() {
-  const shouldShowSidebar = !location.pathname.startsWith('/messages');
   return (
-    <Router>
-    <Layout>
-      <Routes>
-        <Route path="/home" element={<Home />} />
-      </Routes>
-    </Layout>
-  </Router>
+    
+    
+      <Home />
+    
   );
 }
 
