@@ -12,6 +12,8 @@ import DeleteMyProfile from "./user/deletemyprofile/page";
 import Logout from "./user/logout/page";
 import UpdateProfile from "./user/updatemyprofile/page";
 import ViewMyProfile from "./user/viewmyprofile/page";
+import ResetPasswordPage from "./user/resetpassword/page";
+
 // import "./app.css";
 
 
@@ -19,7 +21,7 @@ export default function App() {
   return (
     <Layout>
      
-      <UpdateProfile /> 
+      <ViewMyProfile /> 
     
     </Layout>
   );
