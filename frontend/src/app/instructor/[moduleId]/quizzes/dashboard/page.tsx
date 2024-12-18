@@ -4,17 +4,36 @@ import axios from 'axios';
 import './ModuleQuizzes.css';
 import { useParams, useRouter } from 'next/navigation'; // Import useRouter
 import { FaTrash, FaEdit } from 'react-icons/fa';
-import { MdQuiz } from "react-icons/md";
+import { MdQuiz } from 'react-icons/md';
+import { Types } from 'mongoose';
+
+interface Quiz {
+  _id: any;
+  moduleId: Types.ObjectId;
+  name: string;
+  numberOfQuestions: number;
+  quizType: string;
+  difficultyLevel: string;
+  duration: number;
+}
 
 const ModuleQuizzes: React.FC = () => {
   const { moduleId } = useParams(); // Get moduleId from the URL
   const router = useRouter(); // Initialize Next.js router
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    duration: 10,
+    numberOfQuestions: 10,
+    difficultyLevel: 'easy',
+    quizType: 'easy',
+  });
 
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const token = localStorage.getItem('authToken');
 
   useEffect(() => {
     if (moduleId) {
@@ -30,7 +49,7 @@ const ModuleQuizzes: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:5608/instructor/quizzes/all/${moduleId}`,
+        `http://localhost:6008/instructor/quizzes/all/${moduleId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -54,7 +73,7 @@ const ModuleQuizzes: React.FC = () => {
 
     try {
       await axios.delete(
-        `http://localhost:5608/instructor/quizzes/delete/${quizId}`,
+        `http://localhost:6008/instructor/quizzes/delete/${quizId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -69,8 +88,32 @@ const ModuleQuizzes: React.FC = () => {
     }
   };
 
-  const updateQuiz = (quizId: string) => {
-    console.log('Updating quiz with ID:', quizId);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const updateQuiz = async (quizId: string) => {
+    if (!currentQuiz) return;
+
+    try {
+      const updatedQuiz = {
+        ...formData,
+      };
+
+      await axios.patch(
+        `http://localhost:6008/instructor/quizzes/update/${quizId}`,
+        updatedQuiz,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchQuizzes();
+      setIsUpdateDialogOpen(false); 
+    } catch (error) {
+      console.error('Error updating quiz:', error);
+      setError('Failed to update quiz. Please try again.');
+    }
   };
 
   const navigateToCreateQuiz = () => {
@@ -79,16 +122,34 @@ const ModuleQuizzes: React.FC = () => {
     }
   };
 
+  const openUpdateDialog = (quiz: Quiz) => {
+    setCurrentQuiz(quiz);
+    setFormData({
+      name: quiz.name,
+      duration: quiz.duration,
+      numberOfQuestions: quiz.numberOfQuestions,
+      difficultyLevel: quiz.difficultyLevel,
+      quizType: quiz.quizType,
+    });
+    setIsUpdateDialogOpen(true);
+  };
+
   const navigateToCreateQuestion = () => {
     if (moduleId) {
       router.push(`/instructor/${moduleId}/quizzes/questions/create`);
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent the page from refreshing
+    if (currentQuiz) {
+      updateQuiz(currentQuiz._id);
+    }
+  };
+
   return (
-    <div >
+    <div>
       <div className="dashboard_container">
-      
         <div className="box_right">
           <h3>Create Quiz</h3>
           <p>Design and set up new quizzes for your module. Define the quiz type, duration, and other details to engage your students.</p>
@@ -129,7 +190,7 @@ const ModuleQuizzes: React.FC = () => {
           <p>No quizzes found for this module.</p>
         ) : (
           <div className="quiz-cards-container">
-            {quizzes.map((quiz, index) => {
+            {quizzes.map((quiz) => {
               const quizId = quiz._id;
               return (
                 <div key={quizId} className="quiz-card">
@@ -137,12 +198,13 @@ const ModuleQuizzes: React.FC = () => {
                   <p>Type: {quiz.quizType || 'N/A'}</p>
                   <p>Duration: {quiz.duration || 0} minutes</p>
                   <p>Questions: {quiz.numberOfQuestions || 0}</p>
+                  <p>Difficulty: {quiz.difficultyLevel }</p>
 
                   <div className="quiz-actions">
                     <FaEdit
                       className="action-icon edit-icon"
                       title="Edit Quiz"
-                      onClick={() => updateQuiz(quizId)}
+                      onClick={() => openUpdateDialog(quiz)}
                     />
                     <FaTrash
                       className="action-icon delete-icon"
@@ -153,6 +215,61 @@ const ModuleQuizzes: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+        {isUpdateDialogOpen && currentQuiz && (
+          <div className="update-dialog">
+            <div className="dialog-content">
+              <h3>Update Quiz</h3>
+              <form onSubmit={handleFormSubmit}>
+                <label>
+                  Name:
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Duration:
+                  <input
+                    type="number"
+                    name="duration"
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Number of Questions:
+                  <input
+                    type="number"
+                    name="numberOfQuestions"
+                    value={formData.numberOfQuestions}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Difficulty Level:
+                  <select
+                    name="difficultyLevel"
+                    value={formData.difficultyLevel}
+                    onChange={handleInputChange}
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </label>
+                <button className='update'type="submit">Update</button>
+                <button type="button" onClick={() => setIsUpdateDialogOpen(false)}>
+                  Cancel
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>

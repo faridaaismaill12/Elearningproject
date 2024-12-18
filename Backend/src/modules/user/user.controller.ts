@@ -134,16 +134,11 @@ export class UserController {
      * Get user profile by ID
      */
     @UseGuards(JwtAuthGuard)
-    @Get('view-profile/:id')
-    async getProfile(@Param('id') id: string, @Req() req: any) {
+    @Get('view-profile')
+    async getProfile( @Req() req: any) {
         const userIdFromToken = req.user.sub;
-
-        if (userIdFromToken !== id) {
-            throw new UnauthorizedException('You can only access your own profile');
-        }
-
         console.log('Get Profile endpoint invoked.');
-        return this.userService.viewProfile(id);
+        return this.userService.viewProfile(userIdFromToken);
     } // tested
 
     /**

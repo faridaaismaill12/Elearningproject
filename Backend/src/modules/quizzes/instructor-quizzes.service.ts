@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, InternalServerErrorException, } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Quiz, QuizDocument } from './schemas/quiz.schema';
@@ -184,7 +184,7 @@ async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: n
 
   const module = await this.moduleModel.findById(module_id).populate({
     path: 'quizzes',
-    select: '_id name numberOfQuestions quizType duration', 
+    select: '_id name numberOfQuestions quizType duration difficultyLevel', 
     model: 'Quiz',
   });
 
@@ -205,21 +205,36 @@ async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: n
   }));
 }
 
+async deleteQuiz(moduleId: string, quizId: string): Promise<{ message: string }> {
+   
+    const quiz_id = new Types.ObjectId(quizId)
+    const quiz = await this.quizModel.findById(quiz_id);
 
-// done testing
-async deleteQuiz(quizId: string): Promise<{ message: string }> {
-  const quiz = await this.quizModel.findById(quizId);
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with ID ${quizId} not found.`);
+    }
 
-  if (!quiz) {
-    throw new Error("Quiz not found");
-  }
+    // Step 2: Remove the quiz reference from the module
+    const moduleUpdateResult = await this.moduleModel.updateOne(
+      { _id: moduleId },
+      { $pull: { quizzes: quiz._id } }
+    );
 
+    if (moduleUpdateResult.matchedCount === 0) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+    }
 
+    // Step 3: Delete the quiz document
+    const deleteResult = await this.quizModel.deleteOne({ _id: quizId });
 
-  await quiz.deleteOne();
+    if (deleteResult.deletedCount === 0) {
+      throw new InternalServerErrorException("Failed to delete the quiz document.");
+    }
 
-  return { message: "Quiz deleted successfully" };
-}
+    return { message: "Quiz deleted successfully." };
+  
+  } 
+
 
 
 async deleteQuestion(questionId: string): Promise<{ message: string }> {

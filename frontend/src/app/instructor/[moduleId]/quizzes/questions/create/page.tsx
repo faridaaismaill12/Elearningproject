@@ -44,7 +44,7 @@ const InsertToQuestionBank: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
         questionType,
       };
 
-      const response = await axios.post('http://localhost:5587/instructor/quizzes/add', payload, {
+      const response = await axios.post('http://localhost:6008/instructor/quizzes/add', payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

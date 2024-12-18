@@ -122,13 +122,6 @@ export class StudentQuizzesService {
     }
     console.log('User found:', user);
 
-    const didUserTakeTheQuiz = await this.quizModel.findOne({
-      attemptedUsers:user
-    })
-
-    if(didUserTakeTheQuiz){
-      throw new BadRequestException('You have already taken this quiz')
-    }
   
     let quizDifficulties: string[] = [];
     if (user.studentLevel === 'beginnner') {

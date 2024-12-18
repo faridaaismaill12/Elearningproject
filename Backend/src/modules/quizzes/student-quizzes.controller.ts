@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException, UseGuards, Req } from '@nestjs/common';
 import { StudentQuizzesService } from './student-quizzes.service';
 import { SubmitResponseDto } from './dto/response.dto';
 import { Quiz } from './schemas/quiz.schema';
@@ -20,9 +20,11 @@ export class StudentQuizzesController {
   @Post('start/:quizId')
 async startQuiz(
   @Param('quizId') quizId: string,
-  @Body('userId') userId: string,
+  //@Body('userId') userId: string,
+  @Req() req: any,
 ): Promise<{ response: QuizResponse; questions: Question[] }> {
   try {
+  const userId = req.user.id;
   const {response, questions} = await this.studentQuizzesService.startQuiz(quizId, userId);
   return  {response, questions};
   } catch (error) {
@@ -36,12 +38,14 @@ async startQuiz(
   }
 }
 @Roles('student')
-@Post('/submit/:userId/:quizId')
+@Post('/submit/:quizId')
   async submitQuiz(
     @Param('quizId') quizId: string,
-    @Param('userId') userId: string,
-    @Body() submittedAnswers: { questionId: string; answer: string }[],
+    //@Param('userId') userId: string,
+    @Req() req: any,
+    @Body() submittedAnswers: { questionId: string; answer: string, }[],
   ) {
+    const userId = req.user.id;
     return this.studentQuizzesService.submitQuiz(quizId, userId, submittedAnswers);
   }
 
@@ -53,6 +57,8 @@ async startQuiz(
   ): Promise<QuizResponse> {
     return this.studentQuizzesService.getUserResponse(quizId, userId);
   }
+  
+
   
 
 

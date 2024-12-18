@@ -27,7 +27,7 @@ const QuizForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
 
     setLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:5531/instructor/quizzes/all/${moduleId}`, {
+      const { data } = await axios.get(`http://localhost:6010/instructor/quizzes/all/${moduleId}`, {
         headers: {
           Authorization: `Bearer ${token}` // Pass the token to the backend
         }
@@ -57,7 +57,7 @@ const QuizForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
         moduleId,
       };
 
-      await axios.post('http://localhost:5610/instructor/quizzes/create', payload, {
+      await axios.post('http://localhost:6010/instructor/quizzes/create', payload, {
         headers: {
           Authorization: `Bearer ${token}` // Pass the token to the backend
         }

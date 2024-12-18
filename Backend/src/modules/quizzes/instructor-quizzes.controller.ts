@@ -19,7 +19,7 @@ import { Types } from 'mongoose';
 
 export class InstructorQuizController {
   constructor(private readonly instructorQuizzesService: InstructorQuizzesService) {}
-  //done
+  //done on frontend
   @Roles('instructor')
   @Post('/add')
   async insertQuestionToQuestionBank(@Body() createQuestionDto: CreateQuestionDto, @Req() req: any) {
@@ -27,14 +27,14 @@ export class InstructorQuizController {
     return this.instructorQuizzesService.insertQuestionToQuestionBank(createQuestionDto);
   }
 
-    
+  //done on frontend
   @Roles('instructor')
   @Patch('/update/question/:id')
   async updateQuestion( @Param('id') questionId: string,@Body() updateQuestion: UpdateQuestionDto){
     return this.instructorQuizzesService.updateQuestion(questionId,updateQuestion);
   }
 
-//done
+//done on frontend
   @Roles('instructor') 
   @Post('/create')
   async createQuiz(@Body() createQuizDto: CreateQuizDto, @Req() req: any) {
@@ -44,24 +44,15 @@ export class InstructorQuizController {
     return this.instructorQuizzesService.createQuiz(createQuizDto);
   }
 
-
+//wait
   @Roles('instructor')
-  @Put(':id')
-  async updateQuiz(
-    @Param('id') quizId: string,
-    @Body() updateQuizDto: UpdateQuizDto,
-  ): Promise<Quiz> {
-    return this.instructorQuizzesService.updateQuiz(quizId, updateQuizDto);
-  }
-
-    @Roles('instructor')
   @Get(':quizId')
 async getQuizById(@Param('quizId') quizId: string) {
   console.log(`Received quizId: ${quizId}`);  // Ensure this log is outputted
   return await this.instructorQuizzesService.getQuiz(quizId);
 }
 
-//done
+//done on frontend
 @Roles('instructor')
 @Get('all/:moduleId')
 async getQuizzesByModule(@Param('moduleId') moduleId: string) {
@@ -69,6 +60,7 @@ async getQuizzesByModule(@Param('moduleId') moduleId: string) {
   return await this.instructorQuizzesService.getQuizzes(moduleId);
 }
 
+//done on the frontend
 @Roles('instructor')
 @Patch('update/:quizId')
 async updateQuizById(
@@ -78,15 +70,17 @@ async updateQuizById(
   return this.instructorQuizzesService.updateQuiz(quizId, updateQuizDto);
 }
 
-//done
+//done on frontend
 @Roles('instructor')
-@Delete('delete/:quizId')
+@Delete('delete/:quizId/')
 async deleteQuizById(
   @Param('quizId') quizId: string,
+  @Param('moduleId') moduleId: string,
 ) {
-  return this.instructorQuizzesService.deleteQuiz(quizId);
+  return this.instructorQuizzesService.deleteQuiz(quizId,moduleId);
 }
 
+//done on frontend
 @Roles('instructor')
 @Delete('delete/question/:questionId')
 async deleteQuestionById(
@@ -95,6 +89,7 @@ async deleteQuestionById(
   return this.instructorQuizzesService.deleteQuestion(questionId);
 }
 
+//wait
 @Roles('instructor')
 @Get('module/:moduleId/question/:questionId')
 async getQuestionByModule(
@@ -105,6 +100,7 @@ async getQuestionByModule(
  
 }
 
+//done on frontend
 @Roles('instructor')
 @Get('module/:moduleId')
 async getQuestionsByModule(
@@ -116,8 +112,8 @@ async getQuestionsByModule(
 
 @Roles('instructor')
 @Get('/quiz-responses/:userId/:quizId')
-async findResponsesForQuiz(@Param('userId') userId: string,@Param('quizId') quizId:string): Promise<QuizResponse[]> {
-    return await this.instructorQuizzesService.findResponsesForQuiz(userId,quizId);
+async findResponsesForQuiz(@Param('userId') userId: string,@Param('quizId') quizId:string,  @Req() req: any): Promise<QuizResponse[]> {
+    return await this.instructorQuizzesService.findResponsesForQuiz(req.user.id,quizId);
 }
 
 
