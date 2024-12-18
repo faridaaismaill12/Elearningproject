@@ -46,6 +46,8 @@ async startQuiz(
     @Body() submittedAnswers: { questionId: string; answer: string, }[],
   ) {
     const userId = req.user.id;
+    console.log('userId', userId);
+    console.log(submittedAnswers);
     return this.studentQuizzesService.submitQuiz(quizId, userId, submittedAnswers);
   }
 

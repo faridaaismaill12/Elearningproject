@@ -136,7 +136,8 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     @Get('view-profile')
     async getProfile( @Req() req: any) {
-        const userIdFromToken = req.user.sub;
+        const userIdFromToken = req.user.id;
+        console.log(userIdFromToken);
         console.log('Get Profile endpoint invoked.');
         return this.userService.viewProfile(userIdFromToken);
     } // tested

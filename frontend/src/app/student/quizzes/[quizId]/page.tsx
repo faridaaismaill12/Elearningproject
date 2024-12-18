@@ -34,11 +34,16 @@ const QuizPage = () => {
       console.error('Missing token');
       return;
     }
-
+    const x=
     axios
-      .get(`http://localhost:6010/student/quizzes/start/${quizId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+  .post(
+    `http://localhost:4000/student/quizzes/start/${quizId}`,
+    {}, // No body here
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  )
+
       .then((response) => {
         setQuestions(response.data.questions);
         setQuizResponseId(response.data.response._id);
@@ -46,7 +51,11 @@ const QuizPage = () => {
       .catch((error) => {
         console.error('Error fetching quiz:', error);
       });
+      console.log(x);
   }, [quizId]);
+
+
+  
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers((prevAnswers) => {
@@ -68,8 +77,8 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:6010/student/quizzes/submit/${quizId}`,
-        { answers: submittedAnswers },
+        `http://localhost:4000/student/quizzes/submit/${quizId}`,
+        { submittedAnswers: submittedAnswers },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
         }
