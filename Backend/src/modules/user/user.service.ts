@@ -1,4 +1,3 @@
-
 import {
     Injectable,
     BadRequestException,
@@ -439,8 +438,6 @@ export class UserService {
         return user ? user.name : 'null';
     }
 
-}
-
     async getAllData(): Promise<Record<string, string[]>> {
         const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
           .select('_id enrolledCourses')
@@ -479,4 +476,3 @@ export class UserService {
         return 'exported_data.csv';
       }
 }
-

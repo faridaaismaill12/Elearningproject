@@ -38,6 +38,7 @@ const Navbar = () => {
 
   return (
     <header>
+
       <div className="logo">
         <h1 className="logo-name">BananaBread</h1>
       </div>
@@ -121,5 +122,6 @@ const Navbar = () => {
     </header>
   );
 };
+
 
 export default Navbar;

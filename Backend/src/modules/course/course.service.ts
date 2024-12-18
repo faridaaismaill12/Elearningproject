@@ -1,4 +1,3 @@
-
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -129,26 +128,6 @@ export class CourseService {
 
     return savedModule;
   }
-
-  async addFilesToModule(courseId: string, moduleId: string, fileLocations: string[]): Promise<ModuleSchema> {
-    if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
-      throw new BadRequestException('Invalid course or module ID format.');
-    }
-
-    // Find the module by ID
-    const module = await this.moduleModel.findById(moduleId);
-    if (!module || module.courseId !== courseId) {
-      throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
-    }
-
-    // Add the new file locations to the locations array
-    module.locations = [...module.locations, ...fileLocations];
-
-    // Save the updated module
-    return module.save();
-  }
-
-
 
   async addFilesToModule(courseId: string, moduleId: string, fileLocations: string[]): Promise<ModuleSchema> {
     if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
@@ -355,4 +334,3 @@ export class CourseService {
   
 
 }
-
