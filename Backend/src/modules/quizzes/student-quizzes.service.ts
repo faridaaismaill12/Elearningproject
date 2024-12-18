@@ -124,7 +124,7 @@ export class StudentQuizzesService {
 
   
     let quizDifficulties: string[] = [];
-    if (user.studentLevel === 'beginnner') {
+    if (user.studentLevel === 'beginner') {
       quizDifficulties = ['easy'];
     } else if (user.studentLevel === 'average') {
       quizDifficulties = ['easy', 'medium'];
