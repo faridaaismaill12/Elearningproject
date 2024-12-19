@@ -70,9 +70,13 @@ export class UserController {
      * Reset password using a token
      */
     @Post('reset-password')
-    async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
-        console.log('Token:', token);
-        console.log('New Password DTO:', resetPasswordDto);
+    async resetPassword(@Req() req: any, @Body() resetPasswordDto: ResetPasswordDto) {
+        const authHeader = req.headers.authorization;
+        let token = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+        }
 
         if (!token || !resetPasswordDto.newPassword) {
             throw new BadRequestException('Token and new password are required');
@@ -80,8 +84,6 @@ export class UserController {
 
         return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
     } // tested
-
-
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'instructor') // Only admins and instructors can enroll users
@@ -103,36 +105,25 @@ export class UserController {
      * Update user profile
      */
     @UseGuards(JwtAuthGuard)
-    @Patch('update/:id')
+    @Patch('update-profile')
     async updateProfile(
-        @Param('id') id: string,
-        @Body() updateUserDto: UpdateUserDto,
-        @Req() req: Request & { user: { sub: string; email: string } },
-    ) {
-        const userIdFromToken = req.user.sub; // Extract user ID from JWT payload
-
-        if (userIdFromToken !== id) {
-            throw new ForbiddenException('You can only update your own profile');
-        }
+        @Body() updateUserDto: UpdateUserDto, @Req() req: any) {
+        const userIdFromToken = req.user.id; // Extract user ID from JWT payload
 
         console.log('Update Profile endpoint invoked.');
-        return this.userService.updateProfile(updateUserDto, id);
+        return this.userService.updateProfile(updateUserDto, userIdFromToken);
     } // tested 
 
     /**
      * Delete user profile
      */
     @UseGuards(JwtAuthGuard)
-    @Delete('delete/:id')
-    async deleteProfile(@Param('id') userId: string, @Req() req: any) {
-        const userIdFromToken = req.user.sub;
-
-        if (userIdFromToken !== userId) {
-            throw new ForbiddenException('You can only delete your own profile');
-        }
+    @Delete('delete-profile')
+    async deleteProfile(@Req() req: any) {
+        const userIdFromToken = req.user.id;
 
         console.log('Delete Profile endpoint invoked.');
-        return this.userService.deleteProfile(userId);
+        return this.userService.deleteProfile(userIdFromToken);
     } // tested
 
     /**

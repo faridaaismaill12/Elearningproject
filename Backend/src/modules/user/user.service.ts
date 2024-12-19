@@ -191,7 +191,8 @@ export class UserService {
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
-            const user = await this.userModel.findById(payload.sub);
+
+            const user = await this.userModel.findById(payload.id);
 
             if (!user) {
                 throw new NotFoundException('User not found');
@@ -225,7 +226,7 @@ export class UserService {
             const uploadResult = await this.uploadToCloudinary(updateUserDto.profilePictureUrl);
             updateUserDto.profilePictureUrl = uploadResult.secure_url;
         }
-
+        
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
             throw new NotFoundException('User not found');

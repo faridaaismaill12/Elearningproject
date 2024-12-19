@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 export default function ViewProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [error, setError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -16,7 +17,9 @@ export default function ViewProfilePage() {
 
       if (!token) {
         setError("You must log in first.");
-        router.push("/users/login");
+        setTimeout(() => {
+          router.push("/users/login");
+        }, 3000);
         return;
       }
 
@@ -41,6 +44,38 @@ export default function ViewProfilePage() {
     fetchProfile();
   }, [router]);
 
+  const handleDeleteProfile = async () => {
+    const token = Cookies.get("authToken");
+
+    if (!token) {
+      setError("You must log in first.");
+      setTimeout(() => {
+        router.push("/users/login");
+      }, 3000);
+      return;
+    }
+
+    try {
+      // Send the delete request to the API
+      const response = await axios.delete(
+        `http://localhost:5010/users/delete-profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(response.data);
+      // Clear the token and redirect to login page
+      Cookies.remove("authToken");
+      router.push("/users/login");
+    } catch (err) {
+      console.error("Error deleting profile: ", err);
+      setError("Could not delete profile. Please try again later.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -55,6 +90,21 @@ export default function ViewProfilePage() {
               <strong>Email: </strong> {profileData.email || "N/A"}
             </p>
             <p>
+              <strong>Role: </strong> {profileData.role || "N/A"}
+            </p>
+            <p>
+              <strong>Birthday: </strong> {profileData.birthday || "N/A"}
+            </p>
+            <p>
+              <strong>Student Level: </strong> {profileData.studentLevel || "N/A"}
+            </p>
+            <p>
+              <strong>Bio: </strong> {profileData.bio || "N/A"}
+            </p>
+            <p>
+              <strong>Preferences: </strong> {profileData.preferences || "N/A"}
+            </p>
+            <p>
               <strong>Enrolled Courses:</strong>
             </p>
             <ul className="ml-4">
@@ -65,6 +115,50 @@ export default function ViewProfilePage() {
               )) || "No enrolled courses"}
             </ul>
           </div>
+
+          {/* Reset Password Button */}
+          <div className="mt-6">
+            <button
+              onClick={() => router.push(`/users/profile/reset-password`)}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition mb-4"
+            >
+              Reset Password
+            </button>
+
+          {/* Delete Profile Button */}
+          <div className="mt-6">
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="w-full bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
+            >
+              Delete Profile
+            </button>
+
+            {/* Confirmation Modal */}
+            {confirmDelete && (
+              <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center">
+                <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+                  <h3 className="text-lg font-semibold">Are you sure?</h3>
+                  <p className="mb-4">Once you delete your profile, it cannot be undone.</p>
+                  <div className="flex justify-between">
+                    <button
+                      onClick={handleDeleteProfile}
+                      className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         </div>
       ) : (
         <p>Loading...</p>
