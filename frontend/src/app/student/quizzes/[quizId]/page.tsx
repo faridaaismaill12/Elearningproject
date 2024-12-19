@@ -37,7 +37,7 @@ const QuizPage = () => {
     const x=
     axios
   .post(
-    `http://localhost:4000/student/quizzes/start/${quizId}`,
+    `http://localhost:6089/student/quizzes/start/${quizId}`,
     {}, // No body here
     {
       headers: { Authorization: `Bearer ${token}` },
@@ -77,7 +77,7 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:4000/student/quizzes/submit/${quizId}`,
+        `http://localhost:6089/student/quizzes/submit/${quizId}`,
         { submittedAnswers: submittedAnswers },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
@@ -97,7 +97,7 @@ const QuizPage = () => {
 
   return (
     <div className="quiz-container">
-      <h1>Quiz</h1>
+      <h1></h1>
       {questions.length > 0 ? (
         <form onSubmit={(e) => e.preventDefault()}>
           {questions.map((question) => (

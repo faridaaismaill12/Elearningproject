@@ -43,7 +43,7 @@ async startQuiz(
     @Param('quizId') quizId: string,
     //@Param('userId') userId: string,
     @Req() req: any,
-    @Body() submittedAnswers: { questionId: string; answer: string, }[],
+    @Body('submittedAnswers') submittedAnswers: { questionId: string; answer: string }[],
   ) {
     const userId = req.user.id;
     console.log('userId', userId);
