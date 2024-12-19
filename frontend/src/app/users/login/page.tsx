@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -31,7 +31,7 @@ export default function LoginPage() {
       });
 
       const token = response?.data?.accessToken;
-      Cookies.set("authToken" , token , { expires: 7 })
+      Cookies.set("authToken", token, { expires: 7 });
 
       router.push("http://localhost:4001");
     } catch (err: unknown) {
@@ -45,8 +45,13 @@ export default function LoginPage() {
     }
   };
 
+  const handleLogout = () => {
+    Cookies.remove("authToken");
+    router.push("http://localhost:4001");
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center relative">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
         <h2 className="text-2xl font-semibold mb-4">Login</h2>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -102,6 +107,14 @@ export default function LoginPage() {
           </a>
         </p>
       </div>
+
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="absolute bottom-4 right-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+      >
+        Logout
+      </button>
     </div>
   );
 }
