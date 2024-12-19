@@ -7,9 +7,10 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
-import { Course } from '../course/schemas/course.schema';
+import { Course, CourseDocument } from '../course/schemas/course.schema';
 import {Module, ModuleDocument} from '../course/schemas/module.schema'
 import { UpdateQuestionDto } from './dto/update-quiz.dto';
+
 
 @Injectable()
 export class InstructorQuizzesService {
@@ -17,10 +18,9 @@ export class InstructorQuizzesService {
   @InjectModel(Question.name) private questionModel: Model<Question>,
   @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
   @InjectModel(User.name) private userModel: Model<User>,
-@InjectModel(Module.name) private moduleModel: Model<Module>,
+  @InjectModel(Module.name) private moduleModel: Model<Module>,
+  @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
 ) {}
-
-
 
 //done testing
 async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promise<Question> {
@@ -36,18 +36,16 @@ async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promis
   if (!module) {
     throw new NotFoundException('Module not found');
   }
-
+  
   const duplicateQuestion = await this.questionModel.findOne({
     question: question, 
     moduleId: new Types.ObjectId(moduleId),
     questionType,
     difficultyLevel,
   });
-
   if (duplicateQuestion) {
     throw new BadRequestException('Duplicate question detected. The question already exists in this module.');
   }
-
   let Options = [];
   if (questionType === 'TorF') {
     Options = ['True', 'False'];
@@ -208,7 +206,6 @@ async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: n
 }
 
 async deleteQuiz(moduleId: string, quizId: string): Promise<{ message: string }> {
-   
     const quiz_id = new Types.ObjectId(quizId)
     const quiz = await this.quizModel.findById(quiz_id);
 
@@ -330,7 +327,7 @@ async updateQuestion(
     if (!quiz) {
       throw new NotFoundException('Quiz not found');
     }
- 
+
     if (updateQuizDto.name && updateQuizDto.name !== quiz.name) {
       const existingName = await this.quizModel.findOne({ name: updateQuizDto.name });
       if (existingName) {
@@ -367,7 +364,7 @@ async updateQuestion(
   if (!module.questions || module.questions.length === 0) {
     throw new NotFoundException('Questions not found');
 }
- return module.questions
+return module.questions
 
 }
 
@@ -393,7 +390,7 @@ const question = module.questions.find((q: any) => q._id.equals(questionId));
 if (!question) {
   throw new NotFoundException('Question not found');
 }
- return question;
+return question;
 
 }
 
@@ -412,8 +409,6 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
     createdBy: userId
     
   });
-
-
   if (!quiz) {
     throw new NotFoundException('Quiz not found or you are not the creator of this quiz');
   }
@@ -423,7 +418,30 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
 }
 
 
-
+async averageCourseQuizzes(courseId: string): Promise<number> {
+  if (!Types.ObjectId.isValid(courseId)) {
+    throw new BadRequestException('Invalid Course ID');
+  }
+  const course = await this.courseModel.findById(courseId);
+  if (!course) {
+    throw new NotFoundException('Course not found');
+  }
+  const moduleIds = course.modules.map((module) => module._id);
+  if (moduleIds.length === 0) {
+    throw new NotFoundException('No modules found for this course');
+  }
+  const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
+  if (quizzes.length === 0) {
+    throw new NotFoundException('No quizzes found for this course');
+  }
+  const quizIds = quizzes.map((quiz) => quiz._id);
+  const responses = await this.responseModel.find({ quiz: { $in: quizIds } });
+  if (responses.length === 0) {
+    return 0;
+  }
+  const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
+  return totalScore / responses.length;
+}
 
 
 }

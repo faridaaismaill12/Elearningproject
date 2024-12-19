@@ -37,7 +37,7 @@ export class Quiz {
     attemptedUsers!:[{
         user:Types.ObjectId;
 
-       }]
+    }]
 
 
 

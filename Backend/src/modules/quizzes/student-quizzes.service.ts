@@ -8,6 +8,7 @@ import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
 import { Module, ModuleDocument } from '../course/schemas/module.schema';
+import {Course} from '../course/schemas/course.schema'; // Added Course schema
 
 @Injectable()
 export class StudentQuizzesService {
@@ -17,6 +18,7 @@ export class StudentQuizzesService {
     @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Module.name) private moduleModel: Model<Module>,
+    @InjectModel(Course.name) private courseModel: Model<Course>, // Added Course model
   ) {}
   private async generateQuestions(
     numberOfQuestions: number,
@@ -275,28 +277,24 @@ export class StudentQuizzesService {
     if (!Types.ObjectId.isValid(userId)) {
         throw new NotFoundException('Invalid user ID format');
     }
-
     if (!Types.ObjectId.isValid(quizId)) {
         throw new NotFoundException('Invalid quiz ID format');
     }
-
     const userObjectId = new Types.ObjectId(userId);
     const quizObjectId = new Types.ObjectId(quizId);
-
-
     const user = await this.userModel.findById(userObjectId);
     if (!user) {
         console.log('User not found:', userId);
         throw new NotFoundException('User not found');
     }
-
-
     const quiz = await this.quizModel.findById(quizObjectId);
     if (!quiz) {
         console.log('Quiz not found:', quizId);
         throw new NotFoundException('Quiz not found');
     }
 
+
+//all scores for all modules, for a specific course and take the average 
     const response = await this.responseModel.findOne({
         user: userObjectId,
         quiz: quizObjectId,
@@ -367,6 +365,35 @@ export class StudentQuizzesService {
     }
   
     return user;
+  }
+
+  async getAverageScores(courseId: string, userId: string): Promise<number> {
+    const user = await this.userModel.findById(new Types.ObjectId(userId));
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+    const moduleIds = course.modules.map((module) => module._id);
+    if (moduleIds.length === 0) {
+      throw new NotFoundException('No modules found for this course');
+    }
+    const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
+    if (quizzes.length === 0) {
+      throw new NotFoundException('No quizzes found for this course');
+    }
+    const quizIds = quizzes.map((quiz) => quiz._id);
+    const responses = await this.responseModel.find({
+      quiz: { $in: quizIds },
+      user: new Types.ObjectId(userId),  
+    });
+    if (responses.length === 0) {
+      return 0;
+    }
+    const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
+    return totalScore / responses.length;
   }
   
   
