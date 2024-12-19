@@ -172,13 +172,9 @@ export class UserController {
     //  */
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can delete users
-    @Delete('delete-user/:id')
-    async deleteUser(
-        @Param('id') id: string,
-        @Req() req: any
-    ) {
-        const adminId = req.user.sub; // Extract admin ID from token
-        return this.userService.deleteUser(adminId, id);
+    @Delete('delete-user')
+    async deleteUser(@Body('userId') userId: string) {
+        return this.userService.deleteUser(userId);
     }
 // tested
 
@@ -188,9 +184,8 @@ export class UserController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can view all users
     @Get('get-all-users')
-    async getAllUsers(@Req() req: any) {
-        const adminId = req.user.sub; // Extract admin ID from token
-        return this.userService.getAllUsers(adminId);
+    async getAllUsers() {
+        return this.userService.getAllUsers();
     }
 
 

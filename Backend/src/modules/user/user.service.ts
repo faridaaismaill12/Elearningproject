@@ -346,14 +346,9 @@ export class UserService {
         return { message: 'Student created successfully', student };
     }
 
-    async deleteUser(adminId: string, userId: string) {
-        const admin = await this.userModel.findById(adminId);
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to delete users');
-        }
-
-        // Find the user to delete
+    async deleteUser(userId: string) {
         const userToDelete = await this.userModel.findByIdAndDelete(userId);
+        
         if (!userToDelete) {
             throw new NotFoundException('User not found');
         }
@@ -362,15 +357,9 @@ export class UserService {
     }
 
 
-    async getAllUsers(userId: string): Promise<User[]> {
-        const admin = await this.userModel.findById(userId);
-
-        // Check if the user making the request is an admin
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to access this resource');
-        }
-
-        const users = await this.userModel.find().select('-passwordHash');
+    async getAllUsers(): Promise<User[]> {
+        const users = await this.userModel.find().select('-passwordHash').populate('enrolledCourses').exec();
+        
         if (!users || users.length === 0) {
             throw new NotFoundException('No users found');
         }

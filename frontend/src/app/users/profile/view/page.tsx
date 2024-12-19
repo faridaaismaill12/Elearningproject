@@ -29,7 +29,7 @@ export default function ViewProfilePage() {
           `http://localhost:5010/users/view-profile`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Send the token from cookies
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -80,7 +80,7 @@ export default function ViewProfilePage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
       {profileData ? (
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full">
           <h2 className="text-2xl font-semibold mb-4">User Profile</h2>
           <div>
             <p>
@@ -104,16 +104,25 @@ export default function ViewProfilePage() {
             <p>
               <strong>Preferences: </strong> {profileData.preferences || "N/A"}
             </p>
-            <p>
+
+            {/* Display Enrolled Courses */}
+            <p className="mt-4">
               <strong>Enrolled Courses:</strong>
             </p>
-            <ul className="ml-4">
-              {profileData.enrolledCourses?.map((course: any) => (
-                <li key={course._id}>
-                  {course.title} - {course.description} ({course.difficultyLevel})
-                </li>
-              )) || "No enrolled courses"}
-            </ul>
+            {profileData.enrolledCourses && profileData.enrolledCourses.length > 0 ? (
+              <ul className="ml-4 space-y-2">
+                {profileData.enrolledCourses.map((course: any) => (
+                  <li key={course._id} className="p-2 bg-gray-50 border rounded-md">
+                    <div className="font-semibold">{course.title}</div>
+                    <div className="text-sm text-gray-600">
+                      <strong>Course ID:</strong> {course._id}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No enrolled courses</p>
+            )}
           </div>
 
           {/* Reset Password Button */}
@@ -124,6 +133,7 @@ export default function ViewProfilePage() {
             >
               Reset Password
             </button>
+          </div>
 
           {/* Delete Profile Button */}
           <div className="mt-6">
@@ -158,7 +168,6 @@ export default function ViewProfilePage() {
               </div>
             )}
           </div>
-        </div>
         </div>
       ) : (
         <p>Loading...</p>
