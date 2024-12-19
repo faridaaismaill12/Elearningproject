@@ -1,5 +1,5 @@
-/* Container styles */
-.quiz-container {
+
+.quiz-attempt-container {
   width: 90%;
   max-width: 800px;
   margin: 2rem auto;
@@ -18,7 +18,7 @@ h1 {
   
 }
 
-/* Individual question block */
+
 .question {
   margin-bottom: 1.5rem;
   padding: 1rem;

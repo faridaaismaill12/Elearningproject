@@ -7,6 +7,7 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
+import { Course } from '../course/schemas/course.schema';
 import {Module, ModuleDocument} from '../course/schemas/module.schema'
 import { UpdateQuestionDto } from './dto/update-quiz.dto';
 
@@ -16,7 +17,8 @@ export class InstructorQuizzesService {
   @InjectModel(Question.name) private questionModel: Model<Question>,
   @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
   @InjectModel(User.name) private userModel: Model<User>,
-@InjectModel(Module.name) private moduleModel: Model<Module>,) {}
+@InjectModel(Module.name) private moduleModel: Model<Module>,
+) {}
 
 
 
@@ -396,7 +398,7 @@ if (!question) {
 }
 
 
-//THIS API DOES NOT WORK
+
 async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse[]> {
 
   const instructor = await this.userModel.findById(new Types.ObjectId(userId));
@@ -419,6 +421,9 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
 
   return responses;
 }
+
+
+
 
 
 }

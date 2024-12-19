@@ -122,7 +122,17 @@ export class StudentQuizzesService {
     }
     console.log('User found:', user);
 
+    const existingResponse = await this.responseModel.findOne({
+      user: new Types.ObjectId(userId),
+      quiz: new Types.ObjectId(quizId),
+    });
   
+    if (existingResponse) {
+      console.log('Existing response found. Deleting old response...');
+      await this.responseModel.deleteOne({ _id: existingResponse._id });
+    }
+
+
     let quizDifficulties: string[] = [];
     if (user.studentLevel === 'beginner') {
       quizDifficulties = ['easy'];
@@ -164,7 +174,7 @@ export class StudentQuizzesService {
     quizId: string, 
     userId: string, 
     submittedAnswers: { questionId: string; answer: string }[],
-  ): Promise<{ score: number; correctAnswers: number; totalQuestions: number; feedback: any }> {
+  ): Promise<{ score: number; correctAnswers: number; totalQuestions: number; feedback: any ; timeTaken: number}> {
 
 
 
@@ -186,6 +196,10 @@ export class StudentQuizzesService {
     });
     if (!response) {
       throw new NotFoundException('Invalid session');
+    }
+
+    if (!response.startTime) {
+      throw new BadRequestException('Start time not found in response');
     }
 
     const questionIds = submittedAnswers.map((a) => {
@@ -229,6 +243,10 @@ export class StudentQuizzesService {
   
 
     const score = (correctAnswers / questions.length) * 100;
+
+    const currentTime = new Date();
+  const timeTaken = Math.floor((currentTime.getTime() - response.startTime.getTime()) / 1000); // in seconds
+
   
     response.questionsIds = questions.map((q) => q._id); // Map Question ObjectIds to questionsIds
     response.answers = validatedAnswers;
@@ -248,6 +266,7 @@ export class StudentQuizzesService {
       correctAnswers,
       totalQuestions: questions.length,
       feedback,
+      timeTaken
     };
   }
 
@@ -281,7 +300,7 @@ export class StudentQuizzesService {
     const response = await this.responseModel.findOne({
         user: userObjectId,
         quiz: quizObjectId,
-    });
+    }).populate('correctAnswers score totalAnswers');
 
     if (!response) {
         console.log('Response not found for user:', userId, 'and quiz:', quizId);

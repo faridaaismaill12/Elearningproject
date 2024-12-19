@@ -25,11 +25,7 @@ interface Feedback {
   correctAnswer: string;
 }
 
-interface Quiz {
-    title: string;
-    duration: string;
 
-  }
 
 const QuizPage = () => {
   const { quizId } = useParams();
@@ -51,7 +47,7 @@ const QuizPage = () => {
 
     axios
       .post(
-        `http://localhost:6089/student/quizzes/start/${quizId}`,
+        `http://localhost:6090/student/quizzes/start/${quizId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -95,7 +91,7 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:6089/student/quizzes/submit/${quizId}`,
+        `http://localhost:6090/student/quizzes/submit/${quizId}`,
         { submittedAnswers },
         { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );
@@ -126,11 +122,11 @@ const QuizPage = () => {
   };
 
   const handleViewResults = () => {
-    router.push(`/results/${quizId}`);
+    router.push(`${quizId}/results`);
   };
 
   return (
-    <div className="quiz-container">
+    <div className="quiz-attempt-container">
       <Toaster position="top-center" />
       <h1>Quiz</h1> 
       {questions.length > 0 ? (
@@ -197,7 +193,7 @@ const QuizPage = () => {
         <p>Loading questions...</p>
       )}
 
-      {/* Show the "View Results" button after submission */}
+   
       {isSubmitted && (
         <button type="button" onClick={handleViewResults}>
           View Results

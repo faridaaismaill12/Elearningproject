@@ -52,12 +52,15 @@ async startQuiz(
   }
 
   @Roles('student')
-  @Get('/user-response/:userId/:quizId')
+  @Get('/user-response/:quizId')
   async getUserQuizResponse(
     @Param('quizId') quizId: string,
-    @Param('userId') userId: string,
+    @Req() req: any,
   ): Promise<QuizResponse> {
-    return this.studentQuizzesService.getUserResponse(quizId, userId);
+    const userId = req.user.id;
+    return this.studentQuizzesService.getUserResponse(userId, quizId);
+  }
+  
   }
   
 
@@ -65,4 +68,3 @@ async startQuiz(
 
 
 
-}
