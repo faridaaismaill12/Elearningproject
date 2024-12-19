@@ -270,45 +270,46 @@ export class StudentQuizzesService {
     };
   }
 
-
   async getUserResponse(userId: string, quizId: string): Promise<QuizResponse> {
     if (!Types.ObjectId.isValid(userId)) {
-        throw new NotFoundException('Invalid user ID format');
+      throw new NotFoundException('Invalid user ID format');
     }
-
+  
     if (!Types.ObjectId.isValid(quizId)) {
-        throw new NotFoundException('Invalid quiz ID format');
+      throw new NotFoundException('Invalid quiz ID format');
     }
-
+  
     const userObjectId = new Types.ObjectId(userId);
     const quizObjectId = new Types.ObjectId(quizId);
-
-
+  
     const user = await this.userModel.findById(userObjectId);
     if (!user) {
-        console.log('User not found:', userId);
-        throw new NotFoundException('User not found');
+      console.log('User not found:', userId);
+      throw new NotFoundException('User not found');
     }
-
-
+  
     const quiz = await this.quizModel.findById(quizObjectId);
     if (!quiz) {
-        console.log('Quiz not found:', quizId);
-        throw new NotFoundException('Quiz not found');
+      console.log('Quiz not found:', quizId);
+      throw new NotFoundException('Quiz not found');
     }
-
-    const response = await this.responseModel.findOne({
-        user: userObjectId,
-        quiz: quizObjectId,
-    }).populate('correctAnswers score totalAnswers');
-
+  
+    const response = await this.responseModel
+      .findOne({ user: userObjectId, quiz: quizObjectId })
+      .populate('quiz') // Only populate valid paths like `quiz` or `user`
+      .populate({
+        path: 'answers.questionId', // Populate specific fields
+        select: 'question correctAnswer',
+      });
+  
     if (!response) {
-        console.log('Response not found for user:', userId, 'and quiz:', quizId);
-        throw new NotFoundException('You have not taken this quiz');
+      console.log('Response not found for user:', userId, 'and quiz:', quizId);
+      throw new NotFoundException('You have not taken this quiz');
     }
-
+    console.log('Response found:', response);
+  
     return response;
-}
+  }
   
 
   async upgradeStudentLevel(userId: string): Promise<User> {

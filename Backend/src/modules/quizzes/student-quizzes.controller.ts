@@ -58,6 +58,7 @@ async startQuiz(
     @Req() req: any,
   ): Promise<QuizResponse> {
     const userId = req.user.id;
+    console.log('userId', userId);
     return this.studentQuizzesService.getUserResponse(userId, quizId);
   }
   
