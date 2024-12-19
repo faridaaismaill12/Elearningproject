@@ -37,7 +37,7 @@ export default function RegisterPage() {
     try {
       const response = await axios.post("http://localhost:5010/users/register", payload);
       setSuccess("Registration successful! Redirecting...");
-      setTimeout(() => router.push("/login"), 2000);
+      setTimeout(() => router.push("/users/login"), 2000);
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "Registration failed.");

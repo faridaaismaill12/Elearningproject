@@ -16,7 +16,7 @@ export default function ViewProfilePage() {
 
       if (!token) {
         setError("You must log in first.");
-        router.push("/login");
+        router.push("/users/login");
         return;
       }
 
