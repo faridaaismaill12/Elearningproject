@@ -115,6 +115,12 @@ export default function ViewProfilePage() {
                   <li key={course._id} className="p-2 bg-gray-50 border rounded-md">
                     <div className="font-semibold">{course.title}</div>
                     <div className="text-sm text-gray-600">
+                      <strong>Description:</strong> {course.description || "N/A"}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <strong>Difficulty Level:</strong> {course.difficultyLevel || "N/A"}
+                    </div>
+                    <div className="text-sm text-gray-600">
                       <strong>Course ID:</strong> {course._id}
                     </div>
                   </li>

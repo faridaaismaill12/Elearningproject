@@ -76,25 +76,25 @@ export default function ViewUsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full">
-        <h2 className="text-2xl font-semibold mb-4">All Users</h2>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8">
+      <div className="bg-white p-12 rounded-lg shadow-lg max-w-6xl w-full">
+        <h2 className="text-3xl font-semibold mb-6">All Users</h2>
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
         {users.length === 0 ? (
           <p>No users found.</p>
         ) : (
-          <table className="min-w-full table-auto">
+          <table className="min-w-full table-auto border-collapse">
             <thead>
               <tr>
-                <th className="px-4 py-2 text-left">Name</th>
-                <th className="px-4 py-2 text-left">Email</th>
-                <th className="px-4 py-2 text-left">Role</th>
-                <th className="px-4 py-2 text-left">Birthday</th>
-                <th className="px-4 py-2 text-left">Student Level</th>
-                <th className="px-4 py-2 text-left">Enrolled Courses</th>
-                <th className="px-4 py-2 text-left">Actions</th>
+                <th className="px-6 py-3 text-left">Name</th>
+                <th className="px-6 py-3 text-left">Email</th>
+                <th className="px-6 py-3 text-left">Role</th>
+                <th className="px-6 py-3 text-left">Birthday</th>
+                <th className="px-6 py-3 text-left">Student Level</th>
+                <th className="px-6 py-3 text-left">Enrolled Courses</th>
+                <th className="px-6 py-3 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -102,13 +102,28 @@ export default function ViewUsersPage() {
                 .filter((user) => user._id) // Filter out users with no _id or invalid data
                 .map((user: any) => (
                   <tr key={user._id}>
-                    <td className="px-4 py-2">{user.name}</td>
-                    <td className="px-4 py-2">{user.email}</td>
-                    <td className="px-4 py-2">{user.role}</td>
-                    <td className="px-4 py-2">{user.birthday}</td>
-                    <td className="px-4 py-2">{user.studentLevel}</td>
-                    <td className="px-4 py-2">{user.enrolledCourses}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-6 py-4">{user.name || "N/A"}</td>
+                    <td className="px-6 py-4">{user.email || "N/A"}</td>
+                    <td className="px-6 py-4">{user.role || "N/A"}</td>
+                    <td className="px-6 py-4">{user.birthday || "N/A"}</td>
+                    <td className="px-6 py-4">{user.studentLevel || "N/A"}</td>
+                    <td className="px-6 py-4">
+                      {user.enrolledCourses && user.enrolledCourses.length > 0 ? (
+                        <ul className="ml-4 space-y-2">
+                          {user.enrolledCourses.map((course: any) => (
+                            <li key={course._id} className="p-2 bg-gray-50 border rounded-md">
+                              <div className="font-semibold">{course.title}</div>
+                              <div className="text-sm text-gray-600">
+                                <strong>Course ID:</strong> {course._id}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No enrolled courses</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <button
                         onClick={() => handleDeleteClick(user._id)}
                         className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
