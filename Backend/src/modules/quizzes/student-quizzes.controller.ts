@@ -58,13 +58,37 @@ async startQuiz(
     @Req() req: any,
   ): Promise<QuizResponse> {
     const userId = req.user.id;
+    console.log('userId', userId);
     return this.studentQuizzesService.getUserResponse(userId, quizId);
   }
   
+
+  @Roles('student')  
+  @Get('average-scores/:courseId')
+  async getAverageScores(
+    @Param('courseId') courseId: string,
+    @Req() req: any,
+  ): Promise<{ averageScore: number }> {
+    const userId = req.user.id;  
+    try {
+      const averageScore = await this.studentQuizzesService.getAverageScores(courseId, userId);  
+      return { averageScore };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);  
+      }
+      throw new BadRequestException('An error occurred while calculating the average score'); 
+    }
+
+
+
+
+
   }
   
 
-  
 
+  
+}
 
 

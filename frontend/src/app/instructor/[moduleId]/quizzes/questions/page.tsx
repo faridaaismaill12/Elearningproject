@@ -47,7 +47,7 @@ const QuestionsTable: React.FC = () => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:6008/instructor/quizzes/module/${moduleId}`, {
+      const response = await axios.get(`http://localhost:6097/instructor/quizzes/module/${moduleId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setQuestions(response.data);
@@ -60,7 +60,7 @@ const QuestionsTable: React.FC = () => {
 
   const handleDelete = async (questionId: string) => {
     try {
-      await axios.delete(`http://localhost:6008/instructor/quizzes/delete/question/${questionId}`, {
+      await axios.delete(`http://localhost:6097/instructor/quizzes/delete/question/${questionId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setQuestions((prev) => prev.filter((q) => q._id !== questionId));
@@ -108,7 +108,7 @@ const QuestionsTable: React.FC = () => {
         options: formData.options.split(",").map((option) => option.trim()),
       };
 
-      await axios.patch(`http://localhost:6008/instructor/quizzes/update/question/${currentQuestion._id}`, updatedQuestion, {
+      await axios.patch(`http://localhost:6097/instructor/quizzes/update/question/${currentQuestion._id}`, updatedQuestion, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchQuestions();
@@ -127,7 +127,7 @@ const QuestionsTable: React.FC = () => {
         options: formData.options.split(",").map((option) => option.trim()),
       };
 
-      await axios.post(`http://localhost:6008/instructor/quizzes/add`, newQuestion, {
+      await axios.post(`http://localhost:6097/instructor/quizzes/add`, newQuestion, {
         headers: { Authorization: `Bearer ${token}` },
       });
       resetForm();
