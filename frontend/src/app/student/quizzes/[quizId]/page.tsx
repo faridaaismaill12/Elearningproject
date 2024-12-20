@@ -96,6 +96,8 @@ const QuizPage = () => {
         { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );
 
+      console.log('Quiz submitted:', response.data);
+
       const { feedback } = response.data;
 
       // Save the feedback into state
