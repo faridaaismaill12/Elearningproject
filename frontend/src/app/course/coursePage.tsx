@@ -3,16 +3,20 @@
 import React, { useState, useEffect } from "react";
 import { Menu, MenuItem, IconButton, Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SortIcon from "@mui/icons-material/Sort"; // Import Sort Icon
 import { useRouter } from "next/navigation";
 import CreateCourse from "./Course_Components/create_course";
 import ViewEnrolled from "./Course_Components/view_enrolled";
+import EditCourse from "./Course_Components/edit_course"; // Import EditCourse component
 
 const CoursePage = () => {
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [showViewEnrolled, setShowViewEnrolled] = useState(false);
+  const [showEditCourse, setShowEditCourse] = useState(false);
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -21,7 +25,7 @@ const CoursePage = () => {
   const router = useRouter();
 
   const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ3NzY2NzksImV4cCI6MTczNDg2MzA3OX0.VmALJZC32xy7mGwCDYcOxCxWtOE1TyEVH_1T2bu4sAw";
- 
+
   // Fetch all courses
   const fetchCourses = async () => {
     try {
@@ -55,13 +59,21 @@ const CoursePage = () => {
     setSearchQuery(query);
 
     if (query) {
-      const filtered = courses.filter((course) =>
-        course.keywords.some((keyword: string) => keyword.toLowerCase().includes(query))
+      const filtered = courses.filter(
+        (course) =>
+          course.title.toLowerCase().includes(query) ||
+          course.keywords.some((keyword: string) => keyword.toLowerCase().includes(query))
       );
       setFilteredCourses(filtered);
     } else {
       setFilteredCourses(courses);
     }
+  };
+
+  // Sort courses by date (newest first)
+  const handleSortByDate = () => {
+    const sortedCourses = [...filteredCourses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setFilteredCourses(sortedCourses);
   };
 
   // Open menu
@@ -73,6 +85,17 @@ const CoursePage = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedCourseId(null);
+  };
+
+  // Open the Edit Course Modal
+  const handleOpenEditCourse = (course: any) => {
+    setSelectedCourse(course);
+    setShowEditCourse(true);
+  };
+
+  const handleCloseEditCourse = () => {
+    setShowEditCourse(false);
+    setSelectedCourse(null);
   };
 
   // Delete Course
@@ -126,7 +149,10 @@ const CoursePage = () => {
       {/* Page Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 style={{ margin: 0, fontSize: "2rem" }}>Your Courses</h1>
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <IconButton onClick={handleSortByDate} style={{ cursor: "pointer" }}>
+            <SortIcon />
+          </IconButton>
           <button
             onClick={handleOpenCreateCourse}
             style={{
@@ -161,7 +187,7 @@ const CoursePage = () => {
       {/* Search Bar */}
       <input
         type="text"
-        placeholder="Search by keyword"
+        placeholder="Search by name or keyword"
         value={searchQuery}
         onChange={handleSearch}
         style={{
@@ -176,6 +202,15 @@ const CoursePage = () => {
 
       {/* Create Course Modal */}
       {showCreateCourse && <CreateCourse onClose={handleCloseCreateCourse} />}
+
+      {/* Edit Course Modal */}
+      {showEditCourse && selectedCourse && (
+        <EditCourse
+          course={selectedCourse}
+          onClose={handleCloseEditCourse}
+          onSuccess={fetchCourses}
+        />
+      )}
 
       {/* Error Message */}
       {error && (
@@ -226,8 +261,8 @@ const CoursePage = () => {
                   anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
+                  <MenuItem onClick={() => handleOpenEditCourse(course)}>Edit Course</MenuItem>
                   <MenuItem onClick={() => console.log("Create Module clicked")}>Create Module</MenuItem>
-                  <MenuItem onClick={() => console.log("Edit Course clicked")}>Edit Course</MenuItem>
                   <MenuItem onClick={() => setDeleteDialogOpen(true)}>Delete Course</MenuItem>
                   <MenuItem onClick={() => handleViewCourseDetails(course._id)}>Course Details</MenuItem>
                 </Menu>
