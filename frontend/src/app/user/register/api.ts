@@ -1,8 +1,8 @@
 
-const API_BASE_URL = 'http://localhost:4000/user/register';
+const API_BASE_URL = 'http://localhost:5000';
 export async function registerUser(data: any) {
     try {
-        const response = await fetch('${API_BASE_URL}/users/register', {
+        const response = await fetch(`${API_BASE_URL}/users/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
