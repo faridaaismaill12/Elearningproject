@@ -37,6 +37,7 @@ async startQuiz(
     throw new BadRequestException('An error occurred while starting the quiz');
   }
 }
+
 @Roles('student')
 @Post('/submit/:quizId')
   async submitQuiz(
