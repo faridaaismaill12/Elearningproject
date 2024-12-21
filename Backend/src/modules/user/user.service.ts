@@ -469,4 +469,23 @@ export class UserService {
     
 
 
+    async findUserById(id: string): Promise<any> {
+
+        // Implement the logic to find a user by ID
+
+        // For example:
+
+        const user = await this.userModel.findById(id).exec();
+
+        if (!user) {
+
+            throw new NotFoundException('User not found');
+
+        }
+
+        return user;
+
+    }
+
+
 }
