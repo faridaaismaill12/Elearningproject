@@ -98,7 +98,7 @@ async getQuestionByModule(
   @Param('questionId') questionId: string,
 ): Promise<Question> {
     return await this.instructorQuizzesService.getQuestionByModule(moduleId, questionId);
- 
+
 }
 
 //done on frontend
@@ -108,7 +108,7 @@ async getQuestionsByModule(
   @Param('moduleId') moduleId: string,
 ): Promise<Question[]> {
     return await this.instructorQuizzesService.getQuestionsByModule(moduleId);
- 
+
 }
 
 @Roles('instructor')
@@ -132,9 +132,19 @@ async findResponsesForQuiz(@Param('userId') userId: string,@Param('quizId') quiz
     }
   }
 
-
-
-  
+@Roles('instructor')
+@Get(':courseId/average-quizzes')  
+  async getAverageCourseQuizzes(@Param('courseId') courseId: string): Promise<number> {
+    try {
+      const average = await this.instructorQuizzesService.averageCourseQuizzes(courseId);
+      return average;
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;  
+      }
+      throw new NotFoundException('Error calculating average quiz score');
+    }
+  }
 }
 
 

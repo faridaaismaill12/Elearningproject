@@ -7,9 +7,10 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
-import { Course } from '../course/schemas/course.schema';
+import { Course, CourseDocument } from '../course/schemas/course.schema';
 import {Module, ModuleDocument} from '../course/schemas/module.schema'
 import { UpdateQuestionDto } from './dto/update-quiz.dto';
+
 
 @Injectable()
 export class InstructorQuizzesService {
@@ -17,11 +18,9 @@ export class InstructorQuizzesService {
   @InjectModel(Question.name) private questionModel: Model<Question>,
   @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
   @InjectModel(User.name) private userModel: Model<User>,
-@InjectModel(Module.name) private moduleModel: Model<Module>,
-@InjectModel(Course.name) private courseModel: Model<Course>
+  @InjectModel(Module.name) private moduleModel: Model<Module>,
+  @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
 ) {}
-
-
 
 //done testing
 async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promise<Question> {
@@ -37,18 +36,16 @@ async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promis
   if (!module) {
     throw new NotFoundException('Module not found');
   }
-
+  
   const duplicateQuestion = await this.questionModel.findOne({
     question: question, 
     moduleId: new Types.ObjectId(moduleId),
     questionType,
     difficultyLevel,
   });
-
   if (duplicateQuestion) {
     throw new BadRequestException('Duplicate question detected. The question already exists in this module.');
   }
-
   let Options = [];
   if (questionType === 'TorF') {
     Options = ['True', 'False'];
@@ -382,7 +379,7 @@ async updateQuestion(
     if (!quiz) {
       throw new NotFoundException('Quiz not found');
     }
- 
+
     if (updateQuizDto.name && updateQuizDto.name !== quiz.name) {
       const existingName = await this.quizModel.findOne({ name: updateQuizDto.name });
       if (existingName) {
@@ -419,7 +416,7 @@ async updateQuestion(
   if (!module.questions || module.questions.length === 0) {
     throw new NotFoundException('Questions not found');
 }
- return module.questions
+return module.questions
 
 }
 
@@ -445,7 +442,7 @@ const question = module.questions.find((q: any) => q._id.equals(questionId));
 if (!question) {
   throw new NotFoundException('Question not found');
 }
- return question;
+return question;
 
 }
 
@@ -464,8 +461,6 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
     createdBy: userId
     
   });
-
-
   if (!quiz) {
     throw new NotFoundException('Quiz not found or you are not the creator of this quiz');
   }

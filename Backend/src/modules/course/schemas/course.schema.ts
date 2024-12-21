@@ -80,7 +80,16 @@ export class Course {
   })
   enrolledStudents?: Types.ObjectId[];
   
+  ratings!: Array<{
+    userId: string;
+    rating: number;
+    review?: string;
+  }>;
 
+  // Average rating for the course (calculated from the ratings)
+  @Prop({ type: Number, default: 0 })
+  averageRating!: number;
+  
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
