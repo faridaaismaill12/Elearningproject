@@ -9,9 +9,21 @@ import { ModuleService } from './module.service';
 import { Course, CourseSchema } from './schemas/course.schema';
 import { Lesson, LessonSchema } from './schemas/lesson.schema';
 import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1d',
+        },
+      }),
+      inject: [ConfigService],
+    }),
     MongooseModule.forFeature([
       { name: Course.name, schema: CourseSchema },
       { name: 'Lesson', schema: LessonSchema },
