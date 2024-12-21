@@ -2,14 +2,21 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import UpdateModule from "../../../Course_Components/update_module";
+import CreateLesson from "../../../Course_Components/create_lesson";
+import AddFile from "../../../Course_Components/add_file";
 
 const ModuleDetails = () => {
-  const { courseId, moduleId } = useParams(); // Get courseId and moduleId from route params
+  const { courseId, moduleId } = useParams();
   const [moduleDetails, setModuleDetails] = useState<any>(null);
+  const [lessons, setLessons] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showUpdateForm, setShowUpdateForm] = useState<boolean>(false);
+  const [showCreateLessonForm, setShowCreateLessonForm] = useState<boolean>(false);
+  const [showAddFileForm, setShowAddFileForm] = useState<boolean>(false);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQzNjY3MjMsImV4cCI6MTczNDQ1MzEyM30.VbviQRiZD0SmL6WVimwmjzFZlVt-XrWXVrtSFSvP8bs"; // Replace with dynamic JWT token logic
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ2ODQ0NTUsImV4cCI6MTczNDc3MDg1NX0.LYAmmv4QDNDVD3tR2XhjCXSKj5Mul19m9wSCg-ayTFc";
 
   useEffect(() => {
     const fetchModuleDetails = async () => {
@@ -22,6 +29,7 @@ const ModuleDetails = () => {
 
         const data = await response.json();
         setModuleDetails(data);
+        setLessons(data.lessons || []);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -32,45 +40,44 @@ const ModuleDetails = () => {
     fetchModuleDetails();
   }, [courseId, moduleId]);
 
-  // Function to download module files
   const handleDownloadFiles = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`,
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (!response.ok) {
-        throw new Error(`Failed to download files: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Failed to download files: ${response.statusText}`);
 
-      // Get the filename from the response headers
       const disposition = response.headers.get("Content-Disposition");
       const fileName = disposition?.split("filename=")[1] || "module_files.zip";
-
-      // Convert the response to a blob
       const blob = await response.blob();
 
-      // Create a link element to trigger download
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = fileName.replace(/"/g, ""); // Clean filename
+      link.download = fileName.replace(/"/g, "");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       console.log("Download initiated");
     } catch (err: any) {
-      console.error("Error downloading files:", err.message);
       setError("Failed to download files. Please try again.");
     }
   };
 
   if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
   if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
+
+  if (showUpdateForm) {
+    return (
+      <UpdateModule
+        courseId={courseId}
+        moduleId={moduleId}
+        currentDetails={moduleDetails}
+        onClose={() => setShowUpdateForm(false)}
+      />
+    );
+  }
 
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif", maxWidth: "800px", margin: "0 auto" }}>
@@ -100,24 +107,108 @@ const ModuleDetails = () => {
         </p>
       </div>
 
-      {/* Download Module Files Button */}
-      <button
-        onClick={handleDownloadFiles}
+      {/* Lessons Display */}
+      <h2>Lessons</h2>
+      <div
         style={{
-          padding: "0.5rem 1rem",
-          backgroundColor: "#007bff",
-          color: "#fff",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          display: "block",
-          margin: "0 auto",
+          display: "flex",
+          overflowX: "auto",
+          gap: "1rem",
+          padding: "1rem 0",
+          borderTop: "1px solid #ddd",
+          borderBottom: "1px solid #ddd",
         }}
       >
-        Download Module Files
-      </button>
+        {lessons.map((lesson, index) => (
+          <div
+            key={index}
+            style={{
+              minWidth: "200px",
+              padding: "1rem",
+              backgroundColor: "#f1f1f1",
+              borderRadius: "8px",
+              boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <h3 style={{ margin: "0 0 0.5rem" }}>{lesson.title}</h3>
+            <p style={{ fontSize: "0.9rem", color: "#555" }}>{lesson.content}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Buttons */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "1rem",
+          flexWrap: "wrap",
+          marginTop: "1rem",
+        }}
+      >
+        <button
+          onClick={handleDownloadFiles}
+          style={buttonStyle("#007bff")}
+        >
+          Download Files
+        </button>
+        <button
+          onClick={() => setShowUpdateForm(true)}
+          style={buttonStyle("#28a745")}
+        >
+          Update Module
+        </button>
+        <button
+          onClick={() => setShowCreateLessonForm(true)}
+          style={buttonStyle("#17a2b8")}
+        >
+          Create Lesson
+        </button>
+        <button
+          onClick={() => setShowAddFileForm(true)}
+          style={buttonStyle("#ffc107")}
+        >
+          Add Files
+        </button>
+      </div>
+
+      {/* Render CreateLesson Form */}
+      {showCreateLessonForm && (
+        <div style={{ marginTop: "2rem" }}>
+          <CreateLesson
+            courseId={courseId}
+            moduleId={moduleId}
+            onClose={() => setShowCreateLessonForm(false)}
+          />
+        </div>
+      )}
+
+      {/* Render AddFile Form */}
+      {showAddFileForm && (
+        <div style={{ marginTop: "2rem" }}>
+          <AddFile
+            courseId={courseId}
+            moduleId={moduleId}
+            onClose={() => setShowAddFileForm(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
+
+// Button styling function
+const buttonStyle = (bgColor: string) => ({
+  padding: "0.5rem 1rem",
+  backgroundColor: bgColor,
+  color: "#fff",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+  fontSize: "1rem",
+  transition: "background-color 0.3s",
+  textAlign: "center",
+  minWidth: "120px",
+});
 
 export default ModuleDetails;

@@ -139,7 +139,7 @@ async createLesson(
   }
 
   // Delete a course by instructor - Only instructors
-  @Roles('instructor') // Ensure only instructors can access this endpoint
+  @Roles('instructor,admin') // Ensure only instructors can access this endpoint
 @Delete(':id')
 async deleteCourse(
   @Param('id') courseId: string,

@@ -4,11 +4,15 @@ import React, { useState, useEffect } from "react";
 import { Menu, MenuItem, IconButton, Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
-import CreateCourse from "./Course_Components/create_course"; // Import the CreateCourse component
+import CreateCourse from "./Course_Components/create_course";
+import ViewEnrolled from "./Course_Components/view_enrolled";
 
 const CoursePage = () => {
   const [showCreateCourse, setShowCreateCourse] = useState(false);
+  const [showViewEnrolled, setShowViewEnrolled] = useState(false);
   const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -16,9 +20,8 @@ const CoursePage = () => {
 
   const router = useRouter();
 
-  // Hardcoded token for testing
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQzNjEyNDcsImV4cCI6MTczNDQ0NzY0N30.Ln1CwAvCXLa1_Egx8BnNPZEdlo_gjpGxsyROCJWvvws";
-
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ3NzY2NzksImV4cCI6MTczNDg2MzA3OX0.VmALJZC32xy7mGwCDYcOxCxWtOE1TyEVH_1T2bu4sAw";
+ 
   // Fetch all courses
   const fetchCourses = async () => {
     try {
@@ -35,7 +38,8 @@ const CoursePage = () => {
       }
 
       const data = await response.json();
-      setCourses(data); // Update state with fetched courses
+      setCourses(data);
+      setFilteredCourses(data);
     } catch (err) {
       setError(err.message);
     }
@@ -44,6 +48,21 @@ const CoursePage = () => {
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  // Search functionality
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+
+    if (query) {
+      const filtered = courses.filter((course) =>
+        course.keywords.some((keyword: string) => keyword.toLowerCase().includes(query))
+      );
+      setFilteredCourses(filtered);
+    } else {
+      setFilteredCourses(courses);
+    }
+  };
 
   // Open menu
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, courseId: string) => {
@@ -70,8 +89,8 @@ const CoursePage = () => {
         throw new Error(`Failed to delete course. Status: ${response.statusText}`);
       }
 
-      // Remove the deleted course from state
       setCourses((prevCourses) => prevCourses.filter((course) => course._id !== courseId));
+      setFilteredCourses((prevCourses) => prevCourses.filter((course) => course._id !== courseId));
       setDeleteDialogOpen(false);
     } catch (err) {
       console.error("Delete course error:", err.message);
@@ -93,31 +112,70 @@ const CoursePage = () => {
     setShowCreateCourse(false);
   };
 
+  // Open the View Enrolled Modal
+  const handleOpenViewEnrolled = () => {
+    setShowViewEnrolled(true);
+  };
+
+  const handleCloseViewEnrolled = () => {
+    setShowViewEnrolled(false);
+  };
+
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif", maxWidth: "1200px", margin: "0 auto" }}>
       {/* Page Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 style={{ margin: 0, fontSize: "2rem" }}>Your Courses</h1>
-        <button
-          onClick={handleOpenCreateCourse}
-          style={{
-            padding: "0.5rem 1.5rem",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "1rem",
-            cursor: "pointer",
-          }}
-        >
-          Create Course
-        </button>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button
+            onClick={handleOpenCreateCourse}
+            style={{
+              padding: "0.5rem 1.5rem",
+              backgroundColor: "#007bff",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "1rem",
+              cursor: "pointer",
+            }}
+          >
+            Create Course
+          </button>
+          <button
+            onClick={handleOpenViewEnrolled}
+            style={{
+              padding: "0.5rem 1.5rem",
+              backgroundColor: "#28a745",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "1rem",
+              cursor: "pointer",
+            }}
+          >
+            View Enrolled
+          </button>
+        </div>
       </div>
 
+      {/* Search Bar */}
+      <input
+        type="text"
+        placeholder="Search by keyword"
+        value={searchQuery}
+        onChange={handleSearch}
+        style={{
+          padding: "0.5rem",
+          width: "100%",
+          marginBottom: "1rem",
+          fontSize: "1rem",
+          borderRadius: "4px",
+          border: "1px solid #ddd",
+        }}
+      />
+
       {/* Create Course Modal */}
-      {showCreateCourse && (
-        <CreateCourse onClose={handleCloseCreateCourse} />
-      )}
+      {showCreateCourse && <CreateCourse onClose={handleCloseCreateCourse} />}
 
       {/* Error Message */}
       {error && (
@@ -127,9 +185,9 @@ const CoursePage = () => {
       )}
 
       {/* Course List */}
-      {courses.length > 0 ? (
+      {filteredCourses.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {courses.map((course) => (
+          {filteredCourses.map((course) => (
             <div
               key={course._id}
               style={{
@@ -144,7 +202,12 @@ const CoursePage = () => {
               }}
             >
               {/* Course Title */}
-              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#333" }}>{course.title}</h3>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#333" }}>{course.title}</h3>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: "#666" }}>
+                  Keywords: {course.keywords.join(", ")}
+                </p>
+              </div>
 
               {/* Three Dots Menu */}
               <div>
@@ -191,6 +254,9 @@ const CoursePage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* View Enrolled Modal */}
+      {showViewEnrolled && <ViewEnrolled onClose={handleCloseViewEnrolled} />}
     </div>
   );
 };
