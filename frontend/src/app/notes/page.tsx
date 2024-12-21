@@ -45,13 +45,13 @@ const saveNote = async () => {
     try {
     if (currentNote) {
         // Update existing note
-        await axios.patch(`http://localhost:5010/notes/${currentNote}`, noteData);
+        await axios.patch(`http://localhost:5000/notes/${currentNote}`, noteData);
     } else {
         // Create new note
-        await axios.post('http://localhost:5010/notes', noteData);
+        await axios.post('http://localhost:5000/notes', noteData);
     }
       // Refresh notes after saving
-    const response = await axios.get(`http://localhost:5010/notes?creator=${creator}`);
+    const response = await axios.get(`http://localhost:5000/notes?creator=${creator}`);
     setNotes(response.data);
     } catch (error) {
     console.error('Error saving note', error);
@@ -65,7 +65,7 @@ const handleNoteClick = (noteId: string, content: string) => {
 
 const handleDelete = async (noteId: string) => {
     try {
-    await axios.delete(`http://localhost:5010/notes/${noteId}`);
+    await axios.delete(`http://localhost:5000/notes/${noteId}`);
       setNotes(notes.filter((note) => note._id !== noteId)); // Remove deleted note from state
     } catch (error) {
     console.error('Error deleting note', error);
