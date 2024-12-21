@@ -5,10 +5,12 @@ import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from './schemas/course.schema';
 import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
 import { Lesson, LessonDocument } from './schemas/lesson.schema';
+
 import archiver from 'archiver';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
+
 
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
@@ -21,16 +23,18 @@ export class CourseService {
   ) {}
 
   // Other service methods
-  
+
 
 
   // Create a course
+
   async createCourse(courseData: Partial<Course>, instructorEmail: string): Promise<Course> {
+
     const newCourse = new this.courseModel({
       ...courseData,
       instructor: instructorEmail, // Set instructor's email
     });
-  
+
     return newCourse.save();
   }
   
@@ -83,21 +87,20 @@ export class CourseService {
     if (!Types.ObjectId.isValid(courseId)) {
       throw new BadRequestException('Invalid course ID format.');
     }
-  
+
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
-  
+
     const newModule = new this.moduleModel({
       ...moduleData,
       courseId,
       lessons: [],
     });
-  
+
     const savedModule = await newModule.save();
-  
-    // Save module information in the course's modules array (if required)
+
     course.modules.push({
       _id: savedModule._id.toHexString(),
       title: savedModule.title,
@@ -105,12 +108,14 @@ export class CourseService {
       difficultyLevel: savedModule.difficultyLevel,
       lessons: savedModule.lessons,
     });
+
   
     await course.save();
-  
+
+
+
     return savedModule;
   }
-  
 
   async addFilesToModule(courseId: string, moduleId: string, fileLocations: string[]): Promise<ModuleSchema> {
     if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
@@ -129,6 +134,8 @@ export class CourseService {
     // Save the updated module
     return module.save();
   }
+
+
 
 
   // Get all modules for a specific course
@@ -190,6 +197,7 @@ export class CourseService {
       completions: [],
       resources: [],
     };
+
   
     // Save the lesson in the Lesson collection
     const createdLesson = new this.lessonModel(newLesson);
@@ -218,6 +226,7 @@ export class CourseService {
   }
   
 
+
   // Update a course by MongoDB _id
   async updateCourse(courseId: string, updatedData: Partial<Course>): Promise<Course> {
     if ('modules' in updatedData) {
@@ -238,6 +247,7 @@ export class CourseService {
 
     return updatedCourse;
   }
+
 
 
   async getFilesForModule(
@@ -367,3 +377,4 @@ async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
   
 
 }
+

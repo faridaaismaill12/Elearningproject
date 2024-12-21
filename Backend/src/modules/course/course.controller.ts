@@ -4,27 +4,37 @@ import {
   Body,
   Param,
   BadRequestException,
-  UploadedFiles,
-  UseInterceptors,
   Get,
   Patch,
   Delete,
   NotFoundException,
   Res,
+
+  UseInterceptors,
+  UploadedFiles,
+
+
   Req,
   UseGuards,
+
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CourseService } from './course.service';
+import { Course } from './schemas/course.schema';
+import { Types } from 'mongoose';
+import { Question } from '../quizzes/schemas/question.schema';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { Course } from './schemas/course.schema';
 
-// Multer storage configuration
+
+// Multer storage configuration for file upload
+
 const storage = diskStorage({
   destination: './uploads', // Folder to store files
   filename: (req, file, callback) => {
@@ -33,6 +43,7 @@ const storage = diskStorage({
     callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
   },
 });
+
 
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard) // Global guard for all endpoints in this controller
@@ -83,11 +94,23 @@ async uploadFilesToModule(
   @Param('moduleId') moduleId: string,
   @UploadedFiles() files: Express.Multer.File[],
 ) {
+
+  console.log('Module Data:', moduleData); // Log module data
+  console.log('Uploaded Files:', files);  // Log uploaded files
+
+//   if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
+//     throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
+//   }
+
+
+
   const fileLocations = files.map((file) => `uploads/${file.filename}`);
   return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
 }
 
 
+
+\
 
 // Create a lesson for a specific module - Only instructors
 @Roles('instructor')
