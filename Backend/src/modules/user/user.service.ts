@@ -21,6 +21,12 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { HydratedDocument } from 'mongoose';
+
+export type UserDocument = HydratedDocument<User> & {
+    enrolledCourses: Types.ObjectId[] | Course[];
+};
+
 
 @Injectable()
 export class UserService {
@@ -114,6 +120,12 @@ export class UserService {
 
         return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
     }
+    
+    async getUserName(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId).select('name').exec();
+        return user ? user.name : 'null';
+    }
+    
 
 
 
@@ -427,10 +439,35 @@ export class UserService {
     }
 
     //return user name by given user id
-    async getUserName(userId: string) {
-        const user = await this.userModel.findById(userId).select('name').exec();
-        return user ? user.name : 'null';
+    async getUserEnrolledCourses(userId: string): Promise<{ title: string }[]> {
+        if (!Types.ObjectId.isValid(userId)) {
+            throw new BadRequestException('Invalid user ID format');
+        }
+    
+        // Fetch the user's enrolled courses (ObjectIds)
+        const user = await this.userModel.findById(userId).exec();
+    
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+    
+        if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
+            return []; // Return an empty array if no courses are enrolled
+        }
+    
+        // Fetch course titles from the Course collection
+        const courses = await this.courseModel
+            .find({ _id: { $in: user.enrolledCourses } })
+            .select('title')
+            .exec();
+    
+        // Return only the course titles
+        return courses.map((course) => ({ title: course.title }));
     }
+    
+    
+    
+
 
     async findUserById(id: string): Promise<any> {
 
