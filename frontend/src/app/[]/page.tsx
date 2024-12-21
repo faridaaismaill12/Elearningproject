@@ -3,13 +3,14 @@ import Banner from './banner/Banner'
 import About from './about/About'
 import Courses from './courses/CoursesDisplay'
 import Slider from './slider/Slider'
+import Sidebar from '../_components/sidebar/Sidebar'
 const HomePage = () => {
   return (
     <div>
+      <Sidebar/>
       <Banner/>
       <About/>
       <Courses/>
-      <Slider/>
     </div>
   )
 }
