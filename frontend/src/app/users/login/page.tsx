@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:4000/users/login", {
+      const response = await axios.post("http://localhost:5000/users/login", {
         email: formData.email,
         passwordHash: formData.password,
       });
@@ -44,6 +44,7 @@ export default function LoginPage() {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "Login failed. Please try again.");
       } else {
+        console.log(err);
         setError("An unexpected error occurred.");
       }
     } finally {
