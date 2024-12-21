@@ -28,10 +28,14 @@ import { SearchStudentDto } from './dto/search-student.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
+import { JwtService } from '@nestjs/jwt/dist/jwt.service';
 
 @Controller('users')
 export class UserController {
-    constructor(private readonly userService: UserService) { }
+    constructor(private readonly userService: UserService,
+                private readonly jwtService: JwtService,
+    )
+     { }
 
     /**
      * Register a new user
@@ -69,19 +73,20 @@ export class UserController {
     /**
      * Reset password using a token
      */
-    @Post('reset-password')
-    async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
-        console.log('Token:', token);
-        console.log('New Password DTO:', resetPasswordDto);
+    @Post('reset')
+    async resetPassword(
+        @Query('token') token: string,
+        @Body() resetPasswordDto: ResetPasswordDto,
+    ): Promise<{ message: string }> {
+        const { newPassword } = resetPasswordDto;
 
-        if (!token || !resetPasswordDto.newPassword) {
+        if (!token || !newPassword) {
             throw new BadRequestException('Token and new password are required');
         }
 
-        return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
-    } // tested
-
-
+        // Call the service to handle the password reset logic
+        return await this.userService.resetPassword(token, newPassword);
+    }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'instructor') // Only admins and instructors can enroll users
@@ -103,36 +108,25 @@ export class UserController {
      * Update user profile
      */
     @UseGuards(JwtAuthGuard)
-    @Patch('update/:id')
+    @Patch('update-profile')
     async updateProfile(
-        @Param('id') id: string,
-        @Body() updateUserDto: UpdateUserDto,
-        @Req() req: Request & { user: { sub: string; email: string } },
-    ) {
-        const userIdFromToken = req.user.sub; // Extract user ID from JWT payload
-
-        if (userIdFromToken !== id) {
-            throw new ForbiddenException('You can only update your own profile');
-        }
+        @Body() updateUserDto: UpdateUserDto, @Req() req: any) {
+        const userIdFromToken = req.user.id; // Extract user ID from JWT payload
 
         console.log('Update Profile endpoint invoked.');
-        return this.userService.updateProfile(updateUserDto, id);
+        return this.userService.updateProfile(updateUserDto, userIdFromToken);
     } // tested 
 
     /**
      * Delete user profile
      */
     @UseGuards(JwtAuthGuard)
-    @Delete('delete/:id')
-    async deleteProfile(@Param('id') userId: string, @Req() req: any) {
-        const userIdFromToken = req.user.sub;
-
-        if (userIdFromToken !== userId) {
-            throw new ForbiddenException('You can only delete your own profile');
-        }
+    @Delete('delete-profile')
+    async deleteProfile(@Req() req: any) {
+        const userIdFromToken = req.user.id;
 
         console.log('Delete Profile endpoint invoked.');
-        return this.userService.deleteProfile(userId);
+        return this.userService.deleteProfile(userIdFromToken);
     } // tested
 
     /**
@@ -140,9 +134,9 @@ export class UserController {
      */
     @UseGuards(JwtAuthGuard)
     @Get('view-profile')
-    async getProfile( @Req() req: any) {
+    async getProfile(@Req() req: any) {
         const userIdFromToken = req.user.id;
-        console.log(userIdFromToken);
+
         console.log('Get Profile endpoint invoked.');
         return this.userService.viewProfile(userIdFromToken);
     } // tested
@@ -181,13 +175,9 @@ export class UserController {
     //  */
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can delete users
-    @Delete('delete-user/:id')
-    async deleteUser(
-        @Param('id') id: string,
-        @Req() req: any
-    ) {
-        const adminId = req.user.sub; // Extract admin ID from token
-        return this.userService.deleteUser(adminId, id);
+    @Delete('delete-user')
+    async deleteUser(@Body('userId') userId: string) {
+        return this.userService.deleteUser(userId);
     }
 // tested
 
@@ -197,9 +187,8 @@ export class UserController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can view all users
     @Get('get-all-users')
-    async getAllUsers(@Req() req: any) {
-        const adminId = req.user.sub; // Extract admin ID from token
-        return this.userService.getAllUsers(adminId);
+    async getAllUsers() {
+        return this.userService.getAllUsers();
     }
 
 
@@ -262,5 +251,57 @@ export class UserController {
       }
     }
 
-}
 
+
+
+
+    @Post('enable')
+    @UseGuards(JwtAuthGuard)
+    async enableMfa(@Req() req: any) {
+    const user = req.user; // Extracted user from token
+    if (!user) {
+        throw new UnauthorizedException("Invalid token.");
+    }
+
+    return this.userService.enable2FA(user.id); // Your service logic
+    }
+
+
+
+    @UseGuards(JwtAuthGuard)
+    @Post('verify')
+    async verify2FA(@Body() body: { otp: string }, @Req() req: any) {
+        const authHeader = req.headers['authorization'];
+        if (!authHeader) {
+            throw new UnauthorizedException('Authorization header is missing');
+        }
+    
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            throw new UnauthorizedException('Invalid Authorization header format');
+        }
+    
+        // Verify token and extract payload
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+        const userId = payload.id;
+        // console.log('User ID:', userId);
+        // console.log('OTP:', body.otp);
+        
+        if (!userId) {
+            throw new UnauthorizedException('Invalid token');
+        }
+        // console.log('Verify 2FA endpoint invoked.');
+        // Verify OTP
+        const isValid = await this.userService.verify2FA(userId, body.otp);
+        // console.log(isValid);
+        if (!isValid) {
+            throw new UnauthorizedException('Invalid OTP');
+        }
+
+        
+    
+        return { message: '2FA successful', success: true };
+    }
+
+
+}
