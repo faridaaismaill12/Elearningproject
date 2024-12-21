@@ -8,7 +8,7 @@ import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
 import { Module, ModuleDocument } from '../course/schemas/module.schema';
-import { Course } from '../course/schemas/course.schema';
+import {Course} from '../course/schemas/course.schema'; // Added Course schema
 
 @Injectable()
 export class StudentQuizzesService {
@@ -18,7 +18,7 @@ export class StudentQuizzesService {
     @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Module.name) private moduleModel: Model<Module>,
-    @InjectModel(Course.name) private courseModel: Model<Course>
+    @InjectModel(Course.name) private courseModel: Model<Course>, // Added Course model
   ) {}
   private async generateQuestions(
     numberOfQuestions: number,
@@ -272,46 +272,41 @@ export class StudentQuizzesService {
     };
   }
 
+
   async getUserResponse(userId: string, quizId: string): Promise<QuizResponse> {
     if (!Types.ObjectId.isValid(userId)) {
-      throw new NotFoundException('Invalid user ID format');
+        throw new NotFoundException('Invalid user ID format');
     }
-  
     if (!Types.ObjectId.isValid(quizId)) {
-      throw new NotFoundException('Invalid quiz ID format');
+        throw new NotFoundException('Invalid quiz ID format');
     }
-  
     const userObjectId = new Types.ObjectId(userId);
     const quizObjectId = new Types.ObjectId(quizId);
-  
     const user = await this.userModel.findById(userObjectId);
     if (!user) {
-      console.log('User not found:', userId);
-      throw new NotFoundException('User not found');
+        console.log('User not found:', userId);
+        throw new NotFoundException('User not found');
     }
-  
     const quiz = await this.quizModel.findById(quizObjectId);
     if (!quiz) {
-      console.log('Quiz not found:', quizId);
-      throw new NotFoundException('Quiz not found');
+        console.log('Quiz not found:', quizId);
+        throw new NotFoundException('Quiz not found');
     }
-  
-    const response = await this.responseModel
-      .findOne({ user: userObjectId, quiz: quizObjectId })
-      .populate('quiz') // Only populate valid paths like `quiz` or `user`
-      .populate({
-        path: 'answers.questionId', // Populate specific fields
-        select: 'question correctAnswer',
-      });
-  
+
+
+//all scores for all modules, for a specific course and take the average 
+    const response = await this.responseModel.findOne({
+        user: userObjectId,
+        quiz: quizObjectId,
+    }).populate('correctAnswers score totalAnswers');
+
     if (!response) {
-      console.log('Response not found for user:', userId, 'and quiz:', quizId);
-      throw new NotFoundException('You have not taken this quiz');
+        console.log('Response not found for user:', userId, 'and quiz:', quizId);
+        throw new NotFoundException('You have not taken this quiz');
     }
-    console.log('Response found:', response);
-  
+
     return response;
-  }
+}
   
 
   async upgradeStudentLevel(userId: string): Promise<User> {
@@ -399,38 +394,6 @@ export class StudentQuizzesService {
     }
     const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
     return totalScore / responses.length;
-  }
-  
-
-  async getQuiz(moduleId: string, quizId: string): Promise<Quiz> {
-    if (!quizId || !Types.ObjectId.isValid(quizId)) {
-      console.error('Invalid Quiz ID:', quizId);
-      throw new BadRequestException('Invalid Quiz ID');
-    }
-  
-    if (!moduleId || !Types.ObjectId.isValid(moduleId)) {
-      console.error('Invalid Module ID:', moduleId);
-      throw new BadRequestException('Invalid Module ID');
-    }
-  
-   
-    const quiz = await this.quizModel
-      .findById(quizId)
-      .populate('name moduleId duration createdBy numberOfQuestions quizType');
-  
-    if (!quiz) {
-      console.error('Quiz not found for quizId:', quizId);
-      throw new NotFoundException('Quiz not found');
-    }
-  
-    const module = await this.moduleModel.findById(moduleId)
-  
-    if (!module) {
-      console.error('Module not found for moduleId:', moduleId);
-      throw new NotFoundException('Module not found');
-    }
-  
-    return quiz;
   }
   
   
