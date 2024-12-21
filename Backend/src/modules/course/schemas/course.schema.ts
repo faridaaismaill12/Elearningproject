@@ -6,8 +6,10 @@ export type CourseDocument = Course & Document;
 @Schema({ timestamps: true })
 export class Course {
 
+
   @Prop({ required: false, unique: true }) // Optional courseId
   courseId?: string;
+
 
   @Prop({ required: true })
   title!: string;
@@ -83,4 +85,14 @@ export class Course {
 
 }
 
+
 export const CourseSchema = SchemaFactory.createForClass(Course);
+
+
+// Use middleware to set courseId to _id after the document is initialized
+CourseSchema.pre('save', function (next) {
+  if (!this.courseId) {
+    this.courseId = this._id.toHexString(); // Set courseId to match _id
+  }
+  next();
+});

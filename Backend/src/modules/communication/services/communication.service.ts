@@ -6,6 +6,7 @@ import { CreateChatDto } from '../dto/create-chat.dto';
 import { AddMessageDto } from '../dto/add-message.dto';
 import { UserDocument } from '../../user/schemas/user.schema';
 import { CourseDocument } from '../../course/schemas/course.schema';
+import { NotificationService } from './notification.service';
 
 @Injectable()
 export class CommunicationService {
@@ -13,7 +14,8 @@ export class CommunicationService {
     constructor(
         @InjectModel(Chat.name) private chatModel: Model<ChatDocument>,
         @InjectModel('User') private userModel: Model<UserDocument>,
-        @InjectModel('Course') private courseModel: Model<CourseDocument>// Replace 'any' with the appropriate User model type
+        @InjectModel('Course') private courseModel: Model<CourseDocument>,
+        private readonly notificationService: NotificationService,
     ) { }
 
     async createChat(createChatDto: CreateChatDto): Promise<ChatDocument> {
@@ -80,18 +82,37 @@ export class CommunicationService {
     async addMessage(addMessageDto: AddMessageDto): Promise<Chat> {
         const chat = await this.chatModel.findById(addMessageDto.chatRoomId);
         if (!chat) {
-            throw new NotFoundException('Chat room not found');
+          throw new NotFoundException('Chat room not found');
         }
+    
+        // Add the message to the chat
         if (!chat.messages) {
             chat.messages = [];
         }
         chat.messages.push({
-            sender: addMessageDto.sender,
-            content: addMessageDto.content,
-            timestamp: new Date(),
+          sender: addMessageDto.sender,
+          content: addMessageDto.content,
+          timestamp: new Date(),
         });
-        return chat.save();
-    }
+        const updatedChat = await chat.save();
+    
+        // Notify participants except the sender
+        const sender = await this.userModel.findById(addMessageDto.sender).select('name');
+        const senderName = sender?.name || 'Unknown User';
+    
+        for (const participant of chat.participants) {
+          if (!participant.equals(addMessageDto.sender)) {
+            await this.notificationService.createNotification(
+              participant,
+              `${senderName} sent a message in ${chat.title}.`,
+              'MESSAGE',
+            );
+            console.log(`Notification sent to ${participant} for new message in chat ${chat._id}`);
+          }
+        }
+    
+        return updatedChat;
+      }
     
     
 

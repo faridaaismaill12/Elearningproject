@@ -7,6 +7,7 @@ body {
   background-color: #f0f0f0;
 }
 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -66,14 +67,16 @@ body {
     --border: 217.2 32.6% 17.5%;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground;
+  }
+
+  * {
+    @apply border-border;
   }
 }

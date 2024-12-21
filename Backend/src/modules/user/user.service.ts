@@ -21,6 +21,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { HydratedDocument } from 'mongoose';
 import { createObjectCsvWriter } from 'csv-writer';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
@@ -30,6 +31,14 @@ interface RecordData {
     userId: string;
     courseId: string;
   }
+
+
+
+export type UserDocument = HydratedDocument<User> & {
+    enrolledCourses: Types.ObjectId[] | Course[];
+};
+
+
 
 @Injectable()
 export class UserService {
@@ -123,6 +132,12 @@ export class UserService {
 
         return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
     }
+    
+    async getUserName(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId).select('name').exec();
+        return user ? user.name : 'null';
+    }
+    
 
 
 
@@ -433,11 +448,55 @@ export class UserService {
 
 
     //return user name by given user id
-    async getUserName(userId: string) {
-        const user = await this.userModel.findById(userId).select('name').exec();
-        return user ? user.name : 'null';
+    async getUserEnrolledCourses(userId: string): Promise<{ title: string }[]> {
+        if (!Types.ObjectId.isValid(userId)) {
+            throw new BadRequestException('Invalid user ID format');
+        }
+    
+        // Fetch the user's enrolled courses (ObjectIds)
+        const user = await this.userModel.findById(userId).exec();
+    
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+    
+        if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
+            return []; // Return an empty array if no courses are enrolled
+        }
+    
+        // Fetch course titles from the Course collection
+        const courses = await this.courseModel
+            .find({ _id: { $in: user.enrolledCourses } })
+            .select('title')
+            .exec();
+    
+        // Return only the course titles
+        return courses.map((course) => ({ title: course.title }));
     }
+    
+    
+    
 
+
+    async findUserById(id: string): Promise<any> {
+
+        // Implement the logic to find a user by ID
+
+        // For example:
+
+        const user = await this.userModel.findById(id).exec();
+
+        if (!user) {
+
+            throw new NotFoundException('User not found');
+
+        }
+
+        return user;
+
+    }
+  
+  
     async getAllData(): Promise<Record<string, string[]>> {
         const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
           .select('_id enrolledCourses')
@@ -554,3 +613,4 @@ export class UserService {
 
     
 }
+

@@ -27,19 +27,12 @@ export class CourseService {
 
 
   // Create a course
-  async createCourse(courseData: Partial<Course>): Promise<Course> {
-    // Validate keywords
-    if (
-      courseData.keywords &&
-      (!Array.isArray(courseData.keywords) ||
-        courseData.keywords.some((kw) => typeof kw !== 'string' || kw.trim() === ''))
-    ) {
-      throw new BadRequestException('Keywords must be an array of non-empty strings.');
-    }
+
+  async createCourse(courseData: Partial<Course>, instructorEmail: string): Promise<Course> {
 
     const newCourse = new this.courseModel({
       ...courseData,
-      keywords: courseData.keywords || [], // Default to an empty array if not provided
+      instructor: instructorEmail, // Set instructor's email
     });
 
     return newCourse.save();
@@ -67,25 +60,19 @@ export class CourseService {
 
   // Delete a course by instructor
   async deleteCourseByInstructor(courseId: string): Promise<string> {
-    const course = await this.courseModel.findOne({ courseId });
-
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new BadRequestException('Invalid course ID format.');
+    }
+  
+    const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found.');
     }
-
-    if (!course.instructor) {
-      throw new ForbiddenException('The course does not have an instructor assigned.');
-    }
-
-    // Simulate instructor verification logic (e.g., compare against authenticated user)
-    if (course.instructor.toString() !== 'instructor') {
-      throw new ForbiddenException('You are not authorized to delete this course.');
-    }
-
-    await this.courseModel.deleteOne({ courseId });
-
+  
+    await this.courseModel.deleteOne({ _id: courseId });
     return 'Course has been deleted successfully.';
   }
+  
 
   // Create a module for a specific course
   async createModuleForCourse(
@@ -332,6 +319,61 @@ export class CourseService {
   
     return course;
   }
+  
+  //update module
+  async updateModule(
+    courseId: string,
+    moduleId: string,
+    updatedData: Partial<{ title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard' }>,
+  ): Promise<ModuleSchema> {
+    // Validate IDs
+    if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
+      throw new BadRequestException('Invalid course or module ID format.');
+    }
+  
+    // Check if the course exists
+    const course = await this.courseModel.findById(courseId);
+    if (!course) throw new NotFoundException(`Course with ID ${courseId} not found.`);
+  
+    // Find the module
+    const module = await this.moduleModel.findById(moduleId);
+    if (!module || module.courseId.toString() !== courseId) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
+    }
+  
+    // Update the module attributes
+    if (updatedData.title) module.title = updatedData.title;
+    if (updatedData.content) module.content = updatedData.content;
+    if (updatedData.difficultyLevel) module.difficultyLevel = updatedData.difficultyLevel;
+  
+    // Save the updated module
+    const updatedModule = await module.save();
+  
+    // Optional: Update module references in the Course's "modules" array
+    const courseModule = course.modules.find((mod) => mod._id?.toString() === moduleId);
+    if (courseModule) {
+      courseModule.title = updatedModule.title;
+      courseModule.content = updatedModule.content;
+      courseModule.difficultyLevel = updatedModule.difficultyLevel;
+      await course.save();
+    }
+  
+    return updatedModule;
+  }
+   // Get courses by instructor email
+async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
+  if (!instructorEmail || instructorEmail.trim() === '') {
+    throw new BadRequestException('Instructor email must be provided.');
+  }
+
+  const courses = await this.courseModel.find({ instructor: instructorEmail }).exec();
+
+  if (!courses || courses.length === 0) {
+    throw new NotFoundException('No courses found for instructor with email ${instructorEmail}.');
+  }
+
+  return courses;
+}
   
 
 }

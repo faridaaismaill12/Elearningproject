@@ -9,12 +9,16 @@ import {
   Delete,
   NotFoundException,
   Res,
+
   UseInterceptors,
   UploadedFiles,
 
+
+  Req,
+  UseGuards,
+
 } from '@nestjs/common';
 import { Response } from 'express';
-
 import { CourseService } from './course.service';
 import { Course } from './schemas/course.schema';
 import { Types } from 'mongoose';
@@ -22,6 +26,12 @@ import { Question } from '../quizzes/schemas/question.schema';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { RolesGuard } from '../security/guards/role.guard';
+import { Roles } from '../../decorators/roles.decorator';
+import { Course } from './schemas/course.schema';
+
 
 // Multer storage configuration for file upload
 
@@ -35,87 +45,83 @@ const storage = diskStorage({
 });
 
 
-
-
 @Controller('courses')
+@UseGuards(JwtAuthGuard, RolesGuard) // Global guard for all endpoints in this controller
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
-  // Create a course
+  
+  // Create a course - Only instructors can create
+  @Roles('instructor') // Ensure only instructors can access this endpoint
   @Post()
-async createCourse(
-  @Body()
-  courseData: {
-    title: string;
-    description: string;
-    instructor: string;
-    difficultyLevel: 'easy' | 'medium' | 'hard';
-    keywords?: string[]; // Allow keywords as optional
-  },
-) {
-  return await this.courseService.createCourse(courseData);
-}
+  async createCourse(
+    @Body() courseData: Partial<Course>,
+    @Req() req: any, // Extract the instructor's email from the JWT
+  ): Promise<any> {
+    const instructorEmail = req.user.email; // Get instructor's email from the JWT token
+  
+    if (!instructorEmail) {
+      throw new BadRequestException('Instructor email is required.');
+    }
+  
+    return this.courseService.createCourse(courseData, instructorEmail);
+  }
 
 
-  // Create a module for a specific course
+  // Create a module (Instructor only)
+  @Roles('instructor')
   @Post(':id/modules')
+  @UseInterceptors(FilesInterceptor('files', 10, { storage }))
+  async createModule(
+    @Param('id') courseId: string,
+    @Body() moduleData: any,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const fileLocations = files.map((file) => `uploads/${file.filename}`);
+    return this.courseService.createModuleForCourse(courseId, {
+      ...moduleData,
+      locations: fileLocations,
+    });
+  }
+
+
+// Upload a file to a specific module - Only instructors
+@Roles('instructor')
+@Post(':id/modules/:moduleId/files')
 @UseInterceptors(FilesInterceptor('files', 10, { storage }))
-async createModule(
+async uploadFilesToModule(
   @Param('id') courseId: string,
-  @Body()
-  moduleData: { title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard' },
+  @Param('moduleId') moduleId: string,
   @UploadedFiles() files: Express.Multer.File[],
 ) {
+
   console.log('Module Data:', moduleData); // Log module data
   console.log('Uploaded Files:', files);  // Log uploaded files
 
-  if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
-    throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
-  }
+//   if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
+//     throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
+//   }
+
 
 
   const fileLocations = files.map((file) => `uploads/${file.filename}`);
-
-  return await this.courseService.createModuleForCourse(courseId, {
-    ...moduleData,
-    locations: fileLocations,
-  });
+  return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
 }
 
 
 
-  // Upload a file to a specific module
-  @Post(':id/modules/:moduleId/files')
-  @UseInterceptors(FilesInterceptor('files', 10, { storage })) // Allow up to 10 files
-  async uploadFilesToModule(
-    @Param('id') courseId: string,
-    @Param('moduleId') moduleId: string,
-    @UploadedFiles() files: Express.Multer.File[], // Handle multiple files
-  ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one file must be uploaded.');
-    }
+\
 
-    const fileLocations = files.map((file) => `uploads/${file.filename}`); // Extract file paths
-
-    // Call the service to update the module
-    return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
-  }
-
-  // Create a lesson for a specific module using MongoDB _id
-
-  @Post(':id/modules/:moduleId/lessons')
-  async createLesson(
-    @Param('id') courseId: string,
-    @Param('moduleId') moduleId: string,
-    @Body() lessonData: { title: string; content: string },
-  ): Promise<any> {
-    if (!lessonData.title || !lessonData.content) {
-      throw new BadRequestException('title and content are required to create a lesson.');
-    }
-
-    return await this.courseService.createLessonForModule(courseId, moduleId, lessonData);
-  }
+// Create a lesson for a specific module - Only instructors
+@Roles('instructor')
+@Post(':id/modules/:moduleId/lessons')
+async createLesson(
+  @Param('id') courseId: string,
+  @Param('moduleId') moduleId: string,
+  @Body() lessonData: { title: string; content: string },
+): Promise<any> {
+  return await this.courseService.createLessonForModule(courseId, moduleId, lessonData);
+}
 
   // Get all courses
   @Get()
@@ -139,7 +145,8 @@ async createModule(
     return await this.courseService.findModulesByCourseId(courseId);
   }
 
-  // Update a course by MongoDB _id
+  // Update a course by ID - Only instructors
+  @Roles('instructor')
   @Patch(':id')
   async updateCourse(
     @Param('id') courseId: string,
@@ -154,11 +161,15 @@ async createModule(
     return await this.courseService.updateCourse(courseId, updatedData);
   }
 
-  // Delete a course by instructor
-  @Delete(':id')
-  async deleteCourseByInstructor(@Param('id') courseId: string) {
-    return this.courseService.deleteCourseByInstructor(courseId);
-  }
+  // Delete a course by instructor - Only instructors
+  @Roles('instructor,admin') // Ensure only instructors can access this endpoint
+@Delete(':id')
+async deleteCourse(
+  @Param('id') courseId: string,
+): Promise<any> {
+  return this.courseService.deleteCourseByInstructor(courseId);
+}
+
 
   // Get a specific module by MongoDB _id
   @Get(':id/modules/:moduleId')
@@ -183,10 +194,53 @@ async getFilesForModule(
   return await this.courseService.getFilesForModule(courseId, moduleId, res);
 }
 
-@Get('name/:name')
-async getCourseByName(@Param('name') courseName: string): Promise<Course> {
-  return await this.courseService.findCourseByName(courseName);
+@Roles('instructor', 'student') // Allow only instructor or student
+  @Get('name/:name')
+  async getCourseByName(@Param('name') courseName: string): Promise<Course> {
+    if (!courseName || courseName.trim() === '') {
+      throw new BadRequestException('Course name must be provided.');
+    }
+
+    return await this.courseService.findCourseByName(courseName);
+  }
+
+
+
+@Roles('instructor') // Only instructors can access this endpoint
+@Patch(':id/modules/:moduleId')
+async updateModule(
+  @Param('id') courseId: string,
+  @Param('moduleId') moduleId: string,
+  @Body()
+  updatedData: Partial<{
+    title: string;
+    content: string;
+    difficultyLevel: 'easy' | 'medium' | 'hard';
+  }>,
+) {
+  if (!updatedData || Object.keys(updatedData).length === 0) {
+    throw new BadRequestException('At least one attribute must be provided for update.');
+  }
+
+  return await this.courseService.updateModule(courseId, moduleId, updatedData);
 }
+
+// Fetch courses of the logged-in instructor
+@Roles('instructor') // Ensure only instructors can access this endpoint
+@Get('instructor/my-courses')
+async getCoursesOfInstructor(@Req() req: any): Promise<Course[]> {
+  const instructorEmail = req.user.email; // Extract the instructor's email from the JWT payload
+
+  if (!instructorEmail) {
+    throw new BadRequestException('Instructor email is required.');
+  }
+
+  return await this.courseService.findCoursesByInstructor(instructorEmail);
+}
+
+
+
+
 
 
 }
