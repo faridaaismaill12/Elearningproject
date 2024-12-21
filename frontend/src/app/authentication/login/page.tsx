@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+
+import "./Login.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,31 +13,24 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); 
+    setError("");
 
     try {
-      const response = await fetch("http://localhost:5616/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, passwordHash }),
+      const response = await axios.post("http://localhost:4000/users/login", {
+        email,
+        passwordHash,
       });
 
-      if (!response.ok) {
-        const responseData = await response.json();
-        throw new Error(responseData.message || "Invalid login credentials");
-      }
+      console.log("Login successful:", response.data);
 
-      const data = await response.json();
-      console.log("Login successful:", data);
+      // Save token to local storage
+      localStorage.setItem("authToken", response.data.accessToken);
 
-      localStorage.setItem("authToken", data.accessToken);
-
+      // Redirect to homepage
       router.push("/");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Invalid login credentials");
       } else {
         setError("An unexpected error occurred.");
       }
@@ -42,12 +38,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-md rounded px-8 py-6 w-96">
-        <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
+    <div className="login_container">
+      <div className="formWrapper">
+        <h2 className="title">Login</h2>
         <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <div className="inputGroup">
+            <label htmlFor="email" className="label">
               Email
             </label>
             <input
@@ -55,12 +51,12 @@ export default function Login() {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="input"
               required
             />
           </div>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <div className="inputGroup">
+            <label htmlFor="password" className="label">
               Password
             </label>
             <input
@@ -68,21 +64,18 @@ export default function Login() {
               id="password"
               value={passwordHash}
               onChange={(e) => setPasswordHash(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="input"
               required
             />
           </div>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
-          >
+          {error && <p className="error">{error}</p>}
+          <button type="submit" className="button">
             Login
           </button>
         </form>
-        <p className="text-sm text-center mt-4">
+        <p className="signupLink">
           Don't have an account?{" "}
-          <a href="/authentication/signup" className="text-blue-500 hover:underline">
+          <a href="/authentication/signup" className="link">
             Sign up
           </a>
         </p>

@@ -1,0 +1,109 @@
+/* General container styling */
+.quiz-results-container {
+    max-width: 600px;
+    margin: 0 auto;
+    margin-top: 100px;  
+    padding: 30px;  
+    font-family: 'Arial', sans-serif;
+    background-color: #6024bb;  
+    border: 1px solid #9b4dff; 
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);  
+    height: 400px; 
+    position: relative;
+    animation: bounce 2s infinite ease-in-out;
+    background: linear-gradient(135deg, #6024bb, #9b4dff); 
+
+}
+
+/* Bouncing animation for the box */
+@keyframes bounce {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-12px); } 
+    100% { transform: translateY(0); }
+}
+
+.quiz-results-container h1 {
+    font-size: 2.2rem;  
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 700;  
+    
+
+}
+
+.results h2,
+.results h3 {
+    font-size: 1.6rem;  /* Slightly larger for better readability */
+    color: #ffffff;
+    margin: 15px 0;
+    text-align: center;
+    font-weight: 600;
+}
+
+
+  
+  .result-text h3 {
+    margin: 0;
+    color: #ffffff; 
+    font-weight: 500;
+
+  }
+/* Positioning left and right illustrations */
+.left-side, .right-side {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.5s ease-in-out; /* Smooth transition */
+  
+}
+
+.left-side {
+    left: -350px;
+    bottom: 100px;
+}
+
+.right-side {
+    right: -350px;
+    margin-bottom: 250px;
+}
+
+/* Hover effect on the illustrations */
+.left-side:hover, .right-side:hover {
+    transform: translateY(-50%) scale(1.05);
+    opacity: 1;  /* Full opacity on hover */
+}
+
+/* Styling for toaster */
+.toaster-container {
+    font-size: 1rem;
+    color: #020202;
+    background-color: rgba(255, 255, 255, 0.9);  /* Semi-transparent background */
+    padding: 12px 18px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .quiz-results-container {
+        padding: 20px;
+        margin-top: 50px;
+    }
+
+    .quiz-results-container h1 {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+    }
+
+    .results h2, .results h3 {
+        font-size: 1.2rem;
+    }
+
+    /* Adjusting images for smaller screens */
+    .left-side, .right-side {
+        left: 10px;
+        right: 10px;
+    }
+}

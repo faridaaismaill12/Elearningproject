@@ -8,6 +8,7 @@ import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
 import { Module, ModuleDocument } from '../course/schemas/module.schema';
+import { Course } from '../course/schemas/course.schema';
 
 @Injectable()
 export class StudentQuizzesService {
@@ -17,6 +18,7 @@ export class StudentQuizzesService {
     @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Module.name) private moduleModel: Model<Module>,
+    @InjectModel(Course.name) private courseModel: Model<Course>
   ) {}
   private async generateQuestions(
     numberOfQuestions: number,
@@ -122,16 +124,19 @@ export class StudentQuizzesService {
     }
     console.log('User found:', user);
 
-    const didUserTakeTheQuiz = await this.quizModel.findOne({
-      attemptedUsers:user
-    })
-
-    if(didUserTakeTheQuiz){
-      throw new BadRequestException('You have already taken this quiz')
-    }
+    const existingResponse = await this.responseModel.findOne({
+      user: new Types.ObjectId(userId),
+      quiz: new Types.ObjectId(quizId),
+    });
   
+    if (existingResponse) {
+      console.log('Existing response found. Deleting old response...');
+      await this.responseModel.deleteOne({ _id: existingResponse._id });
+    }
+
+
     let quizDifficulties: string[] = [];
-    if (user.studentLevel === 'beginnner') {
+    if (user.studentLevel === 'beginner') {
       quizDifficulties = ['easy'];
     } else if (user.studentLevel === 'average') {
       quizDifficulties = ['easy', 'medium'];
@@ -171,7 +176,7 @@ export class StudentQuizzesService {
     quizId: string, 
     userId: string, 
     submittedAnswers: { questionId: string; answer: string }[],
-  ): Promise<{ score: number; correctAnswers: number; totalQuestions: number; feedback: any }> {
+  ): Promise<{ score: number; correctAnswers: number; totalQuestions: number; feedback: any ; timeTaken: number}> {
 
 
 
@@ -193,6 +198,10 @@ export class StudentQuizzesService {
     });
     if (!response) {
       throw new NotFoundException('Invalid session');
+    }
+
+    if (!response.startTime) {
+      throw new BadRequestException('Start time not found in response');
     }
 
     const questionIds = submittedAnswers.map((a) => {
@@ -236,6 +245,10 @@ export class StudentQuizzesService {
   
 
     const score = (correctAnswers / questions.length) * 100;
+
+    const currentTime = new Date();
+  const timeTaken = Math.floor((currentTime.getTime() - response.startTime.getTime()) / 1000); // in seconds
+
   
     response.questionsIds = questions.map((q) => q._id); // Map Question ObjectIds to questionsIds
     response.answers = validatedAnswers;
@@ -255,48 +268,50 @@ export class StudentQuizzesService {
       correctAnswers,
       totalQuestions: questions.length,
       feedback,
+      timeTaken
     };
   }
 
-
   async getUserResponse(userId: string, quizId: string): Promise<QuizResponse> {
     if (!Types.ObjectId.isValid(userId)) {
-        throw new NotFoundException('Invalid user ID format');
+      throw new NotFoundException('Invalid user ID format');
     }
-
+  
     if (!Types.ObjectId.isValid(quizId)) {
-        throw new NotFoundException('Invalid quiz ID format');
+      throw new NotFoundException('Invalid quiz ID format');
     }
-
+  
     const userObjectId = new Types.ObjectId(userId);
     const quizObjectId = new Types.ObjectId(quizId);
-
-
+  
     const user = await this.userModel.findById(userObjectId);
     if (!user) {
-        console.log('User not found:', userId);
-        throw new NotFoundException('User not found');
+      console.log('User not found:', userId);
+      throw new NotFoundException('User not found');
     }
-
-
+  
     const quiz = await this.quizModel.findById(quizObjectId);
     if (!quiz) {
-        console.log('Quiz not found:', quizId);
-        throw new NotFoundException('Quiz not found');
+      console.log('Quiz not found:', quizId);
+      throw new NotFoundException('Quiz not found');
     }
-
-    const response = await this.responseModel.findOne({
-        user: userObjectId,
-        quiz: quizObjectId,
-    });
-
+  
+    const response = await this.responseModel
+      .findOne({ user: userObjectId, quiz: quizObjectId })
+      .populate('quiz') // Only populate valid paths like `quiz` or `user`
+      .populate({
+        path: 'answers.questionId', // Populate specific fields
+        select: 'question correctAnswer',
+      });
+  
     if (!response) {
-        console.log('Response not found for user:', userId, 'and quiz:', quizId);
-        throw new NotFoundException('You have not taken this quiz');
+      console.log('Response not found for user:', userId, 'and quiz:', quizId);
+      throw new NotFoundException('You have not taken this quiz');
     }
-
+    console.log('Response found:', response);
+  
     return response;
-}
+  }
   
 
   async upgradeStudentLevel(userId: string): Promise<User> {
@@ -357,5 +372,34 @@ export class StudentQuizzesService {
     return user;
   }
   
+
+  async getAverageScores(courseId: string, userId: string): Promise<number> {
+    const user = await this.userModel.findById(new Types.ObjectId(userId));
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+    const moduleIds = course.modules.map((module) => module._id);
+    if (moduleIds.length === 0) {
+      throw new NotFoundException('No modules found for this course');
+    }
+    const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
+    if (quizzes.length === 0) {
+      throw new NotFoundException('No quizzes found for this course');
+    }
+    const quizIds = quizzes.map((quiz) => quiz._id);
+    const responses = await this.responseModel.find({
+      quiz: { $in: quizIds },
+      user: new Types.ObjectId(userId),  
+    });
+    if (responses.length === 0) {
+      return 0;
+    }
+    const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
+    return totalScore / responses.length;
+  }
   
 }

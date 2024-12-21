@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, InternalServerErrorException, } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Quiz, QuizDocument } from './schemas/quiz.schema';
@@ -7,6 +7,7 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
+import { Course } from '../course/schemas/course.schema';
 import {Module, ModuleDocument} from '../course/schemas/module.schema'
 import { UpdateQuestionDto } from './dto/update-quiz.dto';
 
@@ -16,7 +17,9 @@ export class InstructorQuizzesService {
   @InjectModel(Question.name) private questionModel: Model<Question>,
   @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
   @InjectModel(User.name) private userModel: Model<User>,
-@InjectModel(Module.name) private moduleModel: Model<Module>,) {}
+@InjectModel(Module.name) private moduleModel: Model<Module>,
+@InjectModel(Course.name) private courseModel: Model<Course>
+) {}
 
 
 
@@ -184,7 +187,7 @@ async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: n
 
   const module = await this.moduleModel.findById(module_id).populate({
     path: 'quizzes',
-    select: '_id name numberOfQuestions quizType duration', 
+    select: '_id name numberOfQuestions quizType duration difficultyLevel', 
     model: 'Quiz',
   });
 
@@ -205,56 +208,122 @@ async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: n
   }));
 }
 
+async deleteQuiz(moduleId: string, quizId: string): Promise<{ message: string }> {
+  try {
+   
+    const quiz_id = new Types.ObjectId(quizId);
+    const module_id = new Types.ObjectId(moduleId);
 
-// done testing
-async deleteQuiz(quizId: string): Promise<{ message: string }> {
-  const quiz = await this.quizModel.findById(quizId);
+    const quiz = await this.quizModel.findById(quizId);
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with ID ${quizId} not found.`);
+    }
 
-  if (!quiz) {
-    throw new Error("Quiz not found");
+    const moduleUpdateResult = await this.moduleModel.updateOne(
+      { _id: module_id },
+      { $pull: { quizzes: quiz_id } }
+    );
+
+    if (moduleUpdateResult.matchedCount === 0) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+    }
+
+    const deleteResult = await this.quizModel.deleteOne({ _id: quiz_id });
+    if (deleteResult.deletedCount === 0) {
+      throw new InternalServerErrorException("Failed to delete the quiz document.");
+    }
+
+    return { message: "Quiz deleted successfully." };
+  } catch (error) {
+  
+    throw new InternalServerErrorException('Internal Server Error');
+  }
+}
+
+async deleteQuestion(moduleId: string, questionId: string): Promise<{ message: string }> {
+  if (!Types.ObjectId.isValid(moduleId) || !Types.ObjectId.isValid(questionId)) {
+    throw new BadRequestException('Invalid IDs provided.');
   }
 
+  try {
+    const question_id = new Types.ObjectId(questionId);
+    const module_id = new Types.ObjectId(moduleId);
 
+    const quiz = await this.questionModel.findById(question_id);
+    if (!quiz) {
+      throw new NotFoundException(`Question with ID ${questionId} not found.`);
+    }
 
-  await quiz.deleteOne();
+    const moduleUpdateResult = await this.moduleModel.updateOne(
+      { _id: module_id },
+      { $pull: { questions: questionId } }
+    );
+    if (moduleUpdateResult.matchedCount === 0) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+    }
 
-  return { message: "Quiz deleted successfully" };
+    const deleteResult = await this.questionModel.deleteOne({ _id: question_id });
+    if (deleteResult.deletedCount === 0) {
+      throw new InternalServerErrorException("Failed to delete the quiz document.");
+    }
+
+    return { message: "Question deleted successfully from the module." };
+  } catch (error) {
+    console.error('Error in deleteQuestion:', error);
+    if (error instanceof NotFoundException) throw error;
+    throw new InternalServerErrorException('Internal Server Error');
+  }
 }
 
 
-async deleteQuestion(questionId: string): Promise<{ message: string }> {
-  // Log received questionId for debugging
-  console.log('Received questionId:', questionId);
 
+
+
+async deleteQuestion1(moduleId: string, questionId: string): Promise<{ message: string }> {
+
+  console.log('Received questionId:', questionId, 'Received moduleId:', moduleId);
+
+ 
   if (!Types.ObjectId.isValid(questionId)) {
     throw new BadRequestException('Invalid Question ID');
   }
-
-  // Try finding the question
-  const question = await this.questionModel.findById(new Types.ObjectId(questionId));
-  
-  // Log the result of the query to check if the question is found
-  console.log('Found Question:', question);
-
-  if (!question) {
-    throw new NotFoundException('Question not found');
+  if (!Types.ObjectId.isValid(moduleId)) {
+    throw new BadRequestException('Invalid Module ID');
   }
 
-  // Check if the question is in any modules and pull it
-  const updateResult = await this.moduleModel.updateOne(
-    { questions: questionId },
-    { $pull: { questions: questionId } }
-  );
+  const questionObjectId = new Types.ObjectId(questionId);
+  const moduleObjectId = new Types.ObjectId(moduleId);
 
-  // Log the result of the update query
+
+  const question = await this.questionModel.findById(questionObjectId);
+  if (!question) {
+    throw new NotFoundException(`Question with ID ${questionId} not found.`);
+  }
+
+  const module = await this.moduleModel.findById(moduleObjectId);
+  if (!module) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+  }
+
+  const updateResult = await this.moduleModel.updateOne(
+    { _id: moduleObjectId },
+    { $pull: { questions: questionObjectId } }
+  );
   console.log('Module Update Result:', updateResult);
 
-  // Proceed with deleting the question
-  await question.deleteOne();
+  if (updateResult.matchedCount === 0) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found or doesn't contain the question.`);
+  }
 
+
+  const deleteResult = await this.questionModel.deleteOne({ _id: questionObjectId });
+  if (deleteResult.deletedCount === 0) {
+    throw new InternalServerErrorException('Failed to delete the question document.');
+  }
+
+  console.log('Question deleted successfully:', questionId);
   return { message: 'Question deleted successfully' };
 }
-
 
 async updateQuestion(
   questionId: string,
@@ -381,7 +450,7 @@ if (!question) {
 }
 
 
-//THIS API DOES NOT WORK
+
 async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse[]> {
 
   const instructor = await this.userModel.findById(new Types.ObjectId(userId));
@@ -403,6 +472,31 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
   const responses = await this.responseModel.find({ quiz: new Types.ObjectId(quizId) });
 
   return responses;
+}
+
+async averageCourseQuizzes(courseId: string): Promise<number> {
+  if (!Types.ObjectId.isValid(courseId)) {
+    throw new BadRequestException('Invalid Course ID');
+  }
+  const course = await this.courseModel.findById(courseId);
+  if (!course) {
+    throw new NotFoundException('Course not found');
+  }
+  const moduleIds = course.modules.map((module) => module._id);
+  if (moduleIds.length === 0) {
+    throw new NotFoundException('No modules found for this course');
+  }
+  const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
+  if (quizzes.length === 0) {
+    throw new NotFoundException('No quizzes found for this course');
+  }
+  const quizIds = quizzes.map((quiz) => quiz._id);
+  const responses = await this.responseModel.find({ quiz: { $in: quizIds } });
+  if (responses.length === 0) {
+    return 0;
+  }
+  const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
+  return totalScore / responses.length;
 }
 
 
