@@ -139,17 +139,13 @@ export class UserController {
      * Get user profile by ID
      */
     @UseGuards(JwtAuthGuard)
-    @Get('view-profile/:id')
-    async getProfile(@Param('id') id: string, @Req() req: any) {
-        const userIdFromToken = req.user.sub;
-
-        if (userIdFromToken !== id) {
-            throw new UnauthorizedException('You can only access your own profile');
-        }
+    @Get('view-profile')
+    async getProfile(@Req() req: any) {
+        const userIdFromToken = req.user.id;
 
         console.log('Get Profile endpoint invoked.');
-        return this.userService.viewProfile(id);
-    } // tested
+        return this.userService.viewProfile(userIdFromToken);
+    }  // tested
 
     /**
      * Assign courses to a student (Instructor only)
@@ -248,5 +244,12 @@ export class UserController {
         return { role };
     }
 
+
+    //create find user by id
+    @Get('find-user/:id')
+    async findUserById(@Param('id') id: string) {
+        console.log('Find User by ID endpoint invoked.');
+        return this.userService.findUserById(id);
+    } // tested
 }
 
