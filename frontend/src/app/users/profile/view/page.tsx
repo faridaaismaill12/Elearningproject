@@ -4,11 +4,13 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import UpdateProfilePage from "../update/page";
 
 export default function ViewProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // Modal state
   const router = useRouter();
 
   useEffect(() => {
@@ -24,9 +26,8 @@ export default function ViewProfilePage() {
       }
 
       try {
-        // Fetch the user profile from the API endpoint
         const response = await axios.get(
-          `http://localhost:4000/users/view-profile`,
+          `http://localhost:5010/users/view-profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -56,7 +57,6 @@ export default function ViewProfilePage() {
     }
 
     try {
-      // Send the delete request to the API
       const response = await axios.delete(
         `http://localhost:5010/users/delete-profile`,
         {
@@ -67,7 +67,6 @@ export default function ViewProfilePage() {
       );
 
       console.log(response.data);
-      // Clear the token and redirect to login page
       Cookies.remove("authToken");
       router.push("/users/login");
     } catch (err) {
@@ -105,7 +104,6 @@ export default function ViewProfilePage() {
               <strong>Preferences: </strong> {profileData.preferences || "N/A"}
             </p>
 
-            {/* Display Enrolled Courses */}
             <p className="mt-4">
               <strong>Enrolled Courses:</strong>
             </p>
@@ -131,14 +129,24 @@ export default function ViewProfilePage() {
             )}
           </div>
 
-          {/* Reset Password Button */}
+          {/* Update Profile Button */}
           <div className="mt-6">
             <button
-              onClick={() => router.push(`/users/profile/reset-password`)}
-              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition mb-4"
+              onClick={() => setIsUpdateModalOpen(true)}
+              className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition mb-4"
             >
-              Reset Password
+              Update Profile
             </button>
+          </div>
+
+          {/* Reset Password Button */}
+          <div className="mt-6">
+          <button
+            onClick={() => router.push(`/users/profile/reset-password`)}
+            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition mb-4"
+          >
+            Reset Password
+          </button>
           </div>
 
           {/* Delete Profile Button */}
@@ -174,6 +182,21 @@ export default function ViewProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Update Modal */}
+          {isUpdateModalOpen && (
+            <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+                <button
+                  onClick={() => setIsUpdateModalOpen(false)}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+                >
+                  ✕
+                </button>
+                <UpdateProfilePage />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <p>Loading...</p>

@@ -27,7 +27,7 @@ export default function EnableMFA() {
       console.log("Token:", token);
 
       const response = await axios.post(
-        "http://localhost:4000/users/enable",
+        "http://localhost:5010/users/enable",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
