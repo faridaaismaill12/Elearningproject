@@ -80,15 +80,28 @@ async startQuiz(
       throw new BadRequestException('An error occurred while calculating the average score'); 
     }
 
-
-
-
-
+  }
+    
+  @Roles('student')
+  @Get(':moduleId/:quizId')
+  async getQuiz(
+    @Param('moduleId') moduleId: string,
+    @Param('quizId') quizId: string,
+  ): Promise<Quiz> {
+    console.log('Fetching quiz with moduleId:', moduleId, 'and quizId:', quizId);
+  
+    try {
+      const quiz = await this.studentQuizzesService.getQuiz(moduleId, quizId);
+      console.log('Quiz fetched successfully:', quiz);
+      return quiz;
+    } catch (error) {
+      console.error('Error fetching quiz:', error);
+      throw error;
+    }
   }
   
-
-
   
-}
+  
+    }
 
 

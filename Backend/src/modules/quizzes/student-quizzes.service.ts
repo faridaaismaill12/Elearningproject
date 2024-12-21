@@ -401,5 +401,37 @@ export class StudentQuizzesService {
     const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
     return totalScore / responses.length;
   }
+
+  async getQuiz(moduleId: string, quizId: string): Promise<Quiz> {
+    if (!quizId || !Types.ObjectId.isValid(quizId)) {
+      console.error('Invalid Quiz ID:', quizId);
+      throw new BadRequestException('Invalid Quiz ID');
+    }
+  
+    if (!moduleId || !Types.ObjectId.isValid(moduleId)) {
+      console.error('Invalid Module ID:', moduleId);
+      throw new BadRequestException('Invalid Module ID');
+    }
+  
+   
+    const quiz = await this.quizModel
+      .findById(quizId)
+      .populate('name moduleId duration createdBy numberOfQuestions quizType');
+  
+    if (!quiz) {
+      console.error('Quiz not found for quizId:', quizId);
+      throw new NotFoundException('Quiz not found');
+    }
+  
+    const module = await this.moduleModel.findById(moduleId)
+  
+    if (!module) {
+      console.error('Module not found for moduleId:', moduleId);
+      throw new NotFoundException('Module not found');
+    }
+  
+    return quiz;
+  }
+  
   
 }

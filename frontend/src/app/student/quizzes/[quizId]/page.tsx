@@ -30,6 +30,7 @@ interface Feedback {
 const QuizPage = () => {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState<{ title: string }>({ title: '' });
+    const [quizTitle, setQuizTitle] = useState<string>('Loading...');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [quizResponseId, setQuizResponseId] = useState<string | null>(null);
