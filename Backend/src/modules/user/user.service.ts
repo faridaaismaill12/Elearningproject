@@ -22,6 +22,9 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
 import { createObjectCsvWriter } from 'csv-writer';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
+import * as nodemailer from 'nodemailer';
 
 interface RecordData {
     userId: string;
@@ -177,10 +180,15 @@ export class UserService {
 
         const resetToken = this.jwtService.sign(
             { sub: user._id, email: user.email },
-            { secret: process.env.JWT_SECRET, expiresIn: '15m' },
+            { secret: process.env.JWT_SECRET, expiresIn: '5m' },
         );
 
-        console.log(`Password reset link: http://localhost:${process.env.PORT}/users/reset-password?token=${resetToken}`);
+        const resetLink = `http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`;
+
+        await this.sendPasswordResetEmail(user.email, resetLink);
+
+        
+        console.log(`Password reset link: http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`);
 
         return { message: 'Password reset link sent to your email' };
     }
@@ -191,8 +199,9 @@ export class UserService {
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
-
-            const user = await this.userModel.findById(payload.id);
+            console.log(payload);
+            const user = await this.userModel.findById(payload.sub);
+            console.log(user);
 
             if (!user) {
                 throw new NotFoundException('User not found');
@@ -465,5 +474,83 @@ export class UserService {
         await csvWriter.writeRecords(groupedRecords);
     
         return 'exported_data.csv';
-      }
+    }
+
+
+
+    async enable2FA(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+    
+        const secret = speakeasy.generateSecret({ name: `GIU E-Learning Platform (${user.email})` });
+        user.twoFactorSecret = secret.base32;
+        user.isTwoFactorEnabled = true;
+        await user.save();
+    
+        if (!secret.otpauth_url) {
+            throw new BadRequestException('Failed to generate OTP Auth URL');
+        }
+        const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
+        return qrCodeUrl;
+    }
+
+
+
+    async verify2FA(userId: string, otp: string): Promise<string> {
+        // console.log('Verifying 2FA...');
+        const user = await this.userModel.findById(userId);
+        // console.log(user)
+        if (!user || !user.twoFactorSecret) {
+            throw new UnauthorizedException('2FA is not enabled');
+        }
+        
+        // console.log({ secret: user.twoFactorSecret, otp });
+        
+
+        const isValid = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: otp,
+        });
+    
+        console.log({ secret: user.twoFactorSecret, otp, isValid });
+
+        if(isValid)
+        {
+            const token= this.jwtService.sign({id:userId});
+            return token;
+        }
+        return '';
+    }
+
+    
+    private transporter = nodemailer.createTransport({
+        service: 'Gmail', // Use your email provider
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+        },
+    });
+
+
+
+
+    
+    async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+        await this.transporter.sendMail({
+            from: `"GIU E-learning Platform" <no-reply@wearethebest.com>`,
+            to: email,
+            subject: 'Password Reset Request',
+            html: `
+        <p>You requested a password reset. Click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>If you did not request this reset, please ignore this email.</p>
+        `,
+        });
+    }
+    
+
+    
 }

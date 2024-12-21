@@ -26,7 +26,7 @@ export default function ViewProfilePage() {
       try {
         // Fetch the user profile from the API endpoint
         const response = await axios.get(
-          `http://localhost:5010/users/view-profile`,
+          `http://localhost:4000/users/view-profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

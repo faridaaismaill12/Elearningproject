@@ -35,7 +35,7 @@ export default function RegisterPage() {
     delete payload.password;
 
     try {
-      const response = await axios.post("http://localhost:5010/users/register", payload);
+      const response = await axios.post("http://localhost:4000/users/register", payload);
       setSuccess("Registration successful! Redirecting...");
       setTimeout(() => router.push("/users/login"), 2000);
     } catch (err: unknown) {

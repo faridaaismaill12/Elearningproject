@@ -25,15 +25,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5010/users/login", {
+      const response = await axios.post("http://localhost:4000/users/login", {
         email: formData.email,
         passwordHash: formData.password,
       });
 
       const token = response?.data?.accessToken;
+      const isMfaEnabled = response?.data?.mfaEnabled;
+
       Cookies.set("authToken", token, { expires: 7 });
 
-      router.push("http://localhost:4001");
+      if (isMfaEnabled) {
+        router.push("/authentication/mfa/verify");
+      } else {
+        router.push("/authentication/mfa/enable");
+      }
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "Login failed. Please try again.");
@@ -47,7 +53,11 @@ export default function LoginPage() {
 
   const handleLogout = () => {
     Cookies.remove("authToken");
-    router.push("http://localhost:4001");
+    router.push("/");
+  };
+
+  const handleForgotPassword = () => {
+    router.push("/authentication/password/forgot");
   };
 
   return (
@@ -56,7 +66,6 @@ export default function LoginPage() {
         <h2 className="text-2xl font-semibold mb-4">Login</h2>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
-          {/* Email Field */}
           <div className="mb-4">
             <label htmlFor="email" className="block font-medium mb-1">
               Email
@@ -73,7 +82,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password Field */}
           <div className="mb-4">
             <label htmlFor="password" className="block font-medium mb-1">
               Password
@@ -90,7 +98,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
@@ -102,13 +109,17 @@ export default function LoginPage() {
 
         <p className="mt-4 text-center text-sm">
           Don't have an account?{" "}
-          <a href="/register" className="text-blue-500">
+          <a href="/users/register" className="text-blue-500">
             Register
           </a>
         </p>
+        <p
+          onClick={handleForgotPassword}
+          className="mt-2 text-center text-sm text-blue-500 cursor-pointer"
+        >
+          Forgot Password?
+        </p>
       </div>
-
-      {/* Logout Button */}
       <button
         onClick={handleLogout}
         className="absolute bottom-4 right-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"

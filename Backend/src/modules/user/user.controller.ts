@@ -28,10 +28,14 @@ import { SearchStudentDto } from './dto/search-student.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
+import { JwtService } from '@nestjs/jwt/dist/jwt.service';
 
 @Controller('users')
 export class UserController {
-    constructor(private readonly userService: UserService) { }
+    constructor(private readonly userService: UserService,
+                private readonly jwtService: JwtService,
+    )
+     { }
 
     /**
      * Register a new user
@@ -69,21 +73,20 @@ export class UserController {
     /**
      * Reset password using a token
      */
-    @Post('reset-password')
-    async resetPassword(@Req() req: any, @Body() resetPasswordDto: ResetPasswordDto) {
-        const authHeader = req.headers.authorization;
-        let token = null;
+    @Post('reset')
+    async resetPassword(
+        @Query('token') token: string,
+        @Body() resetPasswordDto: ResetPasswordDto,
+    ): Promise<{ message: string }> {
+        const { newPassword } = resetPasswordDto;
 
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.substring(7);
-        }
-
-        if (!token || !resetPasswordDto.newPassword) {
+        if (!token || !newPassword) {
             throw new BadRequestException('Token and new password are required');
         }
 
-        return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
-    } // tested
+        // Call the service to handle the password reset logic
+        return await this.userService.resetPassword(token, newPassword);
+    }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'instructor') // Only admins and instructors can enroll users
@@ -247,5 +250,58 @@ export class UserController {
         return { message: 'Failed to generate CSV' };
       }
     }
+
+
+
+
+
+    @Post('enable')
+    @UseGuards(JwtAuthGuard)
+    async enableMfa(@Req() req: any) {
+    const user = req.user; // Extracted user from token
+    if (!user) {
+        throw new UnauthorizedException("Invalid token.");
+    }
+
+    return this.userService.enable2FA(user.id); // Your service logic
+    }
+
+
+
+    @UseGuards(JwtAuthGuard)
+    @Post('verify')
+    async verify2FA(@Body() body: { otp: string }, @Req() req: any) {
+        const authHeader = req.headers['authorization'];
+        if (!authHeader) {
+            throw new UnauthorizedException('Authorization header is missing');
+        }
+    
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            throw new UnauthorizedException('Invalid Authorization header format');
+        }
+    
+        // Verify token and extract payload
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+        const userId = payload.id;
+        // console.log('User ID:', userId);
+        // console.log('OTP:', body.otp);
+        
+        if (!userId) {
+            throw new UnauthorizedException('Invalid token');
+        }
+        // console.log('Verify 2FA endpoint invoked.');
+        // Verify OTP
+        const isValid = await this.userService.verify2FA(userId, body.otp);
+        // console.log(isValid);
+        if (!isValid) {
+            throw new UnauthorizedException('Invalid OTP');
+        }
+
+        
+    
+        return { message: '2FA successful', success: true };
+    }
+
 
 }
