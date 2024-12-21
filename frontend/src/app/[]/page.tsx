@@ -9,7 +9,7 @@ const HomePage = () => {
       <Banner/>
       <About/>
       <Courses/>
-   
+      <Slider/>
     </div>
   )
 }
