@@ -17,6 +17,7 @@ import { Course, CourseSchema} from '../course/schemas/course.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 
+
 @Modules({
   imports: [
     JwtModule.registerAsync({

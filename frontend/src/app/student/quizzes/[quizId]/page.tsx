@@ -30,6 +30,7 @@ interface Feedback {
 const QuizPage = () => {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState<{ title: string }>({ title: '' });
+    const [quizTitle, setQuizTitle] = useState<string>('Loading...');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [quizResponseId, setQuizResponseId] = useState<string | null>(null);
@@ -47,7 +48,7 @@ const QuizPage = () => {
 
     axios
       .post(
-        `http://localhost:6090/student/quizzes/start/${quizId}`,
+        `http://localhost:6050/student/quizzes/start/${quizId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -91,10 +92,12 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:6090/student/quizzes/submit/${quizId}`,
+        `http://localhost:6050/student/quizzes/submit/${quizId}`,
         { submittedAnswers },
         { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );
+
+      console.log('Quiz submitted:', response.data);
 
       const { feedback } = response.data;
 
@@ -122,7 +125,7 @@ const QuizPage = () => {
   };
 
   const handleViewResults = () => {
-    router.push(`${quizId}/results`);
+    router.push(`/student/quizzes/results/${quizId}`);
   };
 
   return (
