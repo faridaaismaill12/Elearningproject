@@ -79,11 +79,11 @@ export class Course {
   })
   enrolledStudents?: Types.ObjectId[];
   
-  ratings!: Array<{
-    userId: string;
-    rating: number;
-    review?: string;
-  }>;
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Rating' }],
+    default: [],
+  })
+  ratings!: Types.ObjectId[];
 
   // Average rating for the course (calculated from the ratings)
   @Prop({ type: Number, default: 0 })
