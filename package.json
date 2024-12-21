@@ -25,12 +25,9 @@
     "@nestjs/platform-socket.io": "^10.4.12",
     "@nestjs/throttler": "^6.2.1",
     "@nestjs/websockets": "^10.4.13",
-
     "@Types/express": "npm:@types/express@^5.0.0",
-    "axios": "^1.7.9",
-
     "archiver": "^7.0.1",
-
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
@@ -51,6 +48,8 @@
     "nodemon": "^3.1.7",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "react": "^19.0.0",
+    "react-hot-toast": "^2.4.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
