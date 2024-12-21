@@ -244,5 +244,23 @@ export class UserController {
         return { role };
     }
 
+    /**
+     * Get users and courses
+     */
+    @Get('enrolled-data')
+    async getEnrolledUsersAndCourses() {
+        return await this.userService.getAllData();
+    }
+
+    @Get('export-csv')
+    async exportCSV(): Promise<{ message: string }> {
+      try {
+        const filePath = await this.userService.generateCSV();
+        return { message: `Data successfully exported to ${filePath}` };
+      } catch (error) {
+        return { message: 'Failed to generate CSV' };
+      }
+    }
+
 }
 

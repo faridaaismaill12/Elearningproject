@@ -4,23 +4,27 @@ import {
   Body,
   Param,
   BadRequestException,
-  UploadedFiles,
-  UseInterceptors,
   Get,
   Patch,
   Delete,
   NotFoundException,
   Res,
+  UseInterceptors,
+  UploadedFiles,
+
 } from '@nestjs/common';
 import { Response } from 'express';
 
 import { CourseService } from './course.service';
+import { Course } from './schemas/course.schema';
+import { Types } from 'mongoose';
+import { Question } from '../quizzes/schemas/question.schema';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Course } from './schemas/course.schema';
 
-// Multer storage configuration
+// Multer storage configuration for file upload
+
 const storage = diskStorage({
   destination: './uploads', // Folder to store files
   filename: (req, file, callback) => {
@@ -29,6 +33,8 @@ const storage = diskStorage({
     callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
   },
 });
+
+
 
 
 @Controller('courses')
@@ -67,6 +73,7 @@ async createModule(
     throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
   }
 
+
   const fileLocations = files.map((file) => `uploads/${file.filename}`);
 
   return await this.courseService.createModuleForCourse(courseId, {
@@ -95,11 +102,8 @@ async createModule(
     return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
   }
 
+  // Create a lesson for a specific module using MongoDB _id
 
-
-
-
-  // Create a lesson for a specific module
   @Post(':id/modules/:moduleId/lessons')
   async createLesson(
     @Param('id') courseId: string,

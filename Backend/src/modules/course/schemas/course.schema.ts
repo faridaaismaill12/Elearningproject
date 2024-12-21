@@ -5,8 +5,10 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
+
   @Prop({ required: false, unique: true }) // Optional courseId
   courseId?: string;
+
   @Prop({ required: true })
   title!: string;
 
@@ -61,6 +63,7 @@ export class Course {
       content: string;
     }>;
   }>;
+
 
 
   @Prop({

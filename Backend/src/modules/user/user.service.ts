@@ -1,4 +1,3 @@
-
 import {
     Injectable,
     BadRequestException,
@@ -21,6 +20,12 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { createObjectCsvWriter } from 'csv-writer';
+
+interface RecordData {
+    userId: string;
+    courseId: string;
+  }
 
 @Injectable()
 export class UserService {
@@ -444,10 +449,48 @@ export class UserService {
         return user ? user.role : null;
     }
 
+
     //return user name by given user id
     async getUserName(userId: string) {
         const user = await this.userModel.findById(userId).select('name').exec();
         return user ? user.name : 'null';
     }
 
+    async getAllData(): Promise<Record<string, string[]>> {
+        const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
+          .select('_id enrolledCourses')
+          .lean();
+    
+        const groupedData = users.reduce((acc, user) => {
+          const validCourses = user.enrolledCourses?.filter(courseId => Types.ObjectId.isValid(courseId)) || [];
+          acc[`UserID: ${user._id}`] = validCourses.map(courseId => `CourseID: ${courseId}`);
+          return acc;
+        }, {} as Record<string, string[]>);
+    
+        return groupedData;
+      }
+    
+      async generateCSV(): Promise<string> {
+        const data = await this.getAllData();
+    
+        // Group courses by user and join the courses as a single comma-separated string
+        const groupedRecords = Object.entries(data).map(([userId, courses]) => ({
+          userId,
+          courseIds: courses.join(', '),
+        }));
+    
+        // Set up CSV writer
+        const csvWriter = createObjectCsvWriter({
+          path: 'exported_data.csv',
+          header: [
+            { id: 'userId', title: 'UserID' },
+            { id: 'courseIds', title: 'CourseIDs' },
+          ],
+        });
+    
+        // Write the grouped data to the CSV
+        await csvWriter.writeRecords(groupedRecords);
+    
+        return 'exported_data.csv';
+      }
 }
