@@ -76,24 +76,6 @@ export class UserService {
         }
     }
 
-    async login(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
-        const { email, passwordHash } = loginUserDto;
-
-        const user = await this.userModel.findOne({ email });
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
-        if (!isPasswordValid) {
-            throw new BadRequestException('Invalid credentials');
-        }
-
-        const payload = { id: user._id, email: user.email, role:user.role }; // Define payload
-        const accessToken = this.jwtService.sign(payload); // Sign the token
-        return { accessToken };
-    }
-
 
     async enrollUser(userId: string, courseId: string): Promise<{ message: string }> {
         // Validate MongoDB _id format
