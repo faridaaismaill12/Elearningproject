@@ -37,4 +37,15 @@ export class CreateModuleDto{
     @Type(() => MongooseSchema.Types.ObjectId)
     quizzes?: MongooseSchema.Types.ObjectId[];
 
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => MongooseSchema.Types.ObjectId)
+    questions!: MongooseSchema.Types.ObjectId[];
+
+    @IsArray()
+    @IsNotEmpty()
+    @ValidateNested({each: true})
+    @Type(() => String)
+    locations!: String[];
+
 }
