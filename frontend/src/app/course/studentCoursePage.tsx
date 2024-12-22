@@ -11,7 +11,7 @@ const StudentCoursePage = () => {
 
   const router = useRouter();
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjMxYzQ5OGU1ZDZlZDA0OGI4YmEwZiIsImVtYWlsIjoiY2xhcmFAZ21haWwuY29tIiwicm9sZSI6InN0dWRlbnQiLCJpYXQiOjE3MzQ3OTA3NDAsImV4cCI6MTczNDg3NzE0MH0.MmxxWMIbbjlUBJfmvwMrUky3I7nj5NWLfyh0-Sw3DLE"; // Replace with the actual token
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjMxYzQ5OGU1ZDZlZDA0OGI4YmEwZiIsImVtYWlsIjoiY2xhcmFAZ21haWwuY29tIiwicm9sZSI6InN0dWRlbnQiLCJpYXQiOjE3MzQ4ODUzODAsImV4cCI6MTczNDk3MTc4MH0.sSGJh9rlL4KQIH5erwS74P_ZP3cPzDxtMjD73o7S1ZM"; // Replace with the actual token
 
   useEffect(() => {
     try {
@@ -53,14 +53,13 @@ const StudentCoursePage = () => {
   }, []);
 
   const handleCourseClick = (courseId: string | undefined) => {
-    console.log("Clicked courseId:", courseId); // Log the courseId
     if (!courseId) {
-      console.error("Invalid courseId:", courseId);
+      console.error("Invalid courseId:", courseId); // Debug undefined courseId
       return;
     }
+    console.log("Navigating to:", `/studentDetails/${courseId}`); // Log route
     router.push(`/course/studentDetails/${courseId}`);
   };
-  
   
   
   
@@ -99,22 +98,16 @@ const StudentCoursePage = () => {
         >
           <h2>Enrolled Courses</h2>
           <ul>
-  {enrolledCourses.map((course: any, index: number) => {
-    console.log(`Course at index ${index}:`, course); // Log the entire course object
-    const courseId = course._id || course.courseId; // Adjust to your backend schema
-    return (
-      <li
-        key={courseId || `fallback-key-${index}`}
-        style={{ cursor: "pointer", color: "#007bff", textDecoration: "underline" }}
-        onClick={() => handleCourseClick(courseId)} // Pass courseId here
-      >
-        {course.title || "Untitled Course"}
-      </li>
-    );
-  })}
-</ul>
-
-
+            {enrolledCourses.map((course: any) => (
+              <li
+                key={course._id}
+                style={{ cursor: "pointer", color: "#007bff", textDecoration: "underline" }}
+                onClick={() => handleCourseClick(course._id)}
+              >
+                {course.title}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : (
         <p>No enrolled courses found.</p>

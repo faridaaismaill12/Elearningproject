@@ -5,11 +5,8 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
-
-
-  @Prop({ required: false, unique: true }) // Optional courseId
-  courseId?: string;
-
+  @Prop({ unique: true })
+  courseId!: string;
 
   @Prop({ required: true })
   title!: string;
@@ -67,7 +64,6 @@ export class Course {
   }>;
 
 
-
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Chat' }],
     default: [],
@@ -81,10 +77,13 @@ export class Course {
     default: [],
   })
   enrolledStudents?: Types.ObjectId[];
+
+  @Prop({ type: Boolean, default: false }) // Default to not deleted
+deleted!: boolean;
+
   
 
 }
-
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
 

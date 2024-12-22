@@ -23,7 +23,7 @@ const CourseDetails = () => {
   useEffect(() => {
     const fetchCourseDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/courses/${courseId}`, {
+        const response = await fetch(`http://localhost:400/courses/${courseId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

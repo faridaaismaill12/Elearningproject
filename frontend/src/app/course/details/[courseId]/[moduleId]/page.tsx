@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import UpdateModule from "../../../Course_Components/update_module";
 import CreateLesson from "../../../Course_Components/create_lesson";
 import AddFile from "../../../Course_Components/add_file";
+import UploadVideo from "../../../Course_Components/upload_video";
 
 const ModuleDetails = () => {
   const { courseId, moduleId } = useParams();
@@ -15,36 +16,66 @@ const ModuleDetails = () => {
   const [showUpdateForm, setShowUpdateForm] = useState<boolean>(false);
   const [showCreateLessonForm, setShowCreateLessonForm] = useState<boolean>(false);
   const [showAddFileForm, setShowAddFileForm] = useState<boolean>(false);
+  const [showUploadVideoForm, setShowUploadVideoForm] = useState<boolean>(false);
 
   const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
 
-  useEffect(() => {
-    const fetchModuleDetails = async () => {
-      try {
-        const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}`, {
+  const fetchModuleDetails = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:4000/courses/${courseId}/modules/${moduleId}`,
+        {
           headers: { Authorization: `Bearer ${token}` },
-        });
+        }
+      );
 
-        if (!response.ok) throw new Error(`Failed to fetch module details: ${response.statusText}`);
+      if (!response.ok) throw new Error(`Failed to fetch module details: ${response.statusText}`);
 
-        const data = await response.json();
-        setModuleDetails(data);
-        setLessons(data.lessons || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await response.json();
+      setModuleDetails(data);
+      setLessons(data.lessons || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchModuleDetails();
   }, [courseId, moduleId]);
 
+  const handleCheckboxChange = async (checked: boolean) => {
+    try {
+      const response = await fetch(
+        `http://localhost:4000/courses/${courseId}/modules/${moduleId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ outdated: checked }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update module");
+
+      const updatedModule = await response.json();
+      setModuleDetails(updatedModule); // Update local state with the new module data
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const handleDownloadFiles = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) throw new Error(`Failed to download files: ${response.statusText}`);
 
@@ -58,8 +89,6 @@ const ModuleDetails = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      console.log("Download initiated");
     } catch (err: any) {
       setError("Failed to download files. Please try again.");
     }
@@ -105,6 +134,17 @@ const ModuleDetails = () => {
           <strong>Created At:</strong>{" "}
           {moduleDetails?.createdAt ? new Date(moduleDetails.createdAt).toLocaleString() : "N/A"}
         </p>
+        <div style={{ marginTop: "1rem" }}>
+          <label>
+            <strong>Outdated:</strong>
+            <input
+              type="checkbox"
+              checked={moduleDetails?.outdated}
+              onChange={(e) => handleCheckboxChange(e.target.checked)}
+              style={{ marginLeft: "1rem" }}
+            />
+          </label>
+        </div>
       </div>
 
       {/* Lessons Display */}
@@ -170,6 +210,12 @@ const ModuleDetails = () => {
         >
           Add Files
         </button>
+        <button
+          onClick={() => setShowUploadVideoForm(true)}
+          style={buttonStyle("#6c757d")}
+        >
+          Upload Video
+        </button>
       </div>
 
       {/* Render CreateLesson Form */}
@@ -190,6 +236,17 @@ const ModuleDetails = () => {
             courseId={courseId}
             moduleId={moduleId}
             onClose={() => setShowAddFileForm(false)}
+          />
+        </div>
+      )}
+
+      {/* Render UploadVideo Form */}
+      {showUploadVideoForm && (
+        <div style={{ marginTop: "2rem" }}>
+          <UploadVideo
+            courseId={courseId}
+            moduleId={moduleId}
+            onClose={() => setShowUploadVideoForm(false)}
           />
         </div>
       )}

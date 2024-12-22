@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CoursePage from "./coursePage"; // Instructor view
 import StudentCoursePage from "./studentCoursePage"; // Student view
+import AdminPage from "./AdminPage"; // Admin view
 
 export default function Page() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function Page() {
 
   useEffect(() => {
     // Simulate fetching the user role from a token or API
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4ODYzMjUsImV4cCI6MTczNDk3MjcyNX0.TS1bFpdbLOfKs2NSiEWwBooXLadi5KH6RJSxUvMfNcY"; // Token
     const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decode the JWT
     const role = decodedToken.role; // Assume role is present in the token
 
@@ -29,6 +30,8 @@ export default function Page() {
     return <CoursePage />;
   } else if (userRole === "student") {
     return <StudentCoursePage />;
+  } else if (userRole === "admin") {
+    return <AdminPage />;
   } else {
     // Handle unknown roles
     return <div>Unauthorized: Unknown role</div>;

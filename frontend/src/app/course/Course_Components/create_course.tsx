@@ -10,8 +10,6 @@ const CreateCourse: React.FC<CreateCourseProps> = ({ onClose }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState(""); // Updated field
   const [difficultyLevel, setDifficultyLevel] = useState("");
-  const [keywords, setKeywords] = useState<string[]>([]); // Keywords state
-  const [currentKeyword, setCurrentKeyword] = useState(""); // Temporary input value
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,11 +21,11 @@ const CreateCourse: React.FC<CreateCourseProps> = ({ onClose }) => {
       title,
       description, // Updated field
       difficultyLevel,
-      keywords, // Include keywords in the payload
     };
 
     try {
-      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw";
+      const token =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4ODcwNzgsImV4cCI6MTczNDk3MzQ3OH0.m4zqJiXDtemS0wzRu2GVtARCsbn_tioEndYsaE1blhc";
 
       const response = await fetch("http://localhost:4000/courses", {
         method: "POST",
@@ -51,17 +49,6 @@ const CreateCourse: React.FC<CreateCourseProps> = ({ onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleKeywordAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && currentKeyword.trim()) {
-      setKeywords([...keywords, currentKeyword.trim()]);
-      setCurrentKeyword("");
-    }
-  };
-
-  const handleKeywordRemove = (index: number) => {
-    setKeywords(keywords.filter((_, i) => i !== index));
   };
 
   return (
@@ -90,29 +77,6 @@ const CreateCourse: React.FC<CreateCourseProps> = ({ onClose }) => {
           onChange={(e) => setDifficultyLevel(e.target.value)}
           style={styles.input}
         />
-        <div style={styles.keywordsContainer}>
-          <input
-            type="text"
-            placeholder="Add a keyword and press Enter"
-            value={currentKeyword}
-            onChange={(e) => setCurrentKeyword(e.target.value)}
-            onKeyDown={handleKeywordAdd}
-            style={styles.input}
-          />
-          <div style={styles.keywordsList}>
-            {keywords.map((keyword, index) => (
-              <span key={index} style={styles.keyword}>
-                {keyword}
-                <button
-                  style={styles.removeKeywordButton}
-                  onClick={() => handleKeywordRemove(index)}
-                >
-                  &times;
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
         <div style={styles.buttonContainer}>
           <button onClick={handleCreate} style={styles.button} disabled={loading}>
             {loading ? "Creating..." : "Create"}
@@ -153,32 +117,6 @@ const styles = {
     fontSize: "1rem",
     border: "1px solid #ccc",
     borderRadius: "4px",
-  },
-  keywordsContainer: {
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: "0.5rem",
-  },
-  keywordsList: {
-    display: "flex",
-    flexWrap: "wrap" as const,
-    gap: "0.5rem",
-  },
-  keyword: {
-    display: "flex",
-    alignItems: "center",
-    backgroundColor: "#f1f1f1",
-    padding: "0.25rem 0.5rem",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-  },
-  removeKeywordButton: {
-    background: "none",
-    border: "none",
-    color: "#f44336",
-    marginLeft: "0.5rem",
-    cursor: "pointer",
-    fontSize: "1rem",
   },
   buttonContainer: {
     display: "flex",
