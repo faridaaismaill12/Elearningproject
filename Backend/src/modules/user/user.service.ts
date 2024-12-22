@@ -448,33 +448,30 @@ export class UserService {
 
 
     //return user name by given user id
-    async getUserEnrolledCourses(userId: string): Promise<{ title: string }[]> {
+    async getUserEnrolledCourses(userId: string): Promise<{ _id: string; title: string }[]> {
         if (!Types.ObjectId.isValid(userId)) {
-            throw new BadRequestException('Invalid user ID format');
+          throw new BadRequestException('Invalid user ID format');
         }
-    
+      
         // Fetch the user's enrolled courses (ObjectIds)
         const user = await this.userModel.findById(userId).exec();
-    
+      
         if (!user) {
-            throw new NotFoundException('User not found');
+          throw new NotFoundException('User not found');
         }
-    
+      
         if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
-            return []; // Return an empty array if no courses are enrolled
+          return []; // Return an empty array if no courses are enrolled
         }
-    
-        // Fetch course titles from the Course collection
+      
+        // Fetch course titles and IDs from the Course collection
         const courses = await this.courseModel
-            .find({ _id: { $in: user.enrolledCourses } })
-            .select('title')
-            .exec();
-    
-        // Return only the course titles
-        return courses.map((course) => ({ title: course.title }));
-    }
-    
-    
+          .find({ _id: { $in: user.enrolledCourses } })
+          .select('_id title') // Ensure _id and title are selected
+          .exec();
+      
+        return courses.map((course) => ({ _id: course._id.toString(), title: course.title }));
+      }
     
 
 

@@ -31,6 +31,9 @@ import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { Course } from './schemas/course.schema';
+import { Lesson } from './schemas/lesson.schema';
+
+import { Types } from 'mongoose';
 
 
 // Multer storage configuration for file upload
@@ -162,13 +165,15 @@ async createLesson(
   }
 
   // Delete a course by instructor - Only instructors
-  @Roles('instructor,admin') // Ensure only instructors can access this endpoint
-@Delete(':id')
-async deleteCourse(
-  @Param('id') courseId: string,
-): Promise<any> {
-  return this.courseService.deleteCourseByInstructor(courseId);
-}
+  @Roles('instructor') // Ensure only instructors can access this endpoint
+  @Delete(':id')
+  async deleteCourse(@Param('id') courseId: string) {
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new BadRequestException('Invalid course ID format.');
+    }
+    return await this.courseService.deleteCourseByInstructor(courseId);
+  }
+  
 
 
   // Get a specific module by MongoDB _id
@@ -239,6 +244,23 @@ async getCoursesOfInstructor(@Req() req: any): Promise<Course[]> {
 }
 
 
+@Get(':courseId/modules/:moduleId/lessons')
+async getLessonsForModule(
+  @Param('courseId') courseId: string,
+  @Param('moduleId') moduleId: string
+): Promise<any[]> {
+  return await this.courseService.getLessonsForModule(courseId, moduleId);
+}
+
+
+@Get(':courseId/modules/:moduleId/lessons/:lessonId')
+async getLessonDetails(
+  @Param('courseId') courseId: string,
+  @Param('moduleId') moduleId: string,
+  @Param('lessonId') lessonId: string,
+): Promise<any> {
+  return this.courseService.getLessonDetails(courseId, moduleId, lessonId);
+}
 
 
 

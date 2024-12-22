@@ -16,7 +16,7 @@ const ModuleDetails = () => {
   const [showCreateLessonForm, setShowCreateLessonForm] = useState<boolean>(false);
   const [showAddFileForm, setShowAddFileForm] = useState<boolean>(false);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ2ODQ0NTUsImV4cCI6MTczNDc3MDg1NX0.LYAmmv4QDNDVD3tR2XhjCXSKj5Mul19m9wSCg-ayTFc";
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
 
   useEffect(() => {
     const fetchModuleDetails = async () => {
