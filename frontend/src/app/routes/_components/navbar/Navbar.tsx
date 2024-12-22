@@ -2,6 +2,7 @@
 import React, { useState, ChangeEvent } from "react";
 import "./Navbar.css";
 import { IoSearch } from "react-icons/io5";
+import Link from "next/link";
 
 
 const Navbar = () => {
@@ -94,11 +95,11 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <li className="nav-item">
-                <a className="nav-link" href="/courses">
-                  Courses
-                </a>
-              </li>
+                <li className="nav-item">
+      <Link className="nav-link" href="/routes/course">
+        Courses
+      </Link>
+    </li> 
               <li className="nav-item">
                 <a className="nav-link" href="/report">
                   Teach on BananaBread

@@ -20,7 +20,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CourseService } from './course.service';
-import { Course } from './schemas/course.schema';
+// import { Course } from './schemas/course.schema';
 import { Types } from 'mongoose';
 import { Question } from '../quizzes/schemas/question.schema';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -95,8 +95,8 @@ async uploadFilesToModule(
   @UploadedFiles() files: Express.Multer.File[],
 ) {
 
-  console.log('Module Data:', moduleData); // Log module data
-  console.log('Uploaded Files:', files);  // Log uploaded files
+  // console.log('Module Data:', moduleData); // Log module data
+  // console.log('Uploaded Files:', files);  // Log uploaded files
 
 //   if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
 //     throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
@@ -110,7 +110,7 @@ async uploadFilesToModule(
 
 
 
-\
+
 
 // Create a lesson for a specific module - Only instructors
 @Roles('instructor')
