@@ -16,6 +16,7 @@ import { Types } from 'mongoose';
 import { CourseService } from '../course/course.service';
 import { UserService } from '../user/user.service';
 import { NotificationService } from './services/notification.service';
+import { AddMessageDto } from './dto/add-message.dto';
 
 @WebSocketGateway({
     cors: {
@@ -95,33 +96,53 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
         try {
             const userId = this.validateToken(client);
 
-            // Validate payload
+            console.log('Received sendMessage event with payload:', body);
+
             if (!body || !body.chatRoomId || !body.content) {
+                console.error('Invalid payload format. Missing required fields.');
                 client.emit('error', { message: 'Invalid payload format. Missing required fields.' });
                 return;
             }
 
-            const addMessageDto = {
+            //make sure that the user is participant in the chat
+            if (!this.communicationService.isParticipantInChat(new Types.ObjectId(body.chatRoomId), new Types.ObjectId(userId))) {
+                console.error(`User ${userId} is not a participant of chat room ${body.chatRoomId}`);
+                client.emit('error', { message: 'You are not authorized to send messages in this chat room.' });
+                return;
+            }
+
+            const addMessageDto: AddMessageDto = {
                 chatRoomId: body.chatRoomId,
                 sender: new Types.ObjectId(userId),
                 content: body.content,
             };
 
-            // Fetch chat history and validate participation
+
             const chat = await this.communicationService.getChatHistory(new Types.ObjectId(body.chatRoomId));
-            const isParticipant = chat.participants.some((participant) =>
-                participant._id.equals(new Types.ObjectId(userId)),
-            );
+            const isParticipant = chat.participants.some((participant) => participant._id.equals(new Types.ObjectId(userId)));
 
             if (!isParticipant) {
+                console.error(`User ${userId} is not a participant of chat room ${addMessageDto.chatRoomId}`);
                 client.emit('error', { message: 'You are not authorized to send messages in this chat room.' });
                 return;
             }
 
-            // Save the message in the chat
             const updatedChat = await this.communicationService.addMessage(addMessageDto);
 
-            // Notify other participants in the chat
+            console.log('Message saved to database. Broadcasting to participants...');
+
+            updatedChat.participants.forEach((participant) => {
+                const socketId = this.activeUsers.get(participant.toHexString());
+                if (socketId && participant.toHexString() !== userId) {
+                    console.log(`Emitting to socket ID ${socketId} for participant ${participant.toHexString()}`);
+                    this.server.to(socketId).emit('receiveMessage', {
+                        chatRoomId: body.chatRoomId,
+                        sender: userId,
+                        content: body.content,
+                        timestamp: new Date(),
+                    });
+                }
+            });
             for (const participant of updatedChat.participants) {
                 const participantId = participant.toHexString();
                 const socketId = this.activeUsers.get(participantId);
@@ -143,15 +164,18 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
                 }
             }
 
-            // Acknowledge message sent
             client.emit('messageSent', { success: true });
-            console.log(`Message sent by user ${userId} in chat room ${body.chatRoomId}`);
-        } catch (error) {
-            console.error('Error handling sendMessage event:', (error as Error).message);
-            client.emit('error', { message: (error as Error).message });
+            console.log(`Acknowledgment sent to sender: ${client.id}`);
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error('Error sending message:', error.message);
+                client.emit('error', { message: error.message });
+            } else {
+                console.error('Error sending message:', error);
+                client.emit('error', { message: 'An unknown error occurred.' });
+            }
         }
     }
-
     async emitNotification(recipient: string | Types.ObjectId, notification: Notification) {
         const recipientSocketId = this.activeUsers.get(recipient.toString());
         if (recipientSocketId) {
