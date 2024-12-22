@@ -1,6 +1,8 @@
 import { Controller, Get, NotFoundException, Param } from "@nestjs/common";
 import { ModuleService } from "./module.service";
 import { Module } from "./schemas/module.schema";
+import { RolesGuard } from "../security/guards/role.guard";
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 @Controller('modules')
 export class ModuleController {
@@ -21,4 +23,8 @@ export class ModuleController {
         }
         return module;
 }
+
+
 }
+
+
