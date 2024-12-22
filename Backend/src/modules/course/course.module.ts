@@ -11,7 +11,7 @@ import { Course, CourseSchema } from './schemas/course.schema';
 import { Lesson, LessonSchema } from './schemas/lesson.schema';
 import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
 
-import { LessonController } from './lesson.controller';
+// import { LessonController } from './lesson.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 

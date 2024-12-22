@@ -115,7 +115,7 @@ export class UserController {
 
         console.log('Update Profile endpoint invoked.');
         return this.userService.updateProfile(updateUserDto, userIdFromToken);
-    } // tested 
+    } // tested
 
     /**
      * Delete user profile
@@ -359,4 +359,3 @@ export class UserController {
 }
 
 
-}
