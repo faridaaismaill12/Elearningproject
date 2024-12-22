@@ -30,22 +30,22 @@ export class Lesson {
   @Prop({type: MongooseSchema.Types.ObjectId, ref:"Note"})
   noteId?:MongooseSchema.Types.ObjectId[];
 
-  // Track lesson completion for users
+
   @Prop({
     type: [
       {
         userId: { type: String, ref: "User" },
         completedAt: { type: Date },
+        state: { type: String, enum: ['completed', 'in-progress', 'not-started'], default: 'not-started' },
       },
     ],
     default: [],
   })
   completions!: {
-    userId: String;
+    userId: string;
     completedAt: Date;
+    state: string; 
   }[];
   
 }
-
-
 export const LessonSchema = SchemaFactory.createForClass(Lesson);

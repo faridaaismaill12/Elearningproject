@@ -72,6 +72,66 @@ export class StudentDashboardService {
   }
 
   //Number of Lessons Completed Today
+//   async getLessonsCompleted(userId: string, date: Date): Promise<Number> {
+//     let lessonCount = 0;
+    
+//     if (!Types.ObjectId.isValid(userId)) {
+//       throw new BadRequestException('Invalid User ID');
+//     }
+  
+//     const userObjectId = new Types.ObjectId(userId);
+  
+//     // Check if user exists
+//     const user = await this.userModel.findById(userObjectId);
+//     if (!user) {
+//       throw new NotFoundException('User not found');
+//     }
+  
+//     if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
+//       throw new NotFoundException('No enrolled courses found for the user');
+//     }
+  
+    
+  
+//     // Iterate through enrolled courses
+//     for (const courseId of user.enrolledCourses) {
+//       const course = await this.courseModel.findById(courseId).lean();
+  
+//       if (!course || !course.modules || course.modules.length === 0) {
+//         continue; // Skip if course or modules are missing
+//       }
+
+//       const modules = course.modules.map((module) => module._id);
+//   // Iterate through modules
+// for (const moduleId of modules) {
+//   // Find the module and populate its lessons
+//   const module = await this.moduleModel.findById(new Types.ObjectId(moduleId)).populate('lessons');
+  
+//   if (!module || !module.lessons || module.lessons.length === 0) {
+//     continue; // Skip if no lessons are found in the module
+//   }
+
+//   // Iterate through lessons in the module
+//   for (const lesson of module.lessons) {
+//     // Check if the lesson is completed by the user
+//     const completedLesson = await this.lessonModel.findOne({
+//       lessonId: lesson._id, // Match the lesson by its unique ID
+//       completions: {
+//         $elemMatch: {
+//           userId: userObjectId.toString(), // Match the userId in the completions array
+//           completedAt: { $lte: date }, // Ensure the lesson was completed before or on the given date
+//         },
+//       },
+//     });
+
+  //   if (completedLesson) {
+  //     lessonCount++;
+  //   }
+  // }
+  //   return lessonCount;
+  
+  // }}}
+  
 
   //Average Score Per Course
   async averageCourseGrades(userId: string, courseId: string): Promise<number> {
@@ -81,12 +141,15 @@ export class StudentDashboardService {
     if (!Types.ObjectId.isValid(userId)) {
       throw new BadRequestException('Invalid User ID');
     }
-    const course = await this.courseModel.findById(courseId);
+    const userObjectId = new Types.ObjectId(userId);
+    const courseObjectId = new Types.ObjectId(courseId);
+    
+    const course = await this.courseModel.findById(courseObjectId);
     if (!course) {
       throw new NotFoundException('Course not found');
     }
     
-    const user = await this.userModel.findById(userId);
+    const user = await this.userModel.findById(userObjectId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -120,14 +183,16 @@ export class StudentDashboardService {
       throw new BadRequestException('Invalid User ID');
     }
   
+    const userObjectId = new Types.ObjectId(userId);
+    const courseObjectId = new Types.ObjectId(courseId);
     // Check if course exists
-    const course = await this.courseModel.findById(courseId).lean();
+    const course = await this.courseModel.findById(courseObjectId).lean();
     if (!course) {
       throw new NotFoundException('Course not found');
     }
   
     // Check if user exists
-    const user = await this.userModel.findById(userId).lean();
+    const user = await this.userModel.findById(userObjectId).lean();
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -200,15 +265,18 @@ export class StudentDashboardService {
     if (!Types.ObjectId.isValid(userId)) {
       throw new BadRequestException('Invalid User ID');
     }
+
+    const userObjectId = new Types.ObjectId(userId);
+    const courseObjectId = new Types.ObjectId(courseId);
   
     // Check if course exists
-    const course = await this.courseModel.findById(courseId).lean();
+    const course = await this.courseModel.findById(courseObjectId).lean();
     if (!course) {
       throw new NotFoundException('Course not found');
     }
   
     // Check if user exists
-    const user = await this.userModel.findById(userId).lean();
+    const user = await this.userModel.findById(userObjectId).lean();
     if (!user) {
       throw new NotFoundException('User not found');
     }

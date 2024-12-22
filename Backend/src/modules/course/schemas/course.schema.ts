@@ -41,12 +41,7 @@ export class Course {
           required: true,
           default: 'medium',
         },
-        lessons: [
-          {
-            title: { type: String, required: true },
-            content: { type: String, required: true },
-          },
-        ],
+        lessons:[{ type: MongooseSchema.Types.ObjectId, ref: 'Lesson' }]
       },
     ],
     default: [],
