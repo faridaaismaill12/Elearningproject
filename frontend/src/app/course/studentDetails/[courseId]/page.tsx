@@ -14,12 +14,15 @@ const CourseDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Retrieve token from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
     if (storedToken) {
       setToken(storedToken);
+      const decodedToken = JSON.parse(atob(storedToken.split(".")[1]));
+      setCurrentUserId(decodedToken.id); // Extract current user's ID
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
       router.push("/login"); // Redirect to login if token is not found
@@ -47,7 +50,9 @@ const CourseDetailsPage = () => {
         );
 
         if (!courseResponse.ok) {
-          throw new Error(`Failed to fetch course details: ${courseResponse.statusText}`);
+          throw new Error(
+            `Failed to fetch course details: ${courseResponse.statusText}`
+          );
         }
 
         const courseData = await courseResponse.json();
@@ -66,31 +71,37 @@ const CourseDetailsPage = () => {
         );
 
         if (!modulesResponse.ok) {
-          throw new Error(`Failed to fetch modules: ${modulesResponse.statusText}`);
+          throw new Error(
+            `Failed to fetch modules: ${modulesResponse.statusText}`
+          );
         }
 
         const modulesData = await modulesResponse.json();
         setModules(modulesData);
 
         // Fetch enrolled students with roles
-        const studentPromises = courseData.enrolledStudents.map(async (studentId: string) => {
-          const userResponse = await fetch(
-            `http://localhost:4000/users/find-user/${studentId}`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
+        const studentPromises = courseData.enrolledStudents.map(
+          async (studentId: string) => {
+            const userResponse = await fetch(
+              `http://localhost:4000/users/find-user/${studentId}`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            if (!userResponse.ok) {
+              throw new Error(
+                `Failed to fetch user details: ${userResponse.statusText}`
+              );
             }
-          );
 
-          if (!userResponse.ok) {
-            throw new Error(`Failed to fetch user details: ${userResponse.statusText}`);
+            return userResponse.json();
           }
-
-          return userResponse.json();
-        });
+        );
 
         const studentsData = await Promise.all(studentPromises);
         setEnrolledStudents(studentsData);
@@ -112,7 +123,15 @@ const CourseDetailsPage = () => {
     router.push(`/course/studentDetails/${courseId}/${moduleId}`);
   };
 
+  const handleViewForums = () => {
+    router.push(`/communication/forums/viewAll?courseId=${courseId}`);
+  };
+
   const handleCreate1to1Chat = async (participantId: string) => {
+    if (participantId === currentUserId) {
+      return; // Do not allow creating 1:1 chat with self
+    }
+
     try {
       await axios.post(
         "http://localhost:4000/communication/create-one-to-one-chat",
@@ -129,8 +148,11 @@ const CourseDetailsPage = () => {
       );
 
       alert("1:1 Chat created successfully!");
-    } catch (err) {
-      alert("Failed to create 1:1 chat. Error: " + err.message);
+    } catch (err: any) {
+      alert(
+        "Failed to create 1:1 chat. Error: " +
+          (err.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -160,12 +182,19 @@ const CourseDetailsPage = () => {
 
       alert("Group chat created successfully!");
       setSelectedStudents([]); // Reset selected students
-    } catch (err) {
-      alert("Failed to create group chat. Error: " + err.message);
+    } catch (err: any) {
+      alert(
+        "Failed to create group chat. Error: " +
+          (err.response?.data?.message || err.message)
+      );
     }
   };
 
   const toggleStudentSelection = (studentId: string) => {
+    if (studentId === currentUserId) {
+      return; // Prevent selecting yourself
+    }
+
     setSelectedStudents((prevSelected) => {
       if (prevSelected.includes(studentId)) {
         return prevSelected.filter((id) => id !== studentId);
@@ -193,24 +222,54 @@ const CourseDetailsPage = () => {
         </p>
       </div>
 
+      <h2 style={styles.subtitle}>Modules</h2>
+      <div style={styles.listContainer}>
+        {modules.length > 0 ? (
+          <ul style={styles.list}>
+            {modules.map((module) => (
+              <li
+                key={module._id}
+                style={styles.moduleItem}
+                onClick={() => handleModuleClick(module._id)}
+              >
+                {module.title}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={styles.noData}>No modules available for this course.</p>
+        )}
+      </div>
+
       <h2 style={styles.subtitle}>Enrolled Students</h2>
       <div style={styles.listContainer}>
         {enrolledStudents.length > 0 ? (
           <ul style={styles.list}>
             {enrolledStudents.map((student) => (
-              <li key={student._id} style={styles.listItem}>
+              <li
+                key={student._id}
+                style={{
+                  ...styles.listItem,
+                  backgroundColor:
+                    student.role === "instructor" ? "#f0f8ff" : "transparent",
+                }}
+              >
+                {student.role === "instructor" && <strong>(Instructor)</strong>}
                 <input
                   type="checkbox"
                   checked={selectedStudents.includes(student._id)}
                   onChange={() => toggleStudentSelection(student._id)}
+                  disabled={student._id === currentUserId}
                 />
                 {student.email}
-                <button
-                  onClick={() => handleCreate1to1Chat(student._id)}
-                  style={styles.chatButton}
-                >
-                  Create 1:1 Chat
-                </button>
+                {student._id !== currentUserId && (
+                  <button
+                    onClick={() => handleCreate1to1Chat(student._id)}
+                    style={styles.chatButton}
+                  >
+                    Create 1:1 Chat
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -221,6 +280,10 @@ const CourseDetailsPage = () => {
 
       <button onClick={handleCreateGroupChat} style={styles.groupChatButton}>
         Create Group Chat
+      </button>
+
+      <button onClick={handleViewForums} style={styles.forumButton}>
+        View Forums
       </button>
     </div>
   );
@@ -266,6 +329,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "0.5rem 1rem",
     borderBottom: "1px solid #ddd",
   },
+  moduleItem: {
+    padding: "0.5rem",
+    margin: "0.5rem 0",
+    backgroundColor: "#eaf7ff",
+    border: "1px solid #b3e5fc",
+    borderRadius: "5px",
+    cursor: "pointer",
+    textAlign: "center",
+  },
   chatButton: {
     backgroundColor: "#007bff",
     color: "#fff",
@@ -284,6 +356,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "0.5rem 1rem",
     cursor: "pointer",
   },
+  forumButton: {
+    display: "block",
+    margin: "1rem auto",
+    backgroundColor: "#ff5722",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    padding: "0.5rem 1rem",
+    cursor: "pointer",
+  },
   loading: {
     textAlign: "center",
   },
@@ -291,7 +373,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "red",
     textAlign: "center",
   },
+  noData: {
+    color: "#999",
+    textAlign: "center",
+  },
 };
 
 export default CourseDetailsPage;
-

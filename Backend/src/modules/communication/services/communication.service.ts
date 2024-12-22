@@ -76,6 +76,16 @@ export class CommunicationService {
             $expr: { $eq: [{ $size: "$participants" }, participants.length] }, // Ensure exact count matches
         });
     }
+
+
+    async getChatByParticipantsAndCourse(participants: Types.ObjectId[], courseId: Types.ObjectId) {
+      return this.chatModel.findOne({
+        participants: { $all: participants },
+        $expr: { $eq: [{ $size: "$participants" }, participants.length] },
+        courseId,
+      });
+    }
+    
     
 
 

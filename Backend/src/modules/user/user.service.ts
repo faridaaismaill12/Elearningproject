@@ -299,6 +299,9 @@ export class UserService {
             throw new NotFoundException('User not found');
         }
 
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
         return user;
     }
 
@@ -607,6 +610,16 @@ export class UserService {
         });
     }
     
+
+    //get user by email
+    async getUserByEmail(email: string): Promise<User> {
+        const user = await this.userModel.findOne({ email }).exec();
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        return user;
+        
+    }
 
     
 }
