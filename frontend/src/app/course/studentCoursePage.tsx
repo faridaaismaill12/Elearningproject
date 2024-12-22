@@ -8,23 +8,32 @@ const StudentCoursePage = () => {
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [token, setToken] = useState<string | null>(null);
 
   const router = useRouter();
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjMxYzQ5OGU1ZDZlZDA0OGI4YmEwZiIsImVtYWlsIjoiY2xhcmFAZ21haWwuY29tIiwicm9sZSI6InN0dWRlbnQiLCJpYXQiOjE3MzQ3OTA3NDAsImV4cCI6MTczNDg3NzE0MH0.MmxxWMIbbjlUBJfmvwMrUky3I7nj5NWLfyh0-Sw3DLE"; // Replace with the actual token
-
   useEffect(() => {
-    try {
-      const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decode the JWT
-      const userEmail = decodedToken.email; // Extract email from the token
-      setEmail(userEmail);
-    } catch (error) {
-      console.error("Error decoding token:", error);
+    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    if (storedToken) {
+      setToken(storedToken);
+
+      try {
+        const decodedToken = JSON.parse(atob(storedToken.split(".")[1])); // Decode the JWT
+        const userEmail = decodedToken.email; // Extract email from the token
+        setEmail(userEmail);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    } else {
+      console.error("No token found in localStorage");
+      setError("Authentication token not found. Please log in.");
     }
   }, []);
 
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
+      if (!token) return;
+
       setLoading(true);
       setError(null);
       try {
@@ -50,20 +59,15 @@ const StudentCoursePage = () => {
     };
 
     fetchEnrolledCourses();
-  }, []);
+  }, [token]);
 
   const handleCourseClick = (courseId: string | undefined) => {
-    console.log("Clicked courseId:", courseId); // Log the courseId
     if (!courseId) {
       console.error("Invalid courseId:", courseId);
       return;
     }
     router.push(`/course/studentDetails/${courseId}`);
   };
-  
-  
-  
-  
 
   if (loading) return <div>Loading enrolled courses...</div>;
 
@@ -83,7 +87,7 @@ const StudentCoursePage = () => {
         }}
       >
         <p>
-          <strong>Email:</strong> {email}
+          <strong>Email:</strong> {email || "Email not available"}
         </p>
       </div>
 
@@ -99,22 +103,19 @@ const StudentCoursePage = () => {
         >
           <h2>Enrolled Courses</h2>
           <ul>
-  {enrolledCourses.map((course: any, index: number) => {
-    console.log(`Course at index ${index}:`, course); // Log the entire course object
-    const courseId = course._id || course.courseId; // Adjust to your backend schema
-    return (
-      <li
-        key={courseId || `fallback-key-${index}`}
-        style={{ cursor: "pointer", color: "#007bff", textDecoration: "underline" }}
-        onClick={() => handleCourseClick(courseId)} // Pass courseId here
-      >
-        {course.title || "Untitled Course"}
-      </li>
-    );
-  })}
-</ul>
-
-
+            {enrolledCourses.map((course: any, index: number) => {
+              const courseId = course._id || course.courseId; // Adjust to your backend schema
+              return (
+                <li
+                  key={courseId || `fallback-key-${index}`}
+                  style={{ cursor: "pointer", color: "#007bff", textDecoration: "underline" }}
+                  onClick={() => handleCourseClick(courseId)}
+                >
+                  {course.title || "Untitled Course"}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : (
         <p>No enrolled courses found.</p>

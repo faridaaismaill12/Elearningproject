@@ -7,7 +7,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CreateModule from "../../Course_Components/create_module";
 
 const CourseDetails = () => {
-  const { courseId } = useParams(); // Get courseId from the route params
+  const { courseId } = useParams<{ courseId: string }>(); // Get courseId from the route params
   const router = useRouter();
 
   const [courseDetails, setCourseDetails] = useState<any>(null);
@@ -16,12 +16,24 @@ const CourseDetails = () => {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
+  // Retrieve token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      console.error("No token found in localStorage. Redirecting to login...");
+      router.push("/login"); // Redirect to login if token is not found
+    }
+  }, []);
 
   // Fetch course details
   useEffect(() => {
     const fetchCourseDetails = async () => {
+      if (!token) return;
+
       try {
         const response = await fetch(`http://localhost:4000/courses/${courseId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -36,8 +48,8 @@ const CourseDetails = () => {
       }
     };
 
-    fetchCourseDetails();
-  }, [courseId]);
+    if (courseId) fetchCourseDetails();
+  }, [courseId, token]);
 
   // Open Menu
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, moduleId: string) => {

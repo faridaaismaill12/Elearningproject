@@ -37,11 +37,20 @@ export default function ForumDetails() {
         return;
       }
 
-      const response = await axios.get(`http://localhost:4000/forums/${id}`, {
+      const forumResponse = await axios.get(`http://localhost:4000/forums/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setForum(response.data);
+      const forumData = forumResponse.data;
+
+      // Fetch the creator's name for the forum
+      const userResponse = await axios.get(
+        `http://localhost:4000/users/find-user/${forumData.createdBy}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const creatorName = userResponse.data.name || "Unknown User";
+      setForum({ ...forumData, createdByName: creatorName });
     } catch (err) {
       setError("Failed to fetch forum details.");
     } finally {
@@ -180,9 +189,15 @@ export default function ForumDetails() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Forum Title and Total Replies */}
-      <div className="bg-blue-100 p-4 rounded shadow mb-6 flex items-center justify-between">
+      {/* Forum Title, Created By, and Total Replies */}
+      <div className="bg-blue-100 p-4 rounded shadow mb-6 flex flex-col space-y-2">
         <h1 className="text-3xl font-bold">{forum.title}</h1>
+        <p className="text-gray-700">
+          Created By: {forum.createdByName} |{" "}
+          {forum.createdAt
+            ? new Date(forum.createdAt).toLocaleString()
+            : "Unknown Date"}
+        </p>
         <div className="flex items-center space-x-2 text-gray-600">
           <FaComment className="text-xl text-blue-600" />
           <span className="text-lg">

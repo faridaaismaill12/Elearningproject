@@ -11,11 +11,23 @@ const ModuleDetailsPage = () => {
   const [lessons, setLessons] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NjMxYzQ5OGU1ZDZlZDA0OGI4YmEwZiIsImVtYWlsIjoiY2xhcmFAZ21haWwuY29tIiwicm9sZSI6InN0dWRlbnQiLCJpYXQiOjE3MzQ3OTA3NDAsImV4cCI6MTczNDg3NzE0MH0.MmxxWMIbbjlUBJfmvwMrUky3I7nj5NWLfyh0-Sw3DLE";
+  // Retrieve token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      console.error("No token found in localStorage. Redirecting to login...");
+      router.push("/login"); // Redirect to login if token is not found
+    }
+  }, []);
 
   useEffect(() => {
     const fetchModuleDetails = async () => {
+      if (!token) return;
+
       setLoading(true);
       setError(null);
 
@@ -63,7 +75,7 @@ const ModuleDetailsPage = () => {
     } else {
       setError("Course ID or Module ID is missing.");
     }
-  }, [courseId, moduleId]);
+  }, [courseId, moduleId, token]);
 
   const handleLessonClick = (lessonId: string) => {
     console.log(`Navigating to lessonId: ${lessonId}`); // Debugging
@@ -71,6 +83,8 @@ const ModuleDetailsPage = () => {
   };
 
   const handleDownloadFiles = async () => {
+    if (!token) return;
+
     try {
       const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`, {
         method: "GET",

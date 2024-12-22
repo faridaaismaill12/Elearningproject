@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import UpdateModule from "../../../Course_Components/update_module";
 import CreateLesson from "../../../Course_Components/create_lesson";
 import AddFile from "../../../Course_Components/add_file";
 
 const ModuleDetails = () => {
-  const { courseId, moduleId } = useParams();
+  const { courseId: courseIdParam, moduleId: moduleIdParam } = useParams();
+  const courseId = Array.isArray(courseIdParam) ? courseIdParam[0] : courseIdParam;
+  const moduleId = Array.isArray(moduleIdParam) ? moduleIdParam[0] : moduleIdParam;
+
   const [moduleDetails, setModuleDetails] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -15,11 +18,25 @@ const ModuleDetails = () => {
   const [showUpdateForm, setShowUpdateForm] = useState<boolean>(false);
   const [showCreateLessonForm, setShowCreateLessonForm] = useState<boolean>(false);
   const [showAddFileForm, setShowAddFileForm] = useState<boolean>(false);
+  const [token, setToken] = useState<string | null>(null);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
+  const router = useRouter();
+
+  // Retrieve token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      console.error("No token found in localStorage. Redirecting to login...");
+      router.push("/login"); // Redirect to login if token is not found
+    }
+  }, []);
 
   useEffect(() => {
     const fetchModuleDetails = async () => {
+      if (!token) return;
+
       try {
         const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -37,10 +54,12 @@ const ModuleDetails = () => {
       }
     };
 
-    fetchModuleDetails();
-  }, [courseId, moduleId]);
+    if (courseId && moduleId) fetchModuleDetails();
+  }, [courseId, moduleId, token]);
 
   const handleDownloadFiles = async () => {
+    if (!token) return;
+
     try {
       const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -58,8 +77,6 @@ const ModuleDetails = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      console.log("Download initiated");
     } catch (err: any) {
       setError("Failed to download files. Please try again.");
     }
@@ -146,28 +163,16 @@ const ModuleDetails = () => {
           marginTop: "1rem",
         }}
       >
-        <button
-          onClick={handleDownloadFiles}
-          style={buttonStyle("#007bff")}
-        >
+        <button onClick={handleDownloadFiles} style={buttonStyle("#007bff")}>
           Download Files
         </button>
-        <button
-          onClick={() => setShowUpdateForm(true)}
-          style={buttonStyle("#28a745")}
-        >
+        <button onClick={() => setShowUpdateForm(true)} style={buttonStyle("#28a745")}>
           Update Module
         </button>
-        <button
-          onClick={() => setShowCreateLessonForm(true)}
-          style={buttonStyle("#17a2b8")}
-        >
+        <button onClick={() => setShowCreateLessonForm(true)} style={buttonStyle("#17a2b8")}>
           Create Lesson
         </button>
-        <button
-          onClick={() => setShowAddFileForm(true)}
-          style={buttonStyle("#ffc107")}
-        >
+        <button onClick={() => setShowAddFileForm(true)} style={buttonStyle("#ffc107")}>
           Add Files
         </button>
       </div>
@@ -175,22 +180,14 @@ const ModuleDetails = () => {
       {/* Render CreateLesson Form */}
       {showCreateLessonForm && (
         <div style={{ marginTop: "2rem" }}>
-          <CreateLesson
-            courseId={courseId}
-            moduleId={moduleId}
-            onClose={() => setShowCreateLessonForm(false)}
-          />
+          <CreateLesson courseId={courseId} moduleId={moduleId} onClose={() => setShowCreateLessonForm(false)} />
         </div>
       )}
 
       {/* Render AddFile Form */}
       {showAddFileForm && (
         <div style={{ marginTop: "2rem" }}>
-          <AddFile
-            courseId={courseId}
-            moduleId={moduleId}
-            onClose={() => setShowAddFileForm(false)}
-          />
+          <AddFile courseId={courseId} moduleId={moduleId} onClose={() => setShowAddFileForm(false)} />
         </div>
       )}
     </div>
@@ -198,7 +195,7 @@ const ModuleDetails = () => {
 };
 
 // Button styling function
-const buttonStyle = (bgColor: string) => ({
+const buttonStyle = (bgColor: string): React.CSSProperties => ({
   padding: "0.5rem 1rem",
   backgroundColor: bgColor,
   color: "#fff",
@@ -207,7 +204,7 @@ const buttonStyle = (bgColor: string) => ({
   cursor: "pointer",
   fontSize: "1rem",
   transition: "background-color 0.3s",
-  textAlign: "center",
+  textAlign: "center" as "center",
   minWidth: "120px",
 });
 
