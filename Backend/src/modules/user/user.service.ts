@@ -21,6 +21,24 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { HydratedDocument } from 'mongoose';
+import { createObjectCsvWriter } from 'csv-writer';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
+import * as nodemailer from 'nodemailer';
+
+interface RecordData {
+    userId: string;
+    courseId: string;
+  }
+
+
+
+export type UserDocument = HydratedDocument<User> & {
+    enrolledCourses: Types.ObjectId[] | Course[];
+};
+
+
 
 @Injectable()
 export class UserService {
@@ -114,6 +132,12 @@ export class UserService {
 
         return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
     }
+    
+    async getUserName(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId).select('name').exec();
+        return user ? user.name : 'null';
+    }
+    
 
 
 
@@ -171,10 +195,15 @@ export class UserService {
 
         const resetToken = this.jwtService.sign(
             { sub: user._id, email: user.email },
-            { secret: process.env.JWT_SECRET, expiresIn: '15m' },
+            { secret: process.env.JWT_SECRET, expiresIn: '5m' },
         );
 
-        console.log(`Password reset link: http://localhost:${process.env.PORT}/users/reset-password?token=${resetToken}`);
+        const resetLink = `http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`;
+
+        await this.sendPasswordResetEmail(user.email, resetLink);
+
+        
+        console.log(`Password reset link: http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`);
 
         return { message: 'Password reset link sent to your email' };
     }
@@ -185,7 +214,9 @@ export class UserService {
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+            console.log(payload);
             const user = await this.userModel.findById(payload.sub);
+            console.log(user);
 
             if (!user) {
                 throw new NotFoundException('User not found');
@@ -219,7 +250,7 @@ export class UserService {
             const uploadResult = await this.uploadToCloudinary(updateUserDto.profilePictureUrl);
             updateUserDto.profilePictureUrl = uploadResult.secure_url;
         }
-
+        
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
             throw new NotFoundException('User not found');
@@ -339,14 +370,9 @@ export class UserService {
         return { message: 'Student created successfully', student };
     }
 
-    async deleteUser(adminId: string, userId: string) {
-        const admin = await this.userModel.findById(adminId);
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to delete users');
-        }
-
-        // Find the user to delete
+    async deleteUser(userId: string) {
         const userToDelete = await this.userModel.findByIdAndDelete(userId);
+        
         if (!userToDelete) {
             throw new NotFoundException('User not found');
         }
@@ -355,15 +381,9 @@ export class UserService {
     }
 
 
-    async getAllUsers(userId: string): Promise<User[]> {
-        const admin = await this.userModel.findById(userId);
-
-        // Check if the user making the request is an admin
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to access this resource');
-        }
-
-        const users = await this.userModel.find().select('-passwordHash');
+    async getAllUsers(): Promise<User[]> {
+        const users = await this.userModel.find().select('-passwordHash').populate('enrolledCourses').exec();
+        
         if (!users || users.length === 0) {
             throw new NotFoundException('No users found');
         }
@@ -426,11 +446,37 @@ export class UserService {
         return user ? user.role : null;
     }
 
+
     //return user name by given user id
-    async getUserName(userId: string) {
-        const user = await this.userModel.findById(userId).select('name').exec();
-        return user ? user.name : 'null';
+    async getUserEnrolledCourses(userId: string): Promise<{ title: string }[]> {
+        if (!Types.ObjectId.isValid(userId)) {
+            throw new BadRequestException('Invalid user ID format');
+        }
+    
+        // Fetch the user's enrolled courses (ObjectIds)
+        const user = await this.userModel.findById(userId).exec();
+    
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+    
+        if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
+            return []; // Return an empty array if no courses are enrolled
+        }
+    
+        // Fetch course titles from the Course collection
+        const courses = await this.courseModel
+            .find({ _id: { $in: user.enrolledCourses } })
+            .select('title')
+            .exec();
+    
+        // Return only the course titles
+        return courses.map((course) => ({ title: course.title }));
     }
+    
+    
+    
+
 
     async findUserById(id: string): Promise<any> {
 
@@ -449,6 +495,122 @@ export class UserService {
         return user;
 
     }
+  
+  
+    async getAllData(): Promise<Record<string, string[]>> {
+        const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
+          .select('_id enrolledCourses')
+          .lean();
+    
+        const groupedData = users.reduce((acc, user) => {
+          const validCourses = user.enrolledCourses?.filter(courseId => Types.ObjectId.isValid(courseId)) || [];
+          acc[`UserID: ${user._id}`] = validCourses.map(courseId => `CourseID: ${courseId}`);
+          return acc;
+        }, {} as Record<string, string[]>);
+    
+        return groupedData;
+      }
+    
+      async generateCSV(): Promise<string> {
+        const data = await this.getAllData();
+    
+        // Group courses by user and join the courses as a single comma-separated string
+        const groupedRecords = Object.entries(data).map(([userId, courses]) => ({
+          userId,
+          courseIds: courses.join(', '),
+        }));
+    
+        // Set up CSV writer
+        const csvWriter = createObjectCsvWriter({
+          path: 'exported_data.csv',
+          header: [
+            { id: 'userId', title: 'UserID' },
+            { id: 'courseIds', title: 'CourseIDs' },
+          ],
+        });
+    
+        // Write the grouped data to the CSV
+        await csvWriter.writeRecords(groupedRecords);
+    
+        return 'exported_data.csv';
+    }
 
 
+
+    async enable2FA(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+    
+        const secret = speakeasy.generateSecret({ name: `GIU E-Learning Platform (${user.email})` });
+        user.twoFactorSecret = secret.base32;
+        user.isTwoFactorEnabled = true;
+        await user.save();
+    
+        if (!secret.otpauth_url) {
+            throw new BadRequestException('Failed to generate OTP Auth URL');
+        }
+        const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
+        return qrCodeUrl;
+    }
+
+
+
+    async verify2FA(userId: string, otp: string): Promise<string> {
+        // console.log('Verifying 2FA...');
+        const user = await this.userModel.findById(userId);
+        // console.log(user)
+        if (!user || !user.twoFactorSecret) {
+            throw new UnauthorizedException('2FA is not enabled');
+        }
+        
+        // console.log({ secret: user.twoFactorSecret, otp });
+        
+
+        const isValid = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: otp,
+        });
+    
+        console.log({ secret: user.twoFactorSecret, otp, isValid });
+
+        if(isValid)
+        {
+            const token= this.jwtService.sign({id:userId});
+            return token;
+        }
+        return '';
+    }
+
+    
+    private transporter = nodemailer.createTransport({
+        service: 'Gmail', // Use your email provider
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+        },
+    });
+
+
+
+
+    
+    async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+        await this.transporter.sendMail({
+            from: `"GIU E-learning Platform" <no-reply@wearethebest.com>`,
+            to: email,
+            subject: 'Password Reset Request',
+            html: `
+        <p>You requested a password reset. Click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>If you did not request this reset, please ignore this email.</p>
+        `,
+        });
+    }
+    
+
+    
 }
+

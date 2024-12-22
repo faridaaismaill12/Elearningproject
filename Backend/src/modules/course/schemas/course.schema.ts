@@ -5,8 +5,11 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
+
+
   @Prop({ required: false, unique: true }) // Optional courseId
   courseId?: string;
+
 
   @Prop({ required: true })
   title!: string;
@@ -25,13 +28,19 @@ export class Course {
   difficultyLevel!: string;
 
   @Prop({
+    type: [String],
+    default: [],
+  })
+  keywords!: string[];
+
+  @Prop({
     type: [
       {
         title: { type: String, required: true },
         content: { type: String, required: true },
         difficultyLevel: {
           type: String,
-          enum: ['hard', 'medium', 'easy'], // Use consistent values
+          enum: ['hard', 'medium', 'easy'],
           required: true,
           default: 'medium',
         },
@@ -57,6 +66,8 @@ export class Course {
     }>;
   }>;
 
+
+
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Chat' }],
     default: [],
@@ -71,7 +82,17 @@ export class Course {
   })
   enrolledStudents?: Types.ObjectId[];
   
-  
+
 }
 
+
 export const CourseSchema = SchemaFactory.createForClass(Course);
+
+
+// Use middleware to set courseId to _id after the document is initialized
+CourseSchema.pre('save', function (next) {
+  if (!this.courseId) {
+    this.courseId = this._id.toHexString(); // Set courseId to match _id
+  }
+  next();
+});

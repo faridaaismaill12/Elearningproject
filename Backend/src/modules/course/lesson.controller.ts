@@ -27,10 +27,7 @@ export class LessonController {
         return this.lessonService.markLessonAsCompleted(lessonId, userId);
     }
     
-    @Post()
-    async createLesson(@Body() createLessonDto: CreateLessonDto) {
-        return this.lessonService.createLesson(createLessonDto);
-}
+   
 
 
 }
