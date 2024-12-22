@@ -43,7 +43,7 @@ export class Module {
   }>;
 
   @Prop({ unique: true, default: () => new Types.ObjectId().toString() })
-  moduleId?: string;
+  moduleId!: string;
 
   @Prop({ type: [Types.ObjectId], ref: 'Question' })
   questions!: Types.Array<Question & Document>;

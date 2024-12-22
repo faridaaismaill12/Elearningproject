@@ -18,7 +18,7 @@ export class ModuleController {
         const module= await this.moduleService.findModuleById(moduleId);
         if (!module) {
             throw new NotFoundException('module not found');
-          }
-          return module;
-  }
+        }
+        return module;
+}
 }

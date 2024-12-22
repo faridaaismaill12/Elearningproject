@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CourseService } from './course.service';
+import { ModuleService } from './module.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -23,8 +24,10 @@ import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { Course } from './schemas/course.schema';
-
+import { Module } from './schemas/module.schema';
 // Multer storage configuration
+
+
 const storage = diskStorage({
   destination: './uploads', // Folder to store files
   filename: (req, file, callback) => {
@@ -37,7 +40,9 @@ const storage = diskStorage({
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard) // Global guard for all endpoints in this controller
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(private readonly courseService: CourseService,
+    private readonly moduleService: ModuleService,)
+  {}
 
   
   // Create a course - Only instructors can create
@@ -215,9 +220,23 @@ async getCoursesOfInstructor(@Req() req: any): Promise<Course[]> {
   return await this.courseService.findCoursesByInstructor(instructorEmail);
 }
 
+@Roles('student')
+@Get('student/completed')
+async getCompletedCourses(@Req() req: any): Promise<Course[]> {
+  const studentId = req.user._id;
+  if (!studentId) {
+    throw new BadRequestException('Student ID is required.');
+  }
+  return await this.courseService.getCompletedCoursesForStudent(studentId);
+}
 
-
-
-
+@Roles('instructor')
+@Get('instructor/course-completions/:courseId')
+async getCourseCompletions(
+  @Param('courseId') courseId: string,
+  @Req() req: any
+): Promise<number> {
+  return await this.courseService.getCompletedCoursesForInstructor(courseId);
+}
 
 }

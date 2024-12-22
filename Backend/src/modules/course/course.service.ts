@@ -4,11 +4,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from './schemas/course.schema';
 import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
-import { Lesson, LessonDocument } from './schemas/lesson.schema';
+import { Lesson, LessonDocument} from './schemas/lesson.schema';
+import {User, UserDocument} from '../user/schemas/user.schema';
 import archiver from 'archiver';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
+import { LessonService } from './lesson.service';
+import { ModuleService } from './module.service';
 
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
@@ -18,6 +21,8 @@ export class CourseService {
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly moduleService: ModuleService
   ) {}
 
   // Other service methods
@@ -364,6 +369,71 @@ async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
 
   return courses;
 }
-  
 
+
+async getCompletedCoursesForStudent(studentId: string): Promise<Course[]> {
+  const courses = await this.courseModel.find({
+    enrolledStudents: studentId
+  }).exec();
+
+  const completedCourses = [];
+
+  for (const course of courses) {
+    let isCompleted = true;
+  
+    for (const moduleRef of course.modules) {
+      if (!moduleRef._id) {
+        isCompleted = false;
+        break;
+      }
+
+      const isModuleCompleted = await this.moduleService.isModuleCompletedByStudent(moduleRef._id, studentId);
+      if (!isModuleCompleted) {
+        isCompleted = false;
+        break;
+      }
+    }
+
+    if (isCompleted) {
+      completedCourses.push(course);
+    }
+  }
+
+  return completedCourses;
+}
+
+async getCompletedCoursesForInstructor(courseId: string): Promise<number> {
+  const course = await this.courseModel.findOne({ 
+    courseId: courseId
+  }).populate('enrolledStudents').exec();
+
+  if (!course) {
+    throw new NotFoundException(`Course with ID ${courseId} not found`);
+  }
+  let completedCount = 0;
+  if (!course.enrolledStudents) {
+    throw new NotFoundException(`No enrolled students found for course with ID ${courseId}`);
+  }
+  for (const student of course.enrolledStudents) {
+    let isCompleted = true;
+    for (const moduleRef of course.modules) {
+      if (!moduleRef._id) {
+        isCompleted = false;
+        break;
+      }
+      const isModuleCompleted = await this.moduleService.isModuleCompletedByStudent(
+        moduleRef._id, 
+        student._id.toString()
+      ); 
+      if (!isModuleCompleted) {
+        isCompleted = false;
+        break;
+      }
+    }
+    if (isCompleted) {
+      completedCount++;
+    }
+  }
+  return completedCount;
+}
 }
