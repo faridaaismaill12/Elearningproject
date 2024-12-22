@@ -268,21 +268,22 @@ export class UserController {
 
 
     @UseGuards(JwtAuthGuard) // JWT authentication only
-@Get('my-enrolled-courses')
-async getMyEnrolledCourses(@Req() req: any): Promise<any> {
-    // Extract the user ID and role from the token payload
-    const { id: userId, role } = req.user;
-
-    console.log('JWT Payload:', req.user); // Debugging
-
-    // Check if the logged-in user is a student
-    if (role !== 'student') {
+    @Get('my-enrolled-courses')
+    async getMyEnrolledCourses(@Req() req: any): Promise<any> {
+      const { id: userId, role } = req.user;
+    
+      console.log('JWT Payload:', req.user); // Debugging
+    
+      if (role !== 'student') {
         throw new ForbiddenException('Only students can access this endpoint');
+      }
+    
+      console.log(`Fetching enrolled courses for student with ID: ${userId}`);
+      const enrolledCourses = await this.userService.getUserEnrolledCourses(userId);
+    
+      console.log('Enrolled courses response:', enrolledCourses); // Debugging
+      return enrolledCourses;
     }
-
-    console.log(`Fetching enrolled courses for student with ID: ${userId}`);
-    return this.userService.getUserEnrolledCourses(userId);
-}
 
     
 

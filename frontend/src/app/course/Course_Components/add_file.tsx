@@ -33,7 +33,7 @@ const AddFile: React.FC<AddFileProps> = ({ courseId, moduleId, onClose }) => {
 
     try {
       const token =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ2ODQ0NTUsImV4cCI6MTczNDc3MDg1NX0.LYAmmv4QDNDVD3tR2XhjCXSKj5Mul19m9wSCg-ayTFc";
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw";
 
       const response = await fetch(
         `http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`,
