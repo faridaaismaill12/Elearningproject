@@ -70,7 +70,7 @@ export default function ChatPage() {
       if (socket) socket.disconnect();
 
       socket = io(`http://localhost:4000?token=${token}`, {
-        auth: { token },
+        // auth: { token },
         query: { chatRoomId: chatId },
       });
 
