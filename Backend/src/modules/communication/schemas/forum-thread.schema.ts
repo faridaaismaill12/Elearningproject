@@ -6,7 +6,7 @@ export class ForumThread extends Document {
     @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
     course!: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
     createdBy!: Types.ObjectId;
 
     @Prop({ type: String, required: true })

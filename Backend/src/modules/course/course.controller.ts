@@ -19,17 +19,34 @@ import { CourseService } from './course.service';
 import { ModuleService } from './module.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import path, { extname } from 'path';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { Course } from './schemas/course.schema';
 import { Module } from './schemas/module.schema';
+import { Lesson } from './schemas/lesson.schema';
+
+import * as fs from 'fs';
+
+import { Types } from 'mongoose';
+import archiver from 'archiver';
+
 // Multer storage configuration
 
 
 const storage = diskStorage({
   destination: './uploads', // Folder to store files
+  filename: (req, file, callback) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = extname(file.originalname);
+    callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+  },
+
+});
+
+const videoStorage = diskStorage({
+  destination: './uploads/videos', // Folder to store videos
   filename: (req, file, callback) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = extname(file.originalname);
@@ -107,9 +124,10 @@ async createLesson(
 
   // Get all courses
   @Get()
-  async getAllCourses() {
-    return await this.courseService.findAll();
-  }
+async getAllCourses() {
+  return await this.courseService.findAll();
+}
+
 
   // Get a specific course by MongoDB _id
   @Get(':id')
@@ -120,6 +138,7 @@ async createLesson(
     }
     return course;
   }
+  
 
   // Get all modules for a course
   @Get(':id/modules')
@@ -143,14 +162,17 @@ async createLesson(
     return await this.courseService.updateCourse(courseId, updatedData);
   }
 
-  // Delete a course by instructor - Only instructors
-  @Roles('instructor,admin') // Ensure only instructors can access this endpoint
+  // Delete a course by instructor - Only instructors and
+  @Roles('instructor','admin') // Ensure only instructors can access this endpoint
 @Delete(':id')
-async deleteCourse(
-  @Param('id') courseId: string,
-): Promise<any> {
-  return this.courseService.deleteCourseByInstructor(courseId);
+async deleteCourse(@Param('id') courseId: string) {
+  if (!Types.ObjectId.isValid(courseId)) {
+    throw new BadRequestException('Invalid course ID format.');
+  }
+  return await this.courseService.deleteCourseByInstructor(courseId);
 }
+
+  
 
 
   // Get a specific module by MongoDB _id
@@ -167,46 +189,65 @@ async deleteCourse(
   }
 
   
-@Get(':id/modules/:moduleId/files')
-async getFilesForModule(
-  @Param('id') courseId: string,
-  @Param('moduleId') moduleId: string,
-  @Res() res: Response,
-) {
-  return await this.courseService.getFilesForModule(courseId, moduleId, res);
-}
-
-@Roles('instructor', 'student') // Allow only instructor or student
-  @Get('name/:name')
-  async getCourseByName(@Param('name') courseName: string): Promise<Course> {
-    if (!courseName || courseName.trim() === '') {
-      throw new BadRequestException('Course name must be provided.');
+  @Get(':id/modules/:moduleId/files')
+  async getFilesForModule(
+    @Param('id') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const module = await this.courseService.findModuleById(courseId, moduleId);
+  
+    // Check if the module is outdated
+    if (module.outdated) {
+      res.status(400).json({ message: "The files for this module are outdated." });
+      return;
     }
-
-    return await this.courseService.findCourseByName(courseName);
+  
+    // Existing file handling logic
+    if (!module.locations || module.locations.length === 0) {
+      throw new NotFoundException(`No files found for module ${moduleId}.`);
+    }
+  
+    const filePaths = module.locations.map((location) =>
+      path.join(process.cwd(), location)
+    );
+  
+    if (filePaths.length > 1) {
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="module_files.zip"`);
+      archive.pipe(res);
+      filePaths.forEach((filePath) => archive.file(filePath, { name: path.basename(filePath) }));
+      await archive.finalize();
+    } else {
+      const filePath = filePaths[0];
+      res.download(filePath, path.basename(filePath));
+    }
   }
+  
 
 
 
-@Roles('instructor') // Only instructors can access this endpoint
-@Patch(':id/modules/:moduleId')
-async updateModule(
-  @Param('id') courseId: string,
-  @Param('moduleId') moduleId: string,
-  @Body()
-  updatedData: Partial<{
-    title: string;
-    content: string;
-    difficultyLevel: 'easy' | 'medium' | 'hard';
-  }>,
-) {
-  if (!updatedData || Object.keys(updatedData).length === 0) {
-    throw new BadRequestException('At least one attribute must be provided for update.');
+  @Roles('instructor') // Only instructors can access this endpoint
+  @Patch(':id/modules/:moduleId')
+  async updateModule(
+    @Param('id') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @Body()
+    updatedData: Partial<{
+      title: string;
+      content: string;
+      difficultyLevel: 'easy' | 'medium' | 'hard';
+      outdated: boolean;
+    }>,
+  ) {
+    if (!updatedData || Object.keys(updatedData).length === 0) {
+      throw new BadRequestException('At least one attribute must be provided for update.');
+    }
+  
+    return await this.courseService.updateModule(courseId, moduleId, updatedData);
   }
-
-  return await this.courseService.updateModule(courseId, moduleId, updatedData);
-}
-
+  
 // Fetch courses of the logged-in instructor
 @Roles('instructor') // Ensure only instructors can access this endpoint
 @Get('instructor/my-courses')
@@ -238,5 +279,97 @@ async getCourseCompletions(
 ): Promise<number> {
   return await this.courseService.getCompletedCoursesForInstructor(courseId);
 }
+@Get(':courseId/modules/:moduleId/lessons')
+async getLessonsForModule(
+  @Param('courseId') courseId: string,
+  @Param('moduleId') moduleId: string
+): Promise<any[]> {
+  return await this.courseService.getLessonsForModule(courseId, moduleId);
+}
+
+
+@Get(':courseId/modules/:moduleId/lessons/:lessonId')
+async getLessonDetails(
+  @Param('courseId') courseId: string,
+  @Param('moduleId') moduleId: string,
+  @Param('lessonId') lessonId: string,
+): Promise<any> {
+  return this.courseService.getLessonDetails(courseId, moduleId, lessonId);
+}
+
+
+@Post(':id/modules/:moduleId/videos')
+  @UseInterceptors(FilesInterceptor('videos', 10, { storage: videoStorage }))
+  async uploadVideosToModule(
+    @Param('id') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @UploadedFiles() videos: Express.Multer.File[],
+  ) {
+    const videoLocations = videos.map((video) => `videos/${video.filename}`);
+    return await this.courseService.addVideosToModule(courseId, moduleId, videoLocations);
+  }
+
+  @Get(':id/modules/:moduleId/videos')
+  async getVideosForModule(
+    @Param('id') courseId: string,
+    @Param('moduleId') moduleId: string,
+  ) {
+    const module = await this.courseService.findModuleById(courseId, moduleId);
+    if (!module) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+    }
+    return module.videos; // Return the videos field
+  }
+
+
+
+@Get('videos/:filename')
+async streamVideo(
+  @Param('filename') filename: string,
+  @Res() res: Response,
+) {
+  const filePath = path.join(process.cwd(), 'uploads/videos', filename);
+  if (!fs.existsSync(filePath)) {
+    throw new NotFoundException(`Video file not found: ${filename}`);
+  }
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = res.req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    if (start >= fileSize) {
+      res.status(416).send('Requested range not satisfiable\n' + start + ' >= ' + fileSize);
+      return;
+    }
+
+    const chunkSize = end - start + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+    const head = {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': 'video/mp4',
+    };
+
+    res.writeHead(206, head);
+    file.pipe(res);
+  } else {
+    const head = {
+      'Content-Length': fileSize,
+      'Content-Type': 'video/mp4',
+    };
+    res.writeHead(200, head);
+    fs.createReadStream(filePath).pipe(res);
+  }
+}
+
+
+
+
 
 }

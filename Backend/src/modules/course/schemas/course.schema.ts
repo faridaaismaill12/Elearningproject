@@ -77,6 +77,10 @@ export class Course {
     default: [],
   })
   enrolledStudents?: Types.ObjectId[];
+
+  @Prop({ type: Boolean, default: false }) // Default to not deleted
+deleted!: boolean;
+
   
 
 }

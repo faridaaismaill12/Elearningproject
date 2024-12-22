@@ -73,6 +73,11 @@ export class User extends Document {
   })
   chats?: Types.ObjectId[];
 
+  @Prop({ default: false }) // Indicates if 2FA is enabled
+  isTwoFactorEnabled?: boolean;
+
+  @Prop({ nullable: true }) // Two-factor authentication secret
+    twoFactorSecret?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

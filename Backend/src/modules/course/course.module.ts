@@ -11,6 +11,8 @@ import { ModuleController } from './module.controller';
 import { LessonController } from './lesson.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -27,11 +29,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     MongooseModule.forFeature([
       { name: Course.name, schema: CourseSchema },
       { name: ModuleSchema.name, schema: ModuleSchemaDef },
-      {name: 'Lesson', schema:LessonSchema},
+      { name: 'Lesson', schema: LessonSchema },
     ]),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Serve `uploads` from the project root
+      serveRoot: '/uploads', // Expose the uploads folder via `/uploads`
+    }),
   ],
-  controllers: [CourseController,ModuleController,LessonController],
-  providers: [CourseService,ModuleService,LessonService],
-  exports: [CourseService,ModuleService,LessonService, MongooseModule],
+  controllers: [CourseController, ModuleController, LessonController],
+  providers: [CourseService, ModuleService, LessonService],
+  exports: [CourseService, ModuleService, LessonService, MongooseModule],
 })
 export class CourseModule {}

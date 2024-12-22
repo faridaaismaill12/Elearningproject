@@ -42,22 +42,28 @@ export class CourseService {
 
   // Get all courses
   async findAll(): Promise<Course[]> {
-    return this.courseModel.find().exec();
+    return this.courseModel.find({
+      $or: [{ deleted: { $exists: false } }, { deleted: { $ne: true } }]
+    }).exec();
   }
+  
+  
 
   // Get a specific course by MongoDB _id
   async findCourseById(courseId: string): Promise<Course> {
     if (!Types.ObjectId.isValid(courseId)) {
       throw new BadRequestException('Invalid course ID format.');
     }
-
-    const course = await this.courseModel.findById(courseId);
+  
+    const course = await this.courseModel.findOne({ _id: courseId, deleted: { $ne: true } });
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
-
+  
     return course;
   }
+  
+  
 
   // Delete a course by instructor
   async deleteCourseByInstructor(courseId: string): Promise<string> {
@@ -65,14 +71,19 @@ export class CourseService {
       throw new BadRequestException('Invalid course ID format.');
     }
   
+    // Find the course
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found.');
     }
   
-    await this.courseModel.deleteOne({ _id: courseId });
-    return 'Course has been deleted successfully.';
+    // Mark the course as deleted
+    course.deleted = true;
+    await course.save();
+  
+    return 'Course has been marked as deleted.';
   }
+  
   
 
   // Create a module for a specific course
@@ -319,7 +330,12 @@ export class CourseService {
   async updateModule(
     courseId: string,
     moduleId: string,
-    updatedData: Partial<{ title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard' }>,
+    updatedData: Partial<{
+      title: string;
+      content: string;
+      difficultyLevel: 'easy' | 'medium' | 'hard';
+      outdated: boolean;
+    }>
   ): Promise<ModuleSchema> {
     // Validate IDs
     if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
@@ -340,6 +356,7 @@ export class CourseService {
     if (updatedData.title) module.title = updatedData.title;
     if (updatedData.content) module.content = updatedData.content;
     if (updatedData.difficultyLevel) module.difficultyLevel = updatedData.difficultyLevel;
+    if (typeof updatedData.outdated === 'boolean') module.outdated = updatedData.outdated; // Handle outdated field
   
     // Save the updated module
     const updatedModule = await module.save();
@@ -369,7 +386,7 @@ async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
 
   return courses;
 }
-
+  
 
 async getCompletedCoursesForStudent(studentId: string): Promise<Course[]> {
   const courses = await this.courseModel.find({
