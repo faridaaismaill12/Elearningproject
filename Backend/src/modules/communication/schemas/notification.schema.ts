@@ -1,21 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Types } from 'mongoose';
+import { Document, HydratedDocument,Types } from 'mongoose';
 
-export type NotificationDocument = HydratedDocument<Notification>;
-
+export type notificationDocument = HydratedDocument<Notification>;
 @Schema({ timestamps: true })
 export class Notification extends Document {
-    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-    recipient!: Types.ObjectId; // The user receiving the notification
+    @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], required: true })
+    recipient!: Types.ObjectId;
 
     @Prop({ type: String, enum: ['MESSAGE', 'REPLY', 'ANNOUNCEMENT'], required: true })
-    type!: string; // The type of notification (MESSAGE, REPLY, ANNOUNCEMENT)
+    type!: string;
 
     @Prop({ type: String, required: true })
-    message!: string; // The content of the notification
+    message!: string;
 
     @Prop({ type: Boolean, default: false })
-    read!: boolean; // Whether the notification has been read
+    read!: boolean;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

@@ -12,11 +12,11 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CommunicationService } from './services/communication.service';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { AddMessageDto } from './dto/add-message.dto';
 import { Types } from 'mongoose';
 import { CourseService } from '../course/course.service';
 import { UserService } from '../user/user.service';
-import { NotificationService } from './services/notification.service';
-import { AddMessageDto } from './dto/add-message.dto';
 
 @WebSocketGateway({
     cors: {
@@ -35,14 +35,13 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
         private readonly configService: ConfigService,
         private readonly courseService: CourseService,
         private readonly userService: UserService,
-        private readonly notificationService: NotificationService,
     ) {}
 
     /**
      * Validate and decode JWT token.
      */
     private validateToken(client: Socket): string {
-        const token = client.handshake.headers.authorization?.split(' ')[1] || (client.handshake.query.token as string);
+        const token = client.handshake.headers.authorization?.split(' ')[1] || client.handshake.query.token as string;
 
         if (!token) {
             throw new UnauthorizedException('Authentication token is required.');
@@ -54,6 +53,8 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
         }
 
         const decoded: any = jwt.verify(token, secret);
+        console.log('Decoded token:', decoded);
+
         if (!decoded.id) {
             throw new UnauthorizedException('Invalid token: Missing userId.');
         }
@@ -69,8 +70,13 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
             const userId = this.validateToken(client);
             this.activeUsers.set(userId, client.id);
             console.log(`User ${userId} connected with socket ID ${client.id}`);
-        } catch (error) {
-            console.error('Connection error:', (error as Error).message);
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error('Authentication failed:', error.message);
+            } else {
+                console.error('Authentication failed:', error);
+            }
+            client.emit('error', { message: 'Authentication failed. Invalid or missing token.' });
             client.disconnect();
         }
     }
@@ -89,8 +95,131 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
     }
 
     /**
-     * Handle sendMessage event.
+     * Handle create chat event.
      */
+    @SubscribeMessage('createChat')
+    async handleCreateChat(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+        try {
+            console.log('Raw payload received:', body);
+
+            const userId = this.validateToken(client);
+
+            // Parse participants from JSON
+            const participantsArray = Array.isArray(body.participants)
+                ? body.participants
+                : Object.values(body.participants || {});
+
+            // Add the current user to the participants list
+            if (!participantsArray.includes(userId)) {
+                participantsArray.push(userId);
+            }
+
+            console.log('Constructed participantsArray:', participantsArray);
+
+            const type = participantsArray.length > 2 ? 'group' : 'private';
+
+            // Validate course enrollment
+            const courseId = body.courseId;
+            if (!courseId) {
+                throw new Error('Course ID is required.');
+            }
+
+            const course = await this.courseService.findCourseById(courseId);
+            if (!course) {
+                throw new Error('Course not found.');
+            }
+
+            const enrolledUsers = course.enrolledStudents?.map((user: any) => user.toString()) || [];
+            const allParticipantsEnrolled = participantsArray.every((participant: string) =>
+                enrolledUsers.includes(participant),
+            );
+
+            if (!allParticipantsEnrolled) {
+                throw new Error('Some participants are not enrolled in the course.');
+            }
+
+            //loop on the participantsArray to check the role of the user
+            for (const participant of participantsArray) {
+                const userRole = await this.userService.getUserRole(participant);
+                if (userRole === 'admin') {
+                    throw new Error(' Can not add admins to chat.');
+                }
+                
+            }
+
+            let title = course.courseId+':';
+            if (participantsArray.length === 2) {
+                let i=0;
+                
+                for (const participant of participantsArray) {
+                    // Get username by id
+                    const username = await this.userService.getUserName(participant);
+                    if (username) {
+                        if( i===1)
+                        {
+                            title += '+'
+                        }
+                        title +=username; // Safely concatenate usernames
+                    }
+                    i++;
+                }
+            }else{
+                title += '_' + body.title; 
+            }
+            
+            const roomName= title || 'Chat Room';
+
+
+            const createChatDto: CreateChatDto = {
+                type: type as 'private' | 'group',
+                title:roomName,
+                participants: participantsArray.map((participant: Types.ObjectId) => new Types.ObjectId(participant)),
+                courseId,
+            };
+
+            // Check if a chat with the same participants already exists
+            const existingChat = await this.communicationService.getChatByParticipants(createChatDto.participants);
+            if (existingChat) {
+                console.log('Chat room already exists:', existingChat._id);
+                client.emit('chatCreatedAck', { success: true, chatRoomId: existingChat._id });
+                return;
+            }
+
+            // Create the chat
+            const newChat = await this.communicationService.createChat(createChatDto);
+
+            // Notify all participants
+            newChat.participants.forEach((participant) => {
+                const socketId = this.activeUsers.get(participant.toString());
+                if (socketId) {
+                    this.server.to(socketId).emit('chatCreated', {
+                        chatRoomId: newChat._id,
+                        type: newChat.type,
+                        participants: newChat.participants,
+                        courseId: newChat.courseId,
+                        messages: newChat.messages || [],
+                    });
+                    console.log(`Sent chatCreated to participant: ${participant.toString()}`);
+                }
+            });
+
+            // Acknowledge the initiator
+            client.emit('chatCreatedAck', { success: true, chatRoomId: newChat._id });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error('Error creating chat:', error.message);
+                client.emit('error', { message: error.message });
+            } else {
+                console.error('Error creating chat:', error);
+                client.emit('error', { message: 'An unknown error occurred.' });
+            }
+        }
+    }
+
+    /**
+     * Handle send message event.
+     */
+
     @SubscribeMessage('sendMessage')
     async handleSendMessage(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         try {
@@ -143,26 +272,6 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
                     });
                 }
             });
-            for (const participant of updatedChat.participants) {
-                const participantId = participant.toHexString();
-                const socketId = this.activeUsers.get(participantId);
-
-                // Skip sender
-                if (participantId !== userId) {
-                    // Save notification to the database
-                    const notification = await this.notificationService.createNotification(
-                        participantId,
-                        `${await this.userService.getUserName(userId)} sent a message in ${chat.title}.`,
-                        'MESSAGE',
-                    );
-
-                    // Emit real-time notification to the recipient if online
-                    if (socketId) {
-                        this.server.to(socketId).emit('newNotification', notification);
-                        console.log(`Real-time notification sent to user ${participantId}`);
-                    }
-                }
-            }
 
             client.emit('messageSent', { success: true });
             console.log(`Acknowledgment sent to sender: ${client.id}`);
@@ -176,10 +285,4 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
             }
         }
     }
-    async emitNotification(recipient: string | Types.ObjectId, notification: Notification) {
-        const recipientSocketId = this.activeUsers.get(recipient.toString());
-        if (recipientSocketId) {
-          this.server.to(recipientSocketId).emit('newNotification', notification);
-        }
-      }
 }
