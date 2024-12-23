@@ -3,6 +3,7 @@ import { StudentDashboardService } from './student-dashboard.service';
 import { Roles } from '../../decorators/roles.decorator';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Module } from '../course/schemas/module.schema';
+import { now } from 'mongoose';
 
 @Controller('dashboard/student')
 export class StudentDashboardController {
@@ -22,6 +23,23 @@ export class StudentDashboardController {
           }
         }
   //Number of Lessons Completed Today
+@Roles('student')
+@Get('/completed/:date')
+async getCompletedToday(
+  @Param('userId') userId: string, 
+  @Param('date') date: string
+) {
+  try {
+    const progress = await this.studentdashboardService.getLessonsCompleted(userId, new Date(date));
+    return progress;
+  } catch (error) {
+    if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      throw error;  
+    }
+    throw new Error('Error Finding Progress');
+  }
+}
+
   
   //Average Score Per Course
   @Roles('student')

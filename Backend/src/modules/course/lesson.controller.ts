@@ -35,10 +35,6 @@ export class LessonController {
         return this.lessonService.isLessonCompletedByStudent(lessonId, userId);
     }
     
-    
-    @Get(':id/completed/:userId')
-    async isLessonCompletedByStudent(@Param('id') lessonId: string, @Param('userId') userId: string): Promise<{ completed: boolean }> {
-        return this.lessonService.isLessonCompletedByStudent(lessonId, userId);
+
     }
 
-}

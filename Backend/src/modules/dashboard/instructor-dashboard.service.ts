@@ -20,8 +20,77 @@ export class InstructorDashboardService {
     @InjectModel(Quiz.name) private quizModel: Model<Quiz>){}
   
     //Number of Enrolled Students per course
+    async numberEnrolledStudents(courseId: string): Promise<number>{
+      if (!Types.ObjectId.isValid(courseId)) {
+        throw new BadRequestException('Invalid Course ID');
+      }
+      const course = await this.courseModel.findById(courseId);
+      if (!course) {
+        throw new NotFoundException('Course not found');
+      }
+      if(!course.enrolledStudents){
+        return 0;
+      }
+      return course.enrolledStudents?.length;
+    }
 
     //Average Completion Rate
+  async getAverageLessonCompletionsPerDay(courseId: string): Promise<number> {
+  if (!Types.ObjectId.isValid(courseId)) {
+    throw new BadRequestException('Invalid Course ID');
+  }
+
+  const course = await this.courseModel.findById(courseId).populate('modules');
+  if (!course) {
+    throw new NotFoundException('Course not found');
+  }
+
+  if (!course.enrolledStudents || course.enrolledStudents.length === 0) {
+    throw new NotFoundException('No students enrolled in this course');
+  }
+
+  const modules = course.modules.map((module) => module._id);
+  let totalCompletions = 0;
+  let uniqueCompletionDates = new Set<string>();
+  
+
+  // Iterate through modules
+  for (const moduleId of modules) {
+    const module = await this.moduleModel.findById(moduleId).populate('lessons');
+    if (!module || !module.lessons || module.lessons.length === 0) {
+      continue; // Skip if module or lessons are missing
+    }
+
+    // Iterate through lessons in the module
+    for (const lesson of module.lessons) {
+      const l = await this.lessonModel.findById(lesson);
+      if (!l || !l.completions || l.completions.length === 0) {
+        continue; // Skip if lesson or completions are missing
+      }
+
+      // Calculate completions for the lesson
+      for (const completion of l.completions) {
+        if (
+          course.enrolledStudents.some((studentId) => studentId.toString() === completion.userId) &&
+          completion.state === 'completed' 
+        ) {
+          totalCompletions++;
+          uniqueCompletionDates.add(completion.completedAt.toISOString().split('T')[0]); // Track unique completion dates
+        }
+      }
+    }
+  }
+
+  // Calculate the average
+  const averageCompletions =
+    uniqueCompletionDates.size > 0
+      ? totalCompletions / uniqueCompletionDates.size
+      : 0;
+
+  return averageCompletions;
+}
+
+
 
     //Average Quiz Grade by Course
     async averageCourseGrades(courseId: string): Promise<number> {
@@ -68,6 +137,19 @@ export class InstructorDashboardService {
     }
 
     //Average Course Rating
+    async averageCourseRating(courseId: string): Promise<number>{
+      if (!Types.ObjectId.isValid(courseId)) {
+        throw new BadRequestException('Invalid Course ID');
+      }
+      const course = await this.courseModel.findById(courseId);
+      if (!course) {
+        throw new NotFoundException('Course not found');
+      }
+      if(!course.averageRating){
+        return 0;
+      }
+      return course.averageRating;
+    }
 
  }
 
