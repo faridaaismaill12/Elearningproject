@@ -545,8 +545,22 @@ async getCompletedCoursesForStudent(studentId: string): Promise<Course[]> {
 }
 
 //Get Notes for this Course
-async getCourseNotes(courseId: String): Promise<Note[]>{
-
+async getCourseNotes(courseId: string): Promise<Note[]>{
+  if (!Types.ObjectId.isValid(courseId)){
+    throw new BadRequestException('Invalid course ID format.');
+  }
+  const course = await this.courseModel.findById(new Types.ObjectId(courseId));
+  if(!course){
+    throw new NotFoundException('Cannot Find Course');
+  }
+  if(!course.notespace){
+    throw new BadRequestException('Note Space is not Enabled for this Course');
+  }
+  if(!course.notes){
+    throw new NotFoundException('No Notes were Found for this course');
+  }
+  return course.populate('notes');
 }
+
 
 }

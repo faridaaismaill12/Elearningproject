@@ -358,7 +358,7 @@ async streamVideo(
 
 //get notes in notespace
 @Get(':courseid/notes')
-async getNotesforCourse(@Param('courseID'), courseID: string){
+async getNotesforCourse(@Param('courseID') courseID: string){
 const notes = await this.courseService.getCourseNotes(courseID);
 if(!notes){
   throw new NotFoundException('Notes Not Found');
