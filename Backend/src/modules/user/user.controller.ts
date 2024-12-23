@@ -14,6 +14,7 @@ import {
     Req,
     UnauthorizedException,
     ForbiddenException,
+    Put,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -284,8 +285,23 @@ async getMyEnrolledCourses(@Req() req: any): Promise<any> {
     return this.userService.getUserEnrolledCourses(userId);
 }
 
-    
+//create find user by id
+@Get('find-user/:id')
+async findUserById(@Param('id') id: string) {
+    console.log('Find User by ID endpoint invoked.');
+    return this.userService.findUserById(id);
+} // tested
 
+    
+@Put(':userId/complete-module/:moduleId')
+  async completeModule(
+    @Param('userId') userId: string,
+    @Param('moduleId') moduleId: string,
+  ): Promise<any> {
+    // Call the service method to mark the module as completed for the user
+    const updatedUser = await this.userService.addCompletedModule(userId, moduleId);
+    return updatedUser;
+  }
 
 
 }

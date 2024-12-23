@@ -13,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { User, UserSchema } from '../user/schemas/user.schema';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { join } from 'path';
       { name: Course.name, schema: CourseSchema },
       { name: ModuleSchema.name, schema: ModuleSchemaDef },
       { name: 'Lesson', schema: LessonSchema },
+      { name: User.name, schema:UserSchema}
     ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Serve `uploads` from the project root
