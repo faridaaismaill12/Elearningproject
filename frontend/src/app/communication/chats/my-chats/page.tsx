@@ -34,7 +34,7 @@ export default function ChatPage() {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error('Authentication token not found.');
 
-      const response = await axios.get('http://localhost:6165/communication/chats', {
+      const response = await axios.get('http://localhost:4000/communication/chats', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setChatRooms(response.data);
@@ -49,7 +49,7 @@ export default function ChatPage() {
       if (!token) throw new Error('Authentication token not found.');
 
       const response = await axios.get(
-        `http://localhost:6165/communication/chat-history/${chatId}`,
+        `http://localhost:4000/communication/chat-history/${chatId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -58,7 +58,7 @@ export default function ChatPage() {
 
       if (socket) socket.disconnect();
 
-      socket = io(`http://localhost:6165?token=${token}`, {
+      socket = io(`http://localhost:4000?token=${token}`, {
         query: { chatRoomId: chatId },
       });
 

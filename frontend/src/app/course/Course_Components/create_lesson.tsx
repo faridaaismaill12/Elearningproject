@@ -24,8 +24,7 @@ const CreateLesson: React.FC<CreateLessonProps> = ({ courseId, moduleId, onClose
     };
 
     try {
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
-
+      const token = localStorage.getItem('authToken'); 
       const response = await fetch(
         `http://localhost:4000/courses/${courseId}/modules/${moduleId}/lessons`,
         {

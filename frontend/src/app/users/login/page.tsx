@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:6165/users/login", {
+      const response = await axios.post("http://localhost:4000/users/login", {
         email: formData.email,
         passwordHash: formData.password,
       });
@@ -33,7 +33,7 @@ export default function LoginPage() {
       const token = response?.data?.accessToken;
       const isMfaEnabled = response?.data?.mfaEnabled;
 
-      Cookies.set("authToken", token, { expires: 7 });
+      Cookies.set("authToken", token, { expires: 1 });
 
       if (isMfaEnabled) {
         router.push("/authentication/mfa/verify");

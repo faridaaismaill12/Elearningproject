@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import io, { Socket } from "socket.io-client";
-import { showToast } from "../../../../utils/toastHelper";
+import { showToast } from "../../../utils/toastHelper";
 import "./Notification.css";
 
 interface Notification {
@@ -17,12 +17,12 @@ interface Notification {
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState<typeof Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get("http://localhost:6165/notifications", {
+        const response = await axios.get("http://localhost:4000/notifications", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
@@ -38,7 +38,7 @@ const NotificationsPage: React.FC = () => {
 
     fetchNotifications();
 
-    const newSocket = io("http://localhost:6165", {
+    const newSocket = io("http://localhost:4000", {
       query: { token: localStorage.getItem("authToken") },
     });
 
@@ -60,7 +60,7 @@ const NotificationsPage: React.FC = () => {
   const markAsRead = async (id: string) => {
     try {
       await axios.patch(
-        `http://localhost:6165/notifications/${id}/read`,
+        `http://localhost:4000/notifications/${id}/read`,
         null,
         {
           headers: {
@@ -84,7 +84,7 @@ const NotificationsPage: React.FC = () => {
 
   const deleteNotification = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:6165/notifications/${id}`, {
+      await axios.delete(`http://localhost:4000/notifications/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },

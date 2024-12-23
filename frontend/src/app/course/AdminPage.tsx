@@ -7,8 +7,7 @@ const AdminPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NGI1MzQ4N2I2YzhiOWRkMmFjOGM5MiIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ5NzM0ODksImV4cCI6MTczNTA1OTg4OX0.teodZTB0khP02a9cUMbknBrt2Azn-zHNtjlnWW2JUuk"; // Replace with the actual token
-
+  const token = localStorage.getItem('authToken'); 
   // Fetch all courses
   useEffect(() => {
     const fetchCourses = async () => {
