@@ -1,4 +1,9 @@
 
+body {
+  background: linear-gradient(to right,  #7700ff, #c84dcc,  #ce1364); /* Adjust colors to your preference */
+  color: white; /* Adjust text color for better visibility against the gradient */
+}
+
 .quiz-attempt-container {
   width: 90%;
   max-width: 800px;
@@ -7,6 +12,7 @@
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 0 16px rgba(0, 0, 0, 0.1);
+  border: 2px solid #4c4c4c;
 }
 
 h1 {

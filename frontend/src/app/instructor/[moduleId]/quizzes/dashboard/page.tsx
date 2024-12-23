@@ -140,6 +140,19 @@ const ModuleQuizzes: React.FC = () => {
     }
   };
 
+  const navigateToViewQuestion = () => {
+    if (moduleId) {
+      router.push(`/instructor/${moduleId}/quizzes/questions`);
+    }
+  };
+
+  const navigateToResultsTable = () => {
+    if (moduleId) {
+      router.push(`/instructor/${moduleId}/quizzes/result-table`);
+    }
+  };
+
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // Prevent the page from refreshing
     if (currentQuiz) {
@@ -159,22 +172,22 @@ const ModuleQuizzes: React.FC = () => {
         </div>
         <div className="box_right">
           <h3>View Questions</h3>
-          <p>Manage the questions in your module’s question bank. View questions to ensure your assessments are comprehensive and balanced for your students.</p>
-          <button type="button" onClick={navigateToCreateQuiz}>
-            Go to Create Quiz
+          <p>Track student performance across quizzes and assess trends to improve learning outcomes.</p>
+          <button type="button" onClick={navigateToCreateQuestion}>
+          Go to Create Question
           </button>
         </div>
         <div className="box_left">
           <h3>View Scores</h3>
           <p>Track student performance across quizzes and assess trends to improve learning outcomes.</p>
-          <button type="button" onClick={navigateToCreateQuestion}>
-            Go to Create Question
+          <button type="button" onClick={navigateToViewQuestion}>
+            View Question Bank
           </button>
         </div>
         <div className="box_left">
-          <h3>Create Question</h3>
-          <p>Add questions to the module's question bank. Customize question types, difficulty levels for effective assessments.</p>
-          <button type="button" onClick={navigateToCreateQuestion}>
+          <h3>View Student Results</h3>
+          <p>View and Evalutate student quiz performance</p>
+          <button type="button" onClick={navigateToResultsTable}>
             Go to Create Question
           </button>
         </div>

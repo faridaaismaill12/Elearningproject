@@ -299,7 +299,7 @@ export class StudentQuizzesService {
     const response = await this.responseModel.findOne({
         user: userObjectId,
         quiz: quizObjectId,
-    }).populate('correctAnswers score totalAnswers');
+    }).populate('correctAnswers score totalAnswered');
 
     if (!response) {
         console.log('Response not found for user:', userId, 'and quiz:', quizId);
