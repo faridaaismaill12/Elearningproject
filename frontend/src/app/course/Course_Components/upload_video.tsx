@@ -6,8 +6,7 @@ const UploadVideo = ({ courseId, moduleId, onClose }: { courseId: string; module
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
-
+  const token = localStorage.getItem('authToken'); 
   const handleVideoUpload = async () => {
     if (!videoFile) {
       setError("Please select a video file.");
@@ -76,7 +75,9 @@ const UploadVideo = ({ courseId, moduleId, onClose }: { courseId: string; module
 };
 
 // Button styling function
-const buttonStyle = (bgColor: string) => ({
+import { CSSProperties } from "react";
+
+const buttonStyle = (bgColor: string): CSSProperties => ({
   padding: "0.5rem 1rem",
   backgroundColor: bgColor,
   color: "#fff",
@@ -85,7 +86,7 @@ const buttonStyle = (bgColor: string) => ({
   cursor: "pointer",
   fontSize: "1rem",
   transition: "background-color 0.3s",
-  textAlign: "center",
+  textAlign: "center" as CSSProperties["textAlign"],
 });
 
 export default UploadVideo;

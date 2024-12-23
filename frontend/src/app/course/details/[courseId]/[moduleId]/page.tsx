@@ -26,9 +26,9 @@ const ModuleDetails = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      setToken(storedToken);
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      setToken(token);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
       router.push("/login");

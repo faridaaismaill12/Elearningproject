@@ -13,6 +13,7 @@ import {
   Res,
   Req,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CourseService } from './course.service';
@@ -117,10 +118,22 @@ async createLesson(
 }
 
   // Get all courses
+
   @Get()
-async getAllCourses() {
-  return await this.courseService.findAll();
-}
+  async getAllCourses(@Req() req: any) {
+    const user = req.user; // Assuming user is added to req by middleware (e.g., JWT auth guard)
+
+    if (!user) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+
+    if (user.role !== 'student') {
+      throw new UnauthorizedException('Only students can fetch available courses');
+    }
+
+    return await this.courseService.findAll(user.id);
+  }
+
 
 
   // Get a specific course by MongoDB _id
@@ -183,42 +196,78 @@ async deleteCourse(@Param('id') courseId: string) {
   }
 
   
+  
   @Get(':id/modules/:moduleId/files')
-  async getFilesForModule(
-    @Param('id') courseId: string,
-    @Param('moduleId') moduleId: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    const module = await this.courseService.findModuleById(courseId, moduleId);
-  
-    // Check if the module is outdated
-    if (module.outdated) {
-      res.status(400).json({ message: "The files for this module are outdated." });
-      return;
-    }
-  
-    // Existing file handling logic
-    if (!module.locations || module.locations.length === 0) {
-      throw new NotFoundException(`No files found for module ${moduleId}.`);
-    }
-  
-    const filePaths = module.locations.map((location) =>
-      path.join(process.cwd(), location)
-    );
-  
+async getFilesForModule(
+  @Param('id') courseId: string,
+  @Param('moduleId') moduleId: string,
+  @Req() req: any,
+  @Res() res: Response,
+): Promise<void> {
+  // Log received parameters for debugging
+  console.log('Request received for files:', { courseId, moduleId });
+
+  // Validate the courseId and moduleId
+  if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
+    res.status(400).json({ message: 'Invalid courseId or moduleId format' });
+    return;
+  }
+
+  // Find the module by courseId and moduleId
+  const module = await this.courseService.findModuleById(courseId, moduleId);
+
+  if (!module) {
+    res.status(404).json({ message: `Module not found for courseId: ${courseId}, moduleId: ${moduleId}` });
+    return;
+  }
+
+  // Check user role and module status
+  const userRole = req.user?.role;
+  console.log('User role:', userRole);
+
+  if (module.outdated && userRole === 'student') {
+    res.status(403).json({
+      message: "The files for this module are outdated and cannot be accessed by students.",
+    });
+    return;
+  }
+
+  // Check if files exist in the module
+  if (!module.locations || module.locations.length === 0) {
+    res.status(404).json({ message: `No files found for module ${moduleId}.` });
+    return;
+  }
+
+  const filePaths = module.locations.map((location) =>
+    path.join(process.cwd(), location)
+  );
+
+  try {
     if (filePaths.length > 1) {
+      // Create a zip archive if there are multiple files
       const archive = archiver('zip', { zlib: { level: 9 } });
+
       res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', `attachment; filename="module_files.zip"`);
+      res.setHeader('Content-Disposition', 'attachment; filename="module_files.zip"');
+
       archive.pipe(res);
-      filePaths.forEach((filePath) => archive.file(filePath, { name: path.basename(filePath) }));
+
+      filePaths.forEach((filePath) => {
+        archive.file(filePath, { name: path.basename(filePath) });
+      });
+
       await archive.finalize();
     } else {
+      // Download a single file
       const filePath = filePaths[0];
       res.download(filePath, path.basename(filePath));
     }
+  } catch (error) {
+    console.error('File handling error:', error);
+    res.status(500).json({ message: 'An error occurred while processing the files' });
   }
-  
+}
+
 
 
 

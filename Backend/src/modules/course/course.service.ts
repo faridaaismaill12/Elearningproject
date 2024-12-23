@@ -40,11 +40,33 @@ export class CourseService {
   
 
   // Get all courses
-  async findAll(): Promise<Course[]> {
-    return this.courseModel.find({
-      $or: [{ deleted: { $exists: false } }, { deleted: { $ne: true } }]
-    }).exec();
+  async findAll(studentId: string): Promise<Course[]> {
+    // Fetch the student data to get their `studentLevel`
+    const student = await this.userModel.findById(studentId).exec();
+  
+    if (!student || student.role !== 'student') {
+      throw new Error('Invalid student or not a student role');
+    }
+  
+    // Map student levels to course levels they can access
+    const allowedLevels: Record<string, string[]> = {
+      beginner: ['beginner'],
+      average: ['beginner', 'intermediate'],
+      advanced: ['beginner', 'intermediate', 'advanced'],
+    };
+  
+    // Get the levels this student can access
+    const levels = allowedLevels[student.studentLevel] || [];
+  
+    // Fetch courses that match the allowed levels and are not deleted
+    return this.courseModel
+      .find({
+        difficultyLevel: { $in: levels },
+        $or: [{ deleted: { $exists: false } }, { deleted: { $ne: true } }],
+      })
+      .exec();
   }
+  
   
   
 

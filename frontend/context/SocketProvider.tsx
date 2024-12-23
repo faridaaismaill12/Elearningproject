@@ -14,17 +14,17 @@ interface Notification {
 
 interface SocketContextType {
   notifications: Notification[];
-  socket: typeof Socket | null;
+  socket: Socket | null;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [socket, setSocket] = useState<typeof Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:6165', {
+    const newSocket = io('http://localhost:4000', {
       query: { token: localStorage.getItem('authToken') },
     });
 
