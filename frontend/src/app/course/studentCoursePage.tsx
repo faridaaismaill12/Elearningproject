@@ -114,6 +114,7 @@ const StudentCoursePage = () => {
       )}
     </div>
   );
+  
 };
 
 export default StudentCoursePage;
