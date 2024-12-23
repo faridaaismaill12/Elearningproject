@@ -14,6 +14,8 @@ export default function ForumDetails() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [editingReply, setEditingReply] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [editingForum, setEditingForum] = useState(false);
+  const [forumTitle, setForumTitle] = useState("");
 
   // Fetch current user
   useEffect(() => {
@@ -37,11 +39,21 @@ export default function ForumDetails() {
         return;
       }
 
-      const response = await axios.get(`http://localhost:4000/forums/${id}`, {
+      const forumResponse = await axios.get(`http://localhost:4000/forums/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setForum(response.data);
+      const forumData = forumResponse.data;
+
+      // Fetch the creator's name for the forum
+      const userResponse = await axios.get(
+        `http://localhost:4000/users/find-user/${forumData.createdBy}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const creatorName = userResponse.data.name || "Unknown User";
+      setForum({ ...forumData, createdByName: creatorName });
+      setForumTitle(forumData.title);
     } catch (err) {
       setError("Failed to fetch forum details.");
     } finally {
@@ -53,11 +65,15 @@ export default function ForumDetails() {
     fetchForum();
   }, [id]);
 
-  const canEditOrDelete = (reply) => {
+  const canEditOrDeleteReply = (reply) => {
     return (
       currentUser &&
       (reply.user._id === currentUser.id || currentUser.role === "instructor")
     );
+  };
+
+  const canEditOrDeleteForum = () => {
+    return currentUser && (forum.createdBy === currentUser.id || currentUser.role === "instructor");
   };
 
   // Function to count total replies, including nested ones
@@ -103,6 +119,7 @@ export default function ForumDetails() {
     }
   };
 
+  // Delete a reply
   const deleteReply = async (replyId) => {
     try {
       const token = localStorage.getItem("authToken");
@@ -118,6 +135,47 @@ export default function ForumDetails() {
       await fetchForum(); // Reload the forum details after deletion
     } catch (err) {
       setError("Failed to delete reply.");
+    }
+  };
+
+  // Delete the forum
+  const deleteForum = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setError("Authentication token not found. Please log in.");
+        return;
+      }
+
+      await axios.delete(`http://localhost:4000/forums/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      window.location.href = "/"; // Redirect after deletion
+    } catch (err) {
+      setError("Failed to delete forum.");
+    }
+  };
+
+  // Edit the forum
+  const handleForumEdit = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setError("Authentication token not found. Please log in.");
+        return;
+      }
+
+      await axios.put(
+        `http://localhost:4000/forums/${id}`,
+        { title: forumTitle },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setEditingForum(false);
+      await fetchForum();
+    } catch (err) {
+      setError("Failed to update forum.");
     }
   };
 
@@ -149,7 +207,7 @@ export default function ForumDetails() {
             >
               <FaReply />
             </button>
-            {canEditOrDelete(reply) && (
+            {canEditOrDeleteReply(reply) && (
               <>
                 <button
                   className="text-green-500 hover:text-green-700"
@@ -180,9 +238,55 @@ export default function ForumDetails() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Forum Title and Total Replies */}
-      <div className="bg-blue-100 p-4 rounded shadow mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{forum.title}</h1>
+      {/* Forum Title, Created By, and Total Replies */}
+      <div className="bg-blue-100 p-4 rounded shadow mb-6 flex flex-col space-y-2">
+        {editingForum ? (
+          <div>
+            <input
+              className="w-full p-2 border rounded mb-2"
+              value={forumTitle}
+              onChange={(e) => setForumTitle(e.target.value)}
+            />
+            <button
+              onClick={handleForumEdit}
+              className="bg-green-500 text-white px-4 py-2 rounded"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setEditingForum(false)}
+              className="bg-red-500 text-white px-4 py-2 rounded ml-2"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-3xl font-bold">{forum.title}</h1>
+            <p className="text-gray-700">
+              Created By: {forum.createdByName} |{" "}
+              {forum.createdAt
+                ? new Date(forum.createdAt).toLocaleString()
+                : "Unknown Date"}
+            </p>
+            {canEditOrDeleteForum() && (
+              <div className="flex space-x-2 mt-2">
+                <button
+                  onClick={() => setEditingForum(true)}
+                  className="bg-green-500 text-white px-4 py-2 rounded"
+                >
+                  Edit Forum
+                </button>
+                <button
+                  onClick={deleteForum}
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                >
+                  Delete Forum
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         <div className="flex items-center space-x-2 text-gray-600">
           <FaComment className="text-xl text-blue-600" />
           <span className="text-lg">

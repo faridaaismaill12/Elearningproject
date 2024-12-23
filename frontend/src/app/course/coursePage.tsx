@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { Menu, MenuItem, IconButton, Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import SortIcon from "@mui/icons-material/Sort"; // Import Sort Icon
+import SortIcon from "@mui/icons-material/Sort";
 import { useRouter } from "next/navigation";
 import CreateCourse from "./Course_Components/create_course";
 import ViewEnrolled from "./Course_Components/view_enrolled";
-import EditCourse from "./Course_Components/edit_course"; // Import EditCourse component
+import EditCourse from "./Course_Components/edit_course";
 
 const CoursePage = () => {
   const [showCreateCourse, setShowCreateCourse] = useState(false);
@@ -21,13 +21,25 @@ const CoursePage = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   const router = useRouter();
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ3NzY2NzksImV4cCI6MTczNDg2MzA3OX0.VmALJZC32xy7mGwCDYcOxCxWtOE1TyEVH_1T2bu4sAw";
+  // Retrieve token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      console.error("No token found in localStorage. Redirecting to login...");
+      router.push("/login"); // Redirect to login if token is not found
+    }
+  }, []);
 
   // Fetch all courses
   const fetchCourses = async () => {
+    if (!token) return;
+
     try {
       const response = await fetch("http://localhost:4000/courses/instructor/my-courses", {
         method: "GET",
@@ -51,7 +63,7 @@ const CoursePage = () => {
 
   useEffect(() => {
     fetchCourses();
-  }, []);
+  }, [token]);
 
   // Search functionality
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +84,9 @@ const CoursePage = () => {
 
   // Sort courses by date (newest first)
   const handleSortByDate = () => {
-    const sortedCourses = [...filteredCourses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const sortedCourses = [...filteredCourses].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
     setFilteredCourses(sortedCourses);
   };
 

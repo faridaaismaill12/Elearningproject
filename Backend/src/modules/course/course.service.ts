@@ -340,7 +340,7 @@ export class CourseService {
     if (!module || module.courseId.toString() !== courseId) {
       throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
     }
-  
+  //
     // Update the module attributes
     if (updatedData.title) module.title = updatedData.title;
     if (updatedData.content) module.content = updatedData.content;
@@ -360,7 +360,7 @@ export class CourseService {
   
     return updatedModule;
   }
-   // Get courses by instructor email
+  // Get courses by instructor email
 async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
   if (!instructorEmail || instructorEmail.trim() === '') {
     throw new BadRequestException('Instructor email must be provided.');
@@ -369,11 +369,65 @@ async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
   const courses = await this.courseModel.find({ instructor: instructorEmail }).exec();
 
   if (!courses || courses.length === 0) {
-    throw new NotFoundException('No courses found for instructor with email ${instructorEmail}.');
+    throw new NotFoundException(`No courses found for instructor with email ${instructorEmail}.`);
   }
 
   return courses;
 }
+
+async getLessonsForModule(courseId: string, moduleId: string): Promise<any[]> {
+  const course = await this.courseModel.findById(courseId).exec();
+  if (!course) {
+    throw new NotFoundException(`Course with ID ${courseId} not found`);
+  }
+
+  console.log('Modules:', course.modules); // Debugging log to inspect modules
+
+  const module = course.modules.find(
+    (mod) => mod && mod._id && mod._id.toString() === moduleId
+  );
+
+  if (!module) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found`);
+  }
+
+  return module.lessons || [];
+}
+
+
+async getLessonDetails(courseId: string, moduleId: string, lessonId: string): Promise<any> {
+  if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
+    throw new BadRequestException('Invalid course or module ID format.');
+  }
+
+  // Find the course by its ID
+  const course = await this.courseModel.findById(courseId).exec();
+  if (!course) {
+    throw new NotFoundException(`Course with ID ${courseId} not found.`);
+  }
+
+  // Find the specific module within the course
+  const module = course.modules.find((mod) => mod._id?.toString() === moduleId);
+  if (!module) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
+  }
+
+  // Find the specific lesson within the module
+  const lesson = module.lessons.find((lesson) => lesson._id?.toString() === lessonId);
+  if (!lesson) {
+    throw new NotFoundException(`Lesson with ID ${lessonId} not found in module ${moduleId}.`);
+  }
+
+  // Return the lesson details (title and content)
+  return {
+    title: lesson.title,
+    content: lesson.content,
+  };
+}
+
+
+
+  
   
 
 }

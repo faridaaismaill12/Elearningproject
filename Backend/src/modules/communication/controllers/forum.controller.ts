@@ -37,15 +37,12 @@ export class ForumController {
         @Body() createForumThreadDto: CreateForumThreadDto,
         @Req() req: any,
     ): Promise<ForumThread> {
-        const userId = req.user.id;
+        const userId = req.user.id; // `userId` is already a string
         const { course } = createForumThreadDto;
 
         // Validate if user is enrolled in the course
-        const user = await this.userService.viewProfile(userId);
         const courseData = await this.courseService.findCourseById(course);
-
-        const isEnrolled =
-            courseData.enrolledStudents?.includes(userId) ?? false;
+        const isEnrolled = courseData.enrolledStudents?.includes(userId) ?? false;
 
         if (!isEnrolled) {
             throw new Error('You are not enrolled in this course.');
@@ -53,11 +50,12 @@ export class ForumController {
 
         const forumData = {
             ...createForumThreadDto,
-            createdBy: new Types.ObjectId(userId),
+            createdBy: userId, // Pass userId as a string
         };
 
-        return this.forumService.create(forumData);
-    }
+        return this.forumService.create(forumData); // Pass adjusted forumData
+}
+
 
     /**
      * Fetch all forum threads
@@ -111,8 +109,7 @@ export class ForumController {
             forum.course.toString(),
         );
 
-        const isEnrolled =
-            courseData.enrolledStudents?.includes(userId) ?? false;
+        const isEnrolled = courseData.enrolledStudents?.includes(userId) ?? false;
 
         if (!isEnrolled) {
             throw new Error('You are not enrolled in this course.');
@@ -139,8 +136,7 @@ export class ForumController {
             forum.course.toString(),
         );
 
-        const isEnrolled =
-            courseData.enrolledStudents?.includes(userId) ?? false;
+        const isEnrolled = courseData.enrolledStudents?.includes(userId) ?? false;
 
         if (!isEnrolled) {
             throw new Error('You are not enrolled in this course.');
@@ -178,6 +174,16 @@ export class ForumController {
     ): Promise<ForumThread> {
         const userId = req.user.id;
 
+        const forum = await this.forumService.findOneWithReplies(id);
+        const course = await this.courseService.findCourseById(forum.course.toString());
+
+        // if (
+        //     forum.createdBy.toString() !== userId &&
+        //     course.instructor.toString() !== userId
+        // ) {
+        //     throw new Error('You are not authorized to update this forum.');
+        // }
+
         return this.forumService.updateForum(id, userId, updateData);
     }
 
@@ -192,6 +198,18 @@ export class ForumController {
         @Req() req: any,
     ): Promise<Reply> {
         const userId = req.user.id;
+
+        const reply = await this.forumService.findReplyById(replyId);
+        const forumId = await this.forumService.findReplysForumById(replyId);
+        const forum = await this.forumService.findOneWithReplies(forumId.toString());
+        const course = await this.courseService.findCourseById(forum.course.toString());
+
+        // if (
+        //     reply.user.toString() !== userId &&
+        //     course.instructor.toString() !== userId
+        // ) {
+        //     throw new Error('You are not authorized to update this reply.');
+        // }
 
         return this.forumService.updateReply(replyId, userId, updateData);
     }

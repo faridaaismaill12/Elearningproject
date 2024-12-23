@@ -307,6 +307,26 @@ export class UserController {
 
 
 
+    @UseGuards(JwtAuthGuard) // JWT authentication only
+    @Get('my-enrolled-courses')
+    async getMyEnrolledCourses(@Req() req: any): Promise<any> {
+      const { id: userId, role } = req.user;
+    
+      console.log('JWT Payload:', req.user); // Debugging
+    
+      if (role !== 'student') {
+        throw new ForbiddenException('Only students can access this endpoint');
+      }
+    
+      console.log(`Fetching enrolled courses for student with ID: ${userId}`);
+      const enrolledCourses = await this.userService.getUserEnrolledCourses(userId);
+    
+      console.log('Enrolled courses response:', enrolledCourses); // Debugging
+      return enrolledCourses;
+    }
+
+
+
 //     @UseGuards(JwtAuthGuard, RolesGuard)
 //     @Roles('instructor')
 //     @Get(':id/enrolled-courses')
@@ -342,6 +362,7 @@ export class UserController {
 //     console.log(`Fetching enrolled courses for student with ID: ${userId}`);
 //     return this.userService.getUserEnrolledCourses(userId);
 // }
+
 
     
 
