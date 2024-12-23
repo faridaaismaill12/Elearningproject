@@ -72,22 +72,21 @@ async updateQuizById(
 
 //done on frontend
 @Roles('instructor')
-@Delete('delete/:moduleId/:quizId/')
+@Delete('delete/:quizId/')
 async deleteQuizById(
   @Param('quizId') quizId: string,
   @Param('moduleId') moduleId: string,
 ) {
-  return this.instructorQuizzesService.deleteQuiz(moduleId,quizId);
+  return this.instructorQuizzesService.deleteQuiz(quizId,moduleId);
 }
 
 //done on frontend
 @Roles('instructor')
-@Delete('delete-question/:moduleId/:questionId')
+@Delete('delete/question/:questionId')
 async deleteQuestionById(
-  @Param('moduleId') moduleId: string,
   @Param('questionId') questionId: string,
-): Promise<{ message: string }> {
-  return this.instructorQuizzesService.deleteQuestion1(moduleId, questionId);
+) {
+  return this.instructorQuizzesService.deleteQuestion(questionId);
 }
 
 //wait
@@ -98,7 +97,7 @@ async getQuestionByModule(
   @Param('questionId') questionId: string,
 ): Promise<Question> {
     return await this.instructorQuizzesService.getQuestionByModule(moduleId, questionId);
- 
+
 }
 
 //done on frontend
@@ -108,7 +107,7 @@ async getQuestionsByModule(
   @Param('moduleId') moduleId: string,
 ): Promise<Question[]> {
     return await this.instructorQuizzesService.getQuestionsByModule(moduleId);
- 
+
 }
 
 @Roles('instructor')
@@ -117,7 +116,6 @@ async findResponsesForQuiz(@Param('quizId') quizId:string,  @Req() req: any): Pr
   const userId = req.user.id; 
   return await this.instructorQuizzesService.findResponsesForQuiz(userId,quizId);
 }
-
 
 @Roles('instructor')
 @Get(':courseId/average-quizzes')  
@@ -132,10 +130,6 @@ async findResponsesForQuiz(@Param('quizId') quizId:string,  @Req() req: any): Pr
       throw new NotFoundException('Error calculating average quiz score');
     }
   }
-
-
-
-  
 }
 
 

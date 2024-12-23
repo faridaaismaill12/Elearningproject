@@ -38,6 +38,7 @@ async startQuiz(
     throw new BadRequestException('An error occurred while starting the quiz');
   }
 }
+
 @Roles('student')
 @Post('/submit/:quizId')
   async submitQuiz(
@@ -59,10 +60,8 @@ async startQuiz(
     @Req() req: any,
   ): Promise<QuizResponse> {
     const userId = req.user.id;
-    console.log('userId', userId);
     return this.studentQuizzesService.getUserResponse(userId, quizId);
   }
-  
 
   @Roles('student')  
   @Get('average-scores/:courseId')
@@ -72,32 +71,13 @@ async startQuiz(
   ): Promise<{ averageScore: number }> {
     const userId = req.user.id;  
     try {
-      const averageScore = await this.studentQuizzesService.getAverageScores(courseId, userId);  
+      const averageScore = await this.studentQuizzesService.getAverageScores(courseId, userId); 
       return { averageScore };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);  
       }
       throw new BadRequestException('An error occurred while calculating the average score'); 
-    }
-
-  }
-    
-  @Roles('student')
-  @Get(':moduleId/:quizId')
-  async getQuiz(
-    @Param('moduleId') moduleId: string,
-    @Param('quizId') quizId: string,
-  ): Promise<Quiz> {
-    console.log('Fetching quiz with moduleId:', moduleId, 'and quizId:', quizId);
-  
-    try {
-      const quiz = await this.studentQuizzesService.getQuiz(moduleId, quizId);
-      console.log('Quiz fetched successfully:', quiz);
-      return quiz;
-    } catch (error) {
-      console.error('Error fetching quiz:', error);
-      throw error;
     }
   }
 

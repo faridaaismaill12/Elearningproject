@@ -13,8 +13,8 @@ import { AdminQuizzesService } from './admin-quiz.service';
 import { AdminQuizzesController } from './admin-quiz.controller';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { JwtModule } from '@nestjs/jwt';
+import { Course, CourseSchema} from '../course/schemas/course.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Course, CourseSchema } from '../course/schemas/course.schema';
 
 
 @Modules({
@@ -34,7 +34,7 @@ import { Course, CourseSchema } from '../course/schemas/course.schema';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     MongooseModule.forFeature([{ name: Module.name, schema: ModuleSchema }]),
     MongooseModule.forFeature([{ name: QuizResponse.name, schema: ResponseSchema}]),
-    MongooseModule.forFeature([{ name:Course.name, schema: CourseSchema}])
+    MongooseModule.forFeature([{ name: Course.name, schema: CourseSchema }]),
   ],
   controllers: [InstructorQuizController,StudentQuizzesController,AdminQuizzesController],  // Make sure the controller is correct
   providers: [InstructorQuizzesService,StudentQuizzesService,AdminQuizzesService],

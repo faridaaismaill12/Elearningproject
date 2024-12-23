@@ -7,9 +7,10 @@ import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { Question, QuestionDocument } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
-import { Course } from '../course/schemas/course.schema';
+import { Course, CourseDocument } from '../course/schemas/course.schema';
 import {Module, ModuleDocument} from '../course/schemas/module.schema'
 import { UpdateQuestionDto } from './dto/update-quiz.dto';
+
 
 @Injectable()
 export class InstructorQuizzesService {
@@ -17,11 +18,9 @@ export class InstructorQuizzesService {
   @InjectModel(Question.name) private questionModel: Model<Question>,
   @InjectModel(QuizResponse.name) private responseModel: Model<QuizResponse>,
   @InjectModel(User.name) private userModel: Model<User>,
-@InjectModel(Module.name) private moduleModel: Model<Module>,
-@InjectModel(Course.name) private courseModel: Model<Course>
+  @InjectModel(Module.name) private moduleModel: Model<Module>,
+  @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
 ) {}
-
-
 
 //done testing
 async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promise<Question> {
@@ -37,18 +36,16 @@ async insertQuestionToQuestionBank(createQuestionDto: CreateQuestionDto): Promis
   if (!module) {
     throw new NotFoundException('Module not found');
   }
-
+  
   const duplicateQuestion = await this.questionModel.findOne({
     question: question, 
     moduleId: new Types.ObjectId(moduleId),
     questionType,
     difficultyLevel,
   });
-
   if (duplicateQuestion) {
     throw new BadRequestException('Duplicate question detected. The question already exists in this module.');
   }
-
   let Options = [];
   if (questionType === 'TorF') {
     Options = ['True', 'False'];
@@ -209,12 +206,9 @@ async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: n
 }
 
 async deleteQuiz(moduleId: string, quizId: string): Promise<{ message: string }> {
-  try {
-   
-    const quiz_id = new Types.ObjectId(quizId);
-    const module_id = new Types.ObjectId(moduleId);
+    const quiz_id = new Types.ObjectId(quizId)
+    const quiz = await this.quizModel.findById(quiz_id);
 
-    const quiz = await this.quizModel.findById(quizId);
     if (!quiz) {
       throw new NotFoundException(`Quiz with ID ${quizId} not found.`);
     }
@@ -228,111 +222,62 @@ async deleteQuiz(moduleId: string, quizId: string): Promise<{ message: string }>
 
     
 
+    // Step 2: Remove the quiz reference from the module
     const moduleUpdateResult = await this.moduleModel.updateOne(
-      { _id: module_id },
-      { $pull: { quizzes: quiz_id } }
+      { _id: moduleId },
+      { $pull: { quizzes: quiz._id } }
     );
 
     if (moduleUpdateResult.matchedCount === 0) {
       throw new NotFoundException(`Module with ID ${moduleId} not found.`);
     }
 
-    const deleteResult = await this.quizModel.deleteOne({ _id: quiz_id });
+    // Step 3: Delete the quiz document
+    const deleteResult = await this.quizModel.deleteOne({ _id: quizId });
+
     if (deleteResult.deletedCount === 0) {
       throw new InternalServerErrorException("Failed to delete the quiz document.");
     }
 
     return { message: "Quiz deleted successfully." };
-  } catch (error) {
   
-    throw new InternalServerErrorException('Internal Server Error');
-  }
-}
-
-async deleteQuestion(moduleId: string, questionId: string): Promise<{ message: string }> {
-  if (!Types.ObjectId.isValid(moduleId) || !Types.ObjectId.isValid(questionId)) {
-    throw new BadRequestException('Invalid IDs provided.');
-  }
-
-  try {
-    const question_id = new Types.ObjectId(questionId);
-    const module_id = new Types.ObjectId(moduleId);
-
-    const quiz = await this.questionModel.findById(question_id);
-    if (!quiz) {
-      throw new NotFoundException(`Question with ID ${questionId} not found.`);
-    }
-
-    const moduleUpdateResult = await this.moduleModel.updateOne(
-      { _id: module_id },
-      { $pull: { questions: questionId } }
-    );
-    if (moduleUpdateResult.matchedCount === 0) {
-      throw new NotFoundException(`Module with ID ${moduleId} not found.`);
-    }
-
-    const deleteResult = await this.questionModel.deleteOne({ _id: question_id });
-    if (deleteResult.deletedCount === 0) {
-      throw new InternalServerErrorException("Failed to delete the quiz document.");
-    }
-
-    return { message: "Question deleted successfully from the module." };
-  } catch (error) {
-    console.error('Error in deleteQuestion:', error);
-    if (error instanceof NotFoundException) throw error;
-    throw new InternalServerErrorException('Internal Server Error');
-  }
-}
+  } 
 
 
 
+async deleteQuestion(questionId: string): Promise<{ message: string }> {
+  // Log received questionId for debugging
+  console.log('Received questionId:', questionId);
 
-
-async deleteQuestion1(moduleId: string, questionId: string): Promise<{ message: string }> {
-
-  console.log('Received questionId:', questionId, 'Received moduleId:', moduleId);
-
- 
   if (!Types.ObjectId.isValid(questionId)) {
     throw new BadRequestException('Invalid Question ID');
   }
-  if (!Types.ObjectId.isValid(moduleId)) {
-    throw new BadRequestException('Invalid Module ID');
-  }
 
-  const questionObjectId = new Types.ObjectId(questionId);
-  const moduleObjectId = new Types.ObjectId(moduleId);
+  // Try finding the question
+  const question = await this.questionModel.findById(new Types.ObjectId(questionId));
+  
+  // Log the result of the query to check if the question is found
+  console.log('Found Question:', question);
 
-
-  const question = await this.questionModel.findById(questionObjectId);
   if (!question) {
-    throw new NotFoundException(`Question with ID ${questionId} not found.`);
+    throw new NotFoundException('Question not found');
   }
 
-  const module = await this.moduleModel.findById(moduleObjectId);
-  if (!module) {
-    throw new NotFoundException(`Module with ID ${moduleId} not found.`);
-  }
-
+  // Check if the question is in any modules and pull it
   const updateResult = await this.moduleModel.updateOne(
-    { _id: moduleObjectId },
-    { $pull: { questions: questionObjectId } }
+    { questions: questionId },
+    { $pull: { questions: questionId } }
   );
+
+  // Log the result of the update query
   console.log('Module Update Result:', updateResult);
 
-  if (updateResult.matchedCount === 0) {
-    throw new NotFoundException(`Module with ID ${moduleId} not found or doesn't contain the question.`);
-  }
+  // Proceed with deleting the question
+  await question.deleteOne();
 
-
-  const deleteResult = await this.questionModel.deleteOne({ _id: questionObjectId });
-  if (deleteResult.deletedCount === 0) {
-    throw new InternalServerErrorException('Failed to delete the question document.');
-  }
-
-  console.log('Question deleted successfully:', questionId);
   return { message: 'Question deleted successfully' };
 }
+
 
 async updateQuestion(
   questionId: string,
@@ -432,7 +377,7 @@ async updateQuestion(
   if (!module.questions || module.questions.length === 0) {
     throw new NotFoundException('Questions not found');
 }
- return module.questions
+return module.questions
 
 }
 
@@ -458,7 +403,7 @@ const question = module.questions.find((q: any) => q._id.equals(questionId));
 if (!question) {
   throw new NotFoundException('Question not found');
 }
- return question;
+return question;
 
 }
 

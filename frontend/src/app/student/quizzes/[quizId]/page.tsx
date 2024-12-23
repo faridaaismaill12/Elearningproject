@@ -30,7 +30,6 @@ interface Feedback {
 const QuizPage = () => {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState<{ title: string }>({ title: '' });
-    const [quizTitle, setQuizTitle] = useState<string>('Loading...');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [quizResponseId, setQuizResponseId] = useState<string | null>(null);
@@ -97,8 +96,6 @@ const QuizPage = () => {
         { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );
 
-      console.log('Quiz submitted:', response.data);
-
       const { feedback } = response.data;
 
       // Save the feedback into state
@@ -125,7 +122,7 @@ const QuizPage = () => {
   };
 
   const handleViewResults = () => {
-    router.push(`/student/quizzes/results/${quizId}`);
+    router.push(`${quizId}/results`);
   };
 
   return (

@@ -5,7 +5,6 @@ import axios from "axios";
 import { FaTrash, FaEdit, FaPlus } from "react-icons/fa";
 
 import { useParams } from "next/navigation";
-import { LoadingSpinner } from "@/app/_components/LoadingSpinner";
 interface Question {
   _id: string;
   question: string;
