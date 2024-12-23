@@ -43,7 +43,7 @@ export class Module {
   }>;
 
   @Prop({ unique: true, default: () => new Types.ObjectId().toString() })
-  moduleId!: string;
+  moduleId?: string;
 
   @Prop({ type: [Types.ObjectId], ref: 'Question' })
   questions!: Types.Array<Question & Document>;
@@ -53,6 +53,12 @@ export class Module {
 
   @Prop({ type: [String], default: [] }) // Array of strings for file locations
   locations!: string[];
+
+  @Prop({ type: Boolean, default: false }) // Default to false
+  outdated!: boolean;
+
+  @Prop({ type: [String], default: [] }) // Array of strings for video file locations
+videos!: string[];
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);
