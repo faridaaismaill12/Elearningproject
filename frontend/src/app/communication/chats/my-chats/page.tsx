@@ -19,7 +19,7 @@ interface Message {
   timestamp: string;
 }
 
-let socket: typeof Socket | null = null;
+let socket: Socket | null = null;
 
 export default function ChatPage() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
