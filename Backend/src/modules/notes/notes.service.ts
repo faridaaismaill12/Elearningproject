@@ -5,10 +5,12 @@ import { CreateNoteDto } from './dto/create-note.dto';
 import {UpdateNoteDto} from './dto/update-note.dto';
 import { Note } from './schemas/note.schema';
 import { validate } from 'class-validator';
+import { Course } from '../course/schemas/course.schema';
 
 @Injectable()
 export class NoteService {
-  constructor(@InjectModel(Note.name) private readonly noteModel: Model<Note>) {}
+  constructor(@InjectModel(Note.name) private readonly noteModel: Model<Note>,
+              @InjectModel(Course.name) private readonly courseModel :Model<Course>) {}
 
   async create(createNoteDto: CreateNoteDto): Promise<Note> {
     const { creator, course, module, lesson, content } = createNoteDto;
@@ -112,7 +114,91 @@ export class NoteService {
     }
   }
   
-  
+  //get your notes by course
+  async getNotesbyCourse(userId: string, courseId: string): Promise<Note[]> {
+    try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new HttpException(
+          { message: 'Invalid User ID' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      if (!Types.ObjectId.isValid(courseId)) {
+        throw new HttpException(
+          { message: 'Invalid Course ID' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      const notes = await this.noteModel.find({
+        $and: [
+          {'creator': userId},
+          {'course': courseId}
+        ]
+      });
+      return notes;
+    } catch (error: any) {
+      throw new HttpException(
+        { message: 'Failed to fetch notes' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    
+    }
+  }
+
+  //get your notes by module
+  async getNotesbyModule(userId: string, moduleId: string): Promise<Note[]> {
+    try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new HttpException(
+          { message: 'Invalid User ID' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      if (!Types.ObjectId.isValid(moduleId)) {
+        throw new HttpException(
+          { message: 'Invalid Module ID' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      const notes = await this.noteModel.find({
+        $and: [
+          {'creator': userId},
+          {'module': moduleId}
+        ]
+      });
+      return notes;
+    } catch (error: any) {
+      throw new HttpException(
+        { message: 'Failed to fetch notes' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    
+    }
+  }
+
+  //get all notes in a course
+  /*async getAllCourseNotes(courseId: string): Promise<Note[]>{
+    try {
+
+      if (!Types.ObjectId.isValid(courseId)) {
+        throw new HttpException(
+          { message: 'Invalid Course ID' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      const notes = await this.courseModel.findById( new Types.ObjectId(courseId)).populate('notes');
+      return notes;
+    } catch (error: any) {
+      throw new HttpException(
+        { message: 'Failed to fetch notes' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    
+    }*/
+
+  }
 
 
-}
+
