@@ -53,7 +53,8 @@ const videoStorage = diskStorage({
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard) // Global guard for all endpoints in this controller
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(private readonly courseService: CourseService
+  ) {}
 
   
   // Create a course - Only instructors can create
@@ -355,6 +356,14 @@ async streamVideo(
   }
 }
 
+//get notes in notespace
+@Get(':courseid/notes')
+async getNotesforCourse(@Param('courseID'), courseID: string){
+const notes = await this.courseService.getCourseNotes(courseID);
+if(!notes){
+  throw new NotFoundException('Notes Not Found');
+}
+}
 
 
 

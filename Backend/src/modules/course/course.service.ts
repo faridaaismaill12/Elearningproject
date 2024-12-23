@@ -10,7 +10,7 @@ import archiver from 'archiver';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-
+import { Note } from '../notes/schemas/note.schema';
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
 @Injectable()
@@ -19,6 +19,7 @@ export class CourseService {
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
+    @InjectModel(Note.name) private noteModel: Model<Note>,
   private readonly moduleService: ModuleService
   ) {}
 
@@ -541,6 +542,11 @@ async getCompletedCoursesForStudent(studentId: string): Promise<Course[]> {
   }
 
   return completedCourses;
+}
+
+//Get Notes for this Course
+async getCourseNotes(courseId: String): Promise<Note[]>{
+
 }
 
 }
