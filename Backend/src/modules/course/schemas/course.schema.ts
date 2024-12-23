@@ -41,12 +41,7 @@ export class Course {
           required: true,
           default: 'medium',
         },
-        lessons: [
-          {
-            title: { type: String, required: true },
-            content: { type: String, required: true },
-          },
-        ],
+        lessons:[{ type: MongooseSchema.Types.ObjectId, ref: 'Lesson' }]
       },
     ],
     default: [],
@@ -82,15 +77,27 @@ export class Course {
 deleted!: boolean;
 
   
-  ratings!: Array<{
-    userId: string;
-    rating: number;
-    review?: string;
-  }>;
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Rating' }],
+    default: [],
+  })
+  ratings!: Types.ObjectId[];
 
   // Average rating for the course (calculated from the ratings)
   @Prop({ type: Number, default: 0 })
   averageRating!: number;
+
+  //enable notespace
+  @Prop({
+  type: Boolean, default: true
+})notespace!: boolean;
+
+  //note space 
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Note' }],
+    default: [],
+  })
+  notes?: Types.ObjectId[];
   
 }
 

@@ -1,17 +1,6 @@
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 body {
   font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   background-color: #ffffff;
-}
-
-@layer utilities {
-  .border-border {
-    @apply border border-gray-300; /* Replace with your desired border styles */
-  }
 }
 
 @layer base {
@@ -42,6 +31,7 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -70,5 +60,16 @@ body {
   }
 }
 
+@layer utilities {
+  .bg-background {
+    background-color: hsl(var(--background));
+  }
 
- 
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+}

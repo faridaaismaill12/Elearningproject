@@ -54,7 +54,8 @@ const videoStorage = diskStorage({
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard) // Global guard for all endpoints in this controller
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(private readonly courseService: CourseService
+  ) {}
 
   
   // Create a course - Only instructors can create
@@ -77,18 +78,28 @@ export class CourseController {
   // Create a module (Instructor only)
   @Roles('instructor')
   @Post(':id/modules')
-  @UseInterceptors(FilesInterceptor('files', 10, { storage }))
-  async createModule(
-    @Param('id') courseId: string,
-    @Body() moduleData: any,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    const fileLocations = files.map((file) => `uploads/${file.filename}`);
-    return this.courseService.createModuleForCourse(courseId, {
-      ...moduleData,
-      locations: fileLocations,
-    });
+@UseInterceptors(FilesInterceptor('files', 10, { storage }))
+async createModule(
+  @Param('id') courseId: string,
+  @Body()
+  moduleData: { title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard' },
+  @UploadedFiles() files: Express.Multer.File[],
+) {
+  console.log('Module Data:', moduleData); // Log module data
+  console.log('Uploaded Files:', files);  // Log uploaded files
+
+  if (!moduleData.title || !moduleData.content || !moduleData.difficultyLevel) {
+    throw new BadRequestException('title, content, and difficultyLevel are required to create a module.');
   }
+
+
+  const fileLocations = files.map((file) => `uploads/${file.filename}`);
+
+  return await this.courseService.createModuleForCourse(courseId, {
+    ...moduleData,
+    locations: fileLocations,
+  });
+}
 
 
 // Upload a file to a specific module - Only instructors
@@ -394,6 +405,14 @@ async streamVideo(
   }
 }
 
+//get notes in notespace
+@Get(':courseid/notes')
+async getNotesforCourse(@Param('courseID') courseID: string){
+const notes = await this.courseService.getCourseNotes(courseID);
+if(!notes){
+  throw new NotFoundException('Notes Not Found');
+}
+}
 
 // API to get all users who have completed the course
 @Roles('instructor') // Only instructors can access this route

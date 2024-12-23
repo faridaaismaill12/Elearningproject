@@ -46,15 +46,18 @@ export class LessonService {
           return { message: 'Lesson successfully marked as completed' };
         }
 
-        
         async isLessonCompletedByStudent(lessonId: string, userId: string): Promise<{ completed: boolean }> {
           const lesson = await this.lessonModel.findOne({ lessonId }).exec();
           if (!lesson) {
               throw new NotFoundException('Lesson not found');
-          } 
+          }
+  
           const completionRecord = lesson.completions.find(
               (completion) => completion.userId === userId && completion.state === 'completed'
           );
-          return { completed: !!completionRecord };
+  
+          return { completed: !!completionRecord };
+      }
+
+      
       }
-}

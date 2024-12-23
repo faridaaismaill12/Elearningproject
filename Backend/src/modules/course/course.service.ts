@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { User } from '../user/schemas/user.schema';
 
+import { Note } from '../notes/schemas/note.schema';
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
 @Injectable()
@@ -21,6 +22,7 @@ export class CourseService {
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Note.name) private noteModel: Model<Note>,
   private readonly moduleService: ModuleService
   ) {}
 
@@ -597,5 +599,24 @@ async getUsersCompletedCourse(courseId: string, user: any): Promise<User[]> {
 
   return completedUsers;
 }
+
+//Get Notes for this Course
+async getCourseNotes(courseId: string): Promise<Note[]>{
+  if (!Types.ObjectId.isValid(courseId)){
+    throw new BadRequestException('Invalid course ID format.');
+  }
+  const course = await this.courseModel.findById(new Types.ObjectId(courseId));
+  if(!course){
+    throw new NotFoundException('Cannot Find Course');
+  }
+  if(!course.notespace){
+    throw new BadRequestException('Note Space is not Enabled for this Course');
+  }
+  if(!course.notes){
+    throw new NotFoundException('No Notes were Found for this course');
+  }
+  return course.populate('notes');
+}
+
 
 }
