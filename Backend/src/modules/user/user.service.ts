@@ -26,6 +26,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import * as nodemailer from 'nodemailer';
+import { UpdateRole } from './dto/update-student-level.dto';
 
 interface RecordData {
     userId: string;
@@ -299,6 +300,10 @@ export class UserService {
             throw new NotFoundException('User not found');
         }
 
+        if(user.role === 'instructor' || user.role === 'admin'){
+            user.studentLevel = 'N/A';
+        }
+
         return user;
     }
 
@@ -364,6 +369,22 @@ export class UserService {
 
         await student.save();
         return { message: 'Student created successfully', student };
+    }
+
+    async updateLevel(updateRole: UpdateRole) {
+        const { email, role } = updateRole;
+    
+        const updatedUser = await this.userModel.findOneAndUpdate(
+            { email },
+            { role },
+            { new: true }
+        );
+    
+        if (!updatedUser) {
+            throw new NotFoundException('User not found');
+        }
+    
+        return { message: 'Student Level updated successfully' };
     }
 
     async deleteUser(userId: string) {

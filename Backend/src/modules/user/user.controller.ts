@@ -29,6 +29,7 @@ import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
 import { JwtService } from '@nestjs/jwt/dist/jwt.service';
+import { UpdateRole } from './dto/update-student-level.dto';
 
 @Controller('users')
 export class UserController {
@@ -168,6 +169,13 @@ export class UserController {
         return this.userService.createStudentAccount(createStudentDto);
     }
 
+    @UseGuards(JwtAuthGuard , RolesGuard)
+    @Roles('admin')
+    @Patch('update-student-level')
+    async updateLevel(@Body() updateRole: UpdateRole) {
+        return this.userService.updateLevel(updateRole);
+    }
+
 
     // /**
     //  * Delete a user (Admin only)
@@ -175,7 +183,8 @@ export class UserController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can delete users
     @Delete('delete-user')
-    async deleteUser(@Body('userId') userId: string) {
+    async deleteUser(
+        @Body('userId') userId: string) {
         return this.userService.deleteUser(userId);
     }
 // tested
@@ -215,21 +224,13 @@ export class UserController {
         return this.userService.searchInstructors(searchInstructorDto);
     } // tested
 
-    @Get('get-role/:id')
-    async getUserRole(@Param('id') userId: string) {
+    @UseGuards(JwtAuthGuard)
+    @Get('get-role')
+    async getUserRole(@Req() req: any) {
+        const userId = req.user.id;
         console.log('Get User Role endpoint invoked.');
 
-        if (!userId) {
-            throw new BadRequestException('User Id is required');
-        }
-
-        const role = await this.userService.getUserRole(userId);
-
-        if (!role) {
-            throw new BadRequestException('User not found');
-        }
-
-        return { role };
+        return this.userService.getUserRole(userId);
     }
 
 

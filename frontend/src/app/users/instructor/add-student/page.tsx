@@ -11,25 +11,50 @@ export default function CreateStudentPage() {
     email: "",
     password: "",
     studentLevel: "",
-    role: "student"
+    role: "student",
   });
-  const [users, setUsers] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      setError("You must log in first.");
-      setTimeout(() => {
-        router.push("/users/login");
-      }, 3000);
-    }
+    const checkAccess = async () => {
+      const token = Cookies.get("authToken");
+
+      if (!token) {
+        setError("You must log in first.");
+        setTimeout(() => {
+          router.push("/users/login");
+        }, 3000);
+        return;
+      }
+
+      try {
+        const response = await axios.get("http://localhost:5010/users/get-role", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log(response.data);
+        const role = response.data;
+        if (role !== "instructor") {
+          setError("You do not have permission to access this page.");
+          setTimeout(() => {
+            router.push("http://localhost:4001/users/login");
+          }, 3000);
+        }
+      } catch (err) {
+        setError("Failed to verify access. Please log in again.");
+        setTimeout(() => {
+          router.push("/users/login");
+        }, 3000);
+      }
+    };
+
+    checkAccess();
   }, [router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -59,20 +84,17 @@ export default function CreateStudentPage() {
         "http://localhost:5010/users/create-student",
         payload,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      setUsers(response.data)
       setSuccess(response.data.message || "Student account created successfully!");
       setFormData({
         name: "",
         email: "",
         password: "",
         studentLevel: "",
-        role: "student"
+        role: "student",
       });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
@@ -91,83 +113,88 @@ export default function CreateStudentPage() {
         <h2 className="text-2xl font-semibold mb-4">Create Student Account</h2>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
-        <form onSubmit={handleSubmit}>
-          {/* Name */}
-          <div className="mb-4">
-            <label htmlFor="name" className="block font-medium mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              id="name"
-              className="w-full p-2 border rounded"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        {!error && (
+          <form onSubmit={handleSubmit}>
+            {/* Name Field */}
+            <div className="mb-4">
+              <label htmlFor="name" className="block font-medium mb-1">
+                Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                className="w-full p-2 border rounded"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          {/* Email */}
-          <div className="mb-4">
-            <label htmlFor="email" className="block font-medium mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              className="w-full p-2 border rounded"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            {/* Email Field */}
+            <div className="mb-4">
+              <label htmlFor="email" className="block font-medium mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                className="w-full p-2 border rounded"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          {/* Password */}
-          <div className="mb-4">
-            <label htmlFor="password" className="block font-medium mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              id="password"
-              className="w-full p-2 border rounded"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            {/* Password Field */}
+            <div className="mb-4">
+              <label htmlFor="password" className="block font-medium mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                className="w-full p-2 border rounded"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          {/* Student Level */}
-          <div className="mb-4">
-            <label htmlFor="studentLevel" className="block font-medium mb-1">
-              Student Level
-            </label>
-            <input
-              type="text"
-              name="studentLevel"
-              id="studentLevel"
-              className="w-full p-2 border rounded"
-              value={formData.studentLevel}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            {/* Student Level Field */}
+            <div className="mb-4">
+              <label htmlFor="studentLevel" className="block font-medium mb-1">
+                Student Level
+              </label>
+              <select
+                name="studentLevel"
+                id="studentLevel"
+                className="w-full p-2 border rounded"
+                value={formData.studentLevel}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full p-2 rounded text-white transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
-            }`}
-          >
-            {loading ? "Creating..." : "Create Student"}
-          </button>
-        </form>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full p-2 rounded text-white transition ${
+                loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+              }`}
+            >
+              {loading ? "Creating..." : "Create Student"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
