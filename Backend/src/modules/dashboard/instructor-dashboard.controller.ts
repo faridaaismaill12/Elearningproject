@@ -23,7 +23,21 @@ export class InstructorDashboardController {
     }
 
     //Average Completion Rate
-    @
+    @Roles('instructor')
+    @Get('average-completions/:courseId')
+    async getAverageLessonCompletions(
+      @Param('courseId') courseId: string,
+    ): Promise<{ averageCompletions: number }> {
+      try {
+        const averageCompletions = await this.instructordashboardService.getAverageLessonCompletionsPerDay(courseId);
+        return { averageCompletions };
+      } catch (error) {
+        if (error instanceof BadRequestException || error instanceof NotFoundException) {
+          throw error;  
+        }
+        throw new Error('Error Finding Number of Average Completions');
+      }
+      }
 
 
     //Average Quiz Grade by Course
