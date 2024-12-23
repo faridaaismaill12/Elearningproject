@@ -35,11 +35,11 @@ interface RecordData {
   }
 
 
-import { Module } from '../course/schemas/module.schema';
 
 export type UserDocument = HydratedDocument<User> & {
     enrolledCourses: Types.ObjectId[] | Course[];
 };
+
 
 
 @Injectable()
@@ -47,7 +47,6 @@ export class UserService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @InjectModel(Course.name) private readonly courseModel: Model<Course>,
-        @InjectModel(Module.name) private moduleModel: Model<Module>,
         private readonly jwtService: JwtService,
     ) { }
 
@@ -218,10 +217,15 @@ export class UserService {
 
         const resetToken = this.jwtService.sign(
             { sub: user._id, email: user.email },
-            { secret: process.env.JWT_SECRET, expiresIn: '15m' },
+            { secret: process.env.JWT_SECRET, expiresIn: '5m' },
         );
 
-        console.log(`Password reset link: http://localhost:${process.env.PORT}/users/reset-password?token=${resetToken}`);
+        const resetLink = `http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`;
+
+        await this.sendPasswordResetEmail(user.email, resetLink);
+
+        
+        console.log(`Password reset link: http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`);
 
         return { message: 'Password reset link sent to your email' };
     }
@@ -232,7 +236,9 @@ export class UserService {
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+            console.log(payload);
             const user = await this.userModel.findById(payload.sub);
+            console.log(user);
 
             if (!user) {
                 throw new NotFoundException('User not found');
@@ -280,7 +286,7 @@ export class UserService {
             const uploadResult = await this.uploadToCloudinary(updateUserDto.profilePictureUrl);
             updateUserDto.profilePictureUrl = uploadResult.secure_url;
         }
-
+        
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
             throw new NotFoundException('User not found');
@@ -410,14 +416,9 @@ export class UserService {
         return { message: 'Student created successfully', student };
     }
 
-    async deleteUser(adminId: string, userId: string) {
-        const admin = await this.userModel.findById(adminId);
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to delete users');
-        }
-
-        // Find the user to delete
+    async deleteUser(userId: string) {
         const userToDelete = await this.userModel.findByIdAndDelete(userId);
+        
         if (!userToDelete) {
             throw new NotFoundException('User not found');
         }
@@ -490,32 +491,34 @@ export class UserService {
         return user ? user.role : null;
     }
 
+
     //return user name by given user id
-    async getUserEnrolledCourses(userId: string): Promise<{ title: string }[]> {
+    async getUserEnrolledCourses(userId: string): Promise<{ _id: string; title: string }[]> {
         if (!Types.ObjectId.isValid(userId)) {
-            throw new BadRequestException('Invalid user ID format');
+          throw new BadRequestException('Invalid user ID format');
         }
-    
+      
         // Fetch the user's enrolled courses (ObjectIds)
         const user = await this.userModel.findById(userId).exec();
-    
+      
         if (!user) {
-            throw new NotFoundException('User not found');
+          throw new NotFoundException('User not found');
         }
-    
+      
         if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
-            return []; // Return an empty array if no courses are enrolled
+          return []; // Return an empty array if no courses are enrolled
         }
-    
-        // Fetch course titles from the Course collection
+      
+        // Fetch course titles and IDs from the Course collection
         const courses = await this.courseModel
-            .find({ _id: { $in: user.enrolledCourses } })
-            .select('title')
-            .exec();
+          .find({ _id: { $in: user.enrolledCourses } })
+          .select('_id title') // Ensure _id and title are selected
+          .exec();
+      
+        return courses.map((course) => ({ _id: course._id.toString(), title: course.title }));
+      }
     
-        // Return only the course titles
-        return courses.map((course) => ({ title: course.title }));
-    }
+
 
     async findUserById(id: string): Promise<any> {
 
@@ -534,26 +537,66 @@ export class UserService {
         return user;
 
     }
+  
+  
+    async getAllData(): Promise<Record<string, string[]>> {
+        const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
+          .select('_id enrolledCourses')
+          .lean();
     
-    // Example of adding completed module by string ID
-async addCompletedModule(userId: string, moduleId: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(userId);
-  
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found.`);
+        const groupedData = users.reduce((acc, user) => {
+          const validCourses = user.enrolledCourses?.filter(courseId => Types.ObjectId.isValid(courseId)) || [];
+          acc[`UserID: ${user._id}`] = validCourses.map(courseId => `CourseID: ${courseId}`);
+          return acc;
+        }, {} as Record<string, string[]>);
+    
+        return groupedData;
+      }
+    
+      async generateCSV(): Promise<string> {
+        const data = await this.getAllData();
+    
+        // Group courses by user and join the courses as a single comma-separated string
+        const groupedRecords = Object.entries(data).map(([userId, courses]) => ({
+          userId,
+          courseIds: courses.join(', '),
+        }));
+    
+        // Set up CSV writer
+        const csvWriter = createObjectCsvWriter({
+          path: 'exported_data.csv',
+          header: [
+            { id: 'userId', title: 'UserID' },
+            { id: 'courseIds', title: 'CourseIDs' },
+          ],
+        });
+    
+        // Write the grouped data to the CSV
+        await csvWriter.writeRecords(groupedRecords);
+    
+        return 'exported_data.csv';
     }
-  
-    // Ensure completedModules is initialized
-    if (!user.completedModules) {
-      user.completedModules = [];
+
+
+
+    async enable2FA(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+    
+        const secret = speakeasy.generateSecret({ name: `GIU E-Learning Platform (${user.email})` });
+        user.twoFactorSecret = secret.base32;
+        user.isTwoFactorEnabled = true;
+        await user.save();
+    
+        if (!secret.otpauth_url) {
+            throw new BadRequestException('Failed to generate OTP Auth URL');
+        }
+        const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
+        return qrCodeUrl;
     }
-  
-    // Add the moduleId as a string to the array
-    if (!user.completedModules.includes(moduleId)) {
-      user.completedModules.push(moduleId);
-      await user.save();
-    }
-}
+
 
 
     async verify2FA(userId: string, otp: string): Promise<string> {
@@ -620,5 +663,25 @@ async addCompletedModule(userId: string, moduleId: string): Promise<UserDocument
         
     }
 
+    async addCompletedModule(userId: string, moduleId: string): Promise<UserDocument> {
+        const user = await this.userModel.findById(userId);
+      
+        if (!user) {
+          throw new NotFoundException(`User with ID ${userId} not found.`);
+        }
+      
+        // Ensure completedModules is initialized
+        if (!user.completedModules) {
+          user.completedModules = [];
+        }
+      
+        // Add the moduleId as a string to the array
+        if (!user.completedModules.includes(moduleId)) {
+          user.completedModules.push(moduleId);
+          await user.save();
+        }
+      
+        return user;
+    }
     
 }

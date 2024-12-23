@@ -26,24 +26,22 @@ const ModuleDetails = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    const storedToken = localStorage.getItem("authToken");
     if (storedToken) {
       setToken(storedToken);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
-      router.push("/login"); // Redirect to login if token is not found
+      router.push("/login");
     }
   }, []);
 
-  useEffect(() => {
-    const fetchModuleDetails = async () => {
-      if (!token) return;
+  const fetchModuleDetails = async () => {
+    if (!token) return;
 
-      try {
-        const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+    try {
+      const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!response.ok) throw new Error(`Failed to fetch module details: ${response.statusText}`);
 
@@ -57,13 +55,9 @@ const ModuleDetails = () => {
     }
   };
 
-    if (courseId && moduleId) fetchModuleDetails();
-  }, [courseId, moduleId, token]);
-
-  
   useEffect(() => {
     fetchModuleDetails();
-  }, [courseId, moduleId]);
+  }, [courseId, moduleId, token]);
 
   const handleCheckboxChange = async (checked: boolean) => {
     try {
@@ -82,7 +76,7 @@ const ModuleDetails = () => {
       if (!response.ok) throw new Error("Failed to update module");
 
       const updatedModule = await response.json();
-      setModuleDetails(updatedModule); // Update local state with the new module data
+      setModuleDetails(updatedModule);
     } catch (err: any) {
       setError(err.message);
     }
@@ -220,16 +214,14 @@ const ModuleDetails = () => {
         <button onClick={() => setShowAddFileForm(true)} style={buttonStyle("#ffc107")}>
           Add Files
         </button>
+        <button onClick={() => setShowUploadVideoForm(true)} style={buttonStyle("#6c757d")}>
+          Upload Video
+        </button>
         <button onClick={() => router.push(`/instructor/${moduleId}/quizzes/create`)} style={buttonStyle("#6f42c1")}>
           Create Quiz
         </button>
         <button onClick={() => router.push(`/instructor/${moduleId}/quizzes/dashboard`)} style={buttonStyle("#20c997")}>
           Go to Dashboard
-        <button
-          onClick={() => setShowUploadVideoForm(true)}
-          style={buttonStyle("#6c757d")}
-        >
-          Upload Video
         </button>
       </div>
 
@@ -250,11 +242,7 @@ const ModuleDetails = () => {
       {/* Render UploadVideo Form */}
       {showUploadVideoForm && (
         <div style={{ marginTop: "2rem" }}>
-          <UploadVideo
-            courseId={courseId}
-            moduleId={moduleId}
-            onClose={() => setShowUploadVideoForm(false)}
-          />
+          <UploadVideo courseId={courseId} moduleId={moduleId} onClose={() => setShowUploadVideoForm(false)} />
         </div>
       )}
     </div>

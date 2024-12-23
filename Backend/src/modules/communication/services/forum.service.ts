@@ -7,13 +7,13 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
-import { ForumThread, Reply } from '../schemas/forum-thread.schema';
-import { NotificationService } from './notification.service';
-import { CourseService } from '../../course/course.service';
 import { Course } from '../../course/schemas/course.schema';
 import { UserService } from '../../user/user.service';
 import { CommunicationGateway } from '../communication.chatgateway';
 import { CreateForumThreadDto } from '../dto/create-forum-thread.dto';
+import { ForumThread, Reply } from '../schemas/forum-thread.schema';
+import { NotificationService } from './notification.service';
+import { CourseService } from '../../course/course.service';
 
 @Injectable()
 export class ForumService {
@@ -244,11 +244,7 @@ export class ForumService {
 
 
     // Add a reply to a forum thread (Top-Level Reply)
-    async addReplyToThread(
-        threadId: string,
-        userId: string,
-        message: string,
-    ): Promise<Reply> {
+    async addReplyToThread(threadId: string, userId: string, message: string): Promise<Reply> {
         if (!isValidObjectId(threadId)) {
             throw new BadRequestException(`Invalid thread ID: ${threadId}`);
         }
@@ -261,6 +257,11 @@ export class ForumService {
         });
 
         const savedReply = await reply.save();
+        const thread = await this.forumThreadModel.findById(threadId).exec();
+
+        if (!thread) {
+            throw new NotFoundException('Forum thread not found');
+        }
 
         await this.forumThreadModel.findByIdAndUpdate(threadId, {
             $push: { replies: savedReply._id },
@@ -273,35 +274,32 @@ export class ForumService {
             'REPLY'
         ) as unknown as Notification;
 
-        await this.communicationGateway.emitNotification(thread.createdBy.toString(), notification as unknown as Notification);
+        await this.communicationGateway.emitNotification(new Types.ObjectId(thread.createdBy), notification as unknown as Notification);
 
         return savedReply;
     }
+    
 
     // Add a reply to another reply (Nested Reply)
-    async addReplyToReply(
-        replyId: string,
-        userId: string,
-        message: string,
-    ): Promise<Reply> {
+    async addReplyToReply(replyId: string, userId: string, message: string): Promise<Reply> {
         if (!isValidObjectId(replyId)) {
             throw new BadRequestException(`Invalid reply ID: ${replyId}`);
         }
-
-        const parentReply = await this.replyModel.findById(replyId);
+    
+        const parentReply = await this.replyModel.findById(replyId).populate('forumThread');
         if (!parentReply) {
-            throw new BadRequestException(`Parent reply not found with ID: ${replyId}`);
+            throw new NotFoundException(`Parent reply not found with ID: ${replyId}`);
         }
-
+    
         const reply = new this.replyModel({
             user: new Types.ObjectId(userId),
             message,
             forumThread: parentReply.forumThread,
             parent: new Types.ObjectId(replyId),
         });
-
+    
         const savedReply = await reply.save();
-
+    
         await this.replyModel.findByIdAndUpdate(replyId, {
             $push: { replies: savedReply._id },
         });
@@ -341,6 +339,8 @@ export class ForumService {
     
         return savedReply;
     }
+    
+    
 
     // Fetch threads by course ID
     async findAllByCourseId(courseId: string): Promise<(ForumThread & { replies: Reply[] })[]> {
@@ -475,4 +475,3 @@ async updateReply(replyId: string, userId: string, updateData: Partial<Reply>): 
     }
 
 }
-

@@ -25,6 +25,9 @@ import { UserService } from '../user/user.service';
 })
 @Injectable()
 export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    emitNotification(studentId: Types.ObjectId, arg1: Notification) {
+        throw new Error('Method not implemented.');
+    }
     @WebSocketServer()
     server!: Server;
 

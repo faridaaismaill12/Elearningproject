@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { CourseController } from './course.controller';
-import { CourseService } from './course.service';
-import { Course, CourseSchema } from './schemas/course.schema';
-import { LessonSchema } from './schemas/lesson.schema';
-import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
-import { ModuleService } from './module.service';
-import { LessonService } from './lesson.service';
-import { ModuleController } from './module.controller';
-import { LessonController } from './lesson.controller';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { User, UserSchema } from '../user/schemas/user.schema';
+import { CourseController } from './course.controller';
+import { CourseService } from './course.service';
+import { LessonController } from './lesson.controller';
+import { LessonService } from './lesson.service';
+import { ModuleController } from './module.controller';
+import { ModuleService } from './module.service';
+import { Course, CourseSchema } from './schemas/course.schema';
+import { LessonSchema } from './schemas/lesson.schema';
+import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
 
 @Module({
   imports: [
