@@ -28,6 +28,7 @@ import * as speakeasy from 'speakeasy';
 import * as nodemailer from 'nodemailer';
 import { UpdateRole } from './dto/update-student-level.dto';
 import { AssignCourseDto } from './dto/assign-course.dto';
+import { EnrollUserDto } from './dto/enroll-user.dto';
 
 interface RecordData {
     userId: string;
@@ -91,49 +92,50 @@ export class UserService {
         }
     }
 
-
-    async enrollUser(userId: string, courseId: string): Promise<{ message: string }> {
-        // Validate MongoDB _id format
-        if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(courseId)) {
-            throw new BadRequestException('Invalid user or course ID format.');
+    async enrollUser(studentId: string, enrollUserDto: EnrollUserDto) {
+        const { email, courseId } = enrollUserDto;
+    
+        // Validate student (should match the studentId in the token)
+        const student = await this.userModel.findById(studentId);
+        if (!student || student.email !== email) {
+          throw new ForbiddenException('You can only enroll yourself.');
         }
-
-        // Find the user by MongoDB _id
-        const user = await this.userModel.findById(userId);
-        if (!user) {
-            throw new NotFoundException('User with ID ${userId} not found');
-        }
-
-        // Ensure enrolledCourses is initialized as an array
-        if (!user.enrolledCourses) {
-            user.enrolledCourses = [];
-        }
-
-        // Find the course by _id
+    
+        // Validate course
         const course = await this.courseModel.findById(courseId);
         if (!course) {
-            throw new NotFoundException('Course with ID ${courseId} not found');
+          throw new NotFoundException('Course not found');
+        }
+    
+        // Ensure `enrolledCourses` is initialized for the student
+        if (!student.enrolledCourses) {
+          student.enrolledCourses = [];
         }
 
-        // Check if the course title is already in the enrolledCourses array
-        if (user.enrolledCourses.some((enrolledCourse) => enrolledCourse.equals(course._id))) {
-            throw new BadRequestException('User is already enrolled in course "${course.title}"');
-        }
-
-        // Add the course title to the user's enrolledCourses array
-        user.enrolledCourses.push(course._id);
-        await user.save();
-
-        // add the user to the course's enrolledStudents array
         if (!course.enrolledStudents) {
             course.enrolledStudents = [];
         }
-        course.enrolledStudents.push(new Types.ObjectId(user._id as Types.ObjectId));
+    
+        // Check if the student is already enrolled in the course
+        const isAlreadyEnrolled = student.enrolledCourses.some((enrolledCourse) =>
+          enrolledCourse.equals(course._id),
+        );
+    
+        if (isAlreadyEnrolled) {
+          throw new BadRequestException('You are already enrolled in this course');
+        }
+    
+        // Enroll the student by adding the course ObjectId to `enrolledCourses`
+        student.enrolledCourses.push(course._id);
+
+        course.enrolledStudents.push(student.id);
+    
+        // Save the changes
+        await student.save();
         await course.save();
-
-
-        return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
-    }
+    
+        return { message: 'Successfully enrolled in the course', student };
+      }
     
     async getUserName(userId: string): Promise<string> {
         const user = await this.userModel.findById(userId).select('name').exec();
@@ -333,6 +335,10 @@ export class UserService {
         if (!student.enrolledCourses) {
           student.enrolledCourses = [];
         }
+
+        if (!course.enrolledStudents) {
+            course.enrolledStudents = [];
+        }
     
         // Safely check if already enrolled using `ObjectId.equals`
         const isAlreadyEnrolled = student.enrolledCourses.some((enrolledCourse) =>
@@ -345,9 +351,12 @@ export class UserService {
     
         // Push the course ObjectId directly without converting to string
         student.enrolledCourses.push(course._id);
+
+        course.enrolledStudents.push(student.id)
     
         // Save the changes
         await student.save();
+        await course.save();
     
         return { message: 'Course assigned successfully', student };
     }

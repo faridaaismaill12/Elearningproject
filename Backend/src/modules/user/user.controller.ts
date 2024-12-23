@@ -25,6 +25,7 @@ import { ResetPasswordDto } from './dto/password-reset.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
+import { EnrollUserDto } from './dto/enroll-user.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
@@ -91,20 +92,12 @@ export class UserController {
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'instructor') // Only admins and instructors can enroll users
-    @Post(':id/enroll/:courseId')
-    @HttpCode(200)
-    async enrollUser(
-        @Param('id') userId: string,
-        @Param('courseId') courseId: string
-    ): Promise<any> {
-        if (!userId || !courseId) {
-            throw new BadRequestException('User ID and Course ID are required.');
-        }
-        return await this.userService.enrollUser(userId, courseId);
+    @Roles('student')
+    @Post('enroll-user')
+    async enrollUser(@Body() enrollUser: EnrollUserDto,@Req() req: any) {
+        const studentId = req.user.id;
+        return await this.userService.enrollUser(studentId , enrollUser);
     }
-
-
 
     /**
      * Update user profile
