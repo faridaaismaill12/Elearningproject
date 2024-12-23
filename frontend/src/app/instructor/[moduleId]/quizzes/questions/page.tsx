@@ -1,8 +1,9 @@
 "use client";
+import './QuestionTable.css';
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaTrash, FaEdit, FaPlus } from "react-icons/fa";
-import './QuestionTable.css';
+
 import { useParams } from "next/navigation";
 import { LoadingSpinner } from "@/app/_components/LoadingSpinner";
 interface Question {
@@ -47,7 +48,7 @@ const QuestionsTable: React.FC = () => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:6097/instructor/quizzes/module/${moduleId}`, {
+      const response = await axios.get(`http://localhost:6080/instructor/quizzes/module/${moduleId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setQuestions(response.data);
@@ -60,7 +61,7 @@ const QuestionsTable: React.FC = () => {
 
   const handleDelete = async (questionId: string) => {
     try {
-      await axios.delete(`http://localhost:6097/instructor/quizzes/delete/question/${questionId}`, {
+      await axios.delete(`http://localhost:6080/instructor/quizzes/delete/question/${questionId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setQuestions((prev) => prev.filter((q) => q._id !== questionId));
@@ -108,7 +109,7 @@ const QuestionsTable: React.FC = () => {
         options: formData.options.split(",").map((option) => option.trim()),
       };
 
-      await axios.patch(`http://localhost:6097/instructor/quizzes/update/question/${currentQuestion._id}`, updatedQuestion, {
+      await axios.patch(`http://localhost:6080/instructor/quizzes/update/question/${currentQuestion._id}`, updatedQuestion, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchQuestions();
@@ -127,7 +128,7 @@ const QuestionsTable: React.FC = () => {
         options: formData.options.split(",").map((option) => option.trim()),
       };
 
-      await axios.post(`http://localhost:6097/instructor/quizzes/add`, newQuestion, {
+      await axios.post(`http://localhost:6080/instructor/quizzes/add`, newQuestion, {
         headers: { Authorization: `Bearer ${token}` },
       });
       resetForm();
@@ -167,7 +168,7 @@ const QuestionsTable: React.FC = () => {
   //if(loading) return <LoadingSpinner/>
 
   return (
-    <div className="container">
+    <div className="question_container">
       <h2>Question Bank</h2>
       {loading ? (
        <p>Loading...</p>

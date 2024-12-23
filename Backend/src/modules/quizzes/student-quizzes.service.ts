@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Quiz, QuizDocument } from './schemas/quiz.schema';
@@ -259,9 +259,10 @@ export class StudentQuizzesService {
 
 
     await this.quizModel.updateOne(
-    { _id: quiz._id }, 
-    { $addToSet: { attemptedUsers: userId } } 
+      { _id: quiz._id },
+      { $addToSet: { attemptedUsers: { user: userId } } }
     );
+    
 
     return {
       score,
@@ -313,63 +314,73 @@ export class StudentQuizzesService {
     return response;
   }
   
-
   async upgradeStudentLevel(userId: string): Promise<User> {
-    const user = await this.userModel.findById(new Types.ObjectId(userId));
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-  
-    const userTakenQuizzes = await this.quizModel.find({ attemptedUsers: userId });
-    if (userTakenQuizzes.length === 0) {
-      throw new NotFoundException('User has not taken any quizzes');
-    }
-  
-    const responses = await this.responseModel.find({
-      user: new Types.ObjectId(userId),
-      quiz: { $in: userTakenQuizzes.map((quiz) => quiz._id) }, 
-    });
-  
-    if (responses.length === 0) {
-      throw new NotFoundException('No valid responses found for the quizzes taken by the user');
-    }
-
-    let totalScore = 0;
-    for (let i = 0; i < responses.length; i++) {
-    totalScore += responses[i].score;
-    }
-
-    const averageScore = totalScore / responses.length;
-  
-    let newLevel: string | null = null;
-  
-    if (user.studentLevel === 'beginner') {
-      if (averageScore >= 75) {
-        newLevel = 'average';  
-      } else {
-        newLevel = 'beginner';  
+    try {
+      // Check if the userId is a valid MongoDB ObjectId
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new NotFoundException('Invalid User ID');
       }
-    }
-  
-    if (user.studentLevel === 'average') {
-      if (averageScore >= 90) {
-        newLevel = 'advanced'; 
-      } else {
-        newLevel = 'average';  
-      }
-    }
-  
-    if (user.studentLevel === 'advanced') {
-      newLevel = 'advanced'; 
-    }
-  
 
-    if (newLevel && user.studentLevel !== newLevel) {
-      user.studentLevel = newLevel;
-      await user.save();
+      // Convert userId to ObjectId
+      const userObjectId = new Types.ObjectId(userId);
+
+      // Find the user by ObjectId
+      const user = await this.userModel.findById(userObjectId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Check if the user has taken any quizzes
+      const userTakenQuizzes = await this.quizModel.find({ attemptedUsers: userObjectId });
+      if (userTakenQuizzes.length === 0) {
+        throw new NotFoundException('User has not taken any quizzes');
+      }
+
+      // Get responses for the quizzes, ensuring quiz and user are ObjectIds
+      const responses = await this.responseModel.find({
+        user: userObjectId,
+        quiz: { $in: userTakenQuizzes.map(quiz => quiz._id) },
+      });
+
+      if (responses.length === 0) {
+        throw new NotFoundException('No valid responses found for the quizzes taken by the user');
+      }
+
+      // Calculate the total score and average score
+      const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
+      const averageScore = totalScore / responses.length;
+
+      // Determine the new level based on the average score
+      let newLevel: string | null = null;
+
+      switch (user.studentLevel) {
+        case 'beginner':
+          newLevel = averageScore >= 75 ? 'average' : 'beginner';
+          break;
+        case 'average':
+          newLevel = averageScore >= 90 ? 'advanced' : 'average';
+          break;
+        case 'advanced':
+          newLevel = 'advanced';  // No change for advanced
+          break;
+        default:
+          throw new InternalServerErrorException('Invalid student level');
+      }
+
+      // If the level has changed, update the user record
+      if (newLevel && user.studentLevel !== newLevel) {
+        user.studentLevel = newLevel;
+        await user.save();
+      }
+
+      // Return the updated user
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof InternalServerErrorException) {
+        throw error;  // Re-throw known exceptions
+      }
+      throw new InternalServerErrorException('An unexpected error occurred while upgrading the student level');
     }
-  
-    return user;
   }
   
 

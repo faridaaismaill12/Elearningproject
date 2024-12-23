@@ -9,9 +9,9 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [authUser, setAuthUser] = useState<string>("");
-  const [profileImage, setProfileImage] = useState<string>("");
-  const [userRole, setUserRole] = useState<string>("");
+  const [authUser, setAuthUser] = useState<string>("Guest");
+  const [profileImage, setProfileImage] = useState<string>("/avatar-placeholder.png");
+  const [userRole, setUserRole] = useState<string>("User");
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -26,7 +26,7 @@ const Navbar = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get("http://localhost:4000/users/view-profile", {
+      const response = await axios.get("http://localhost:6090/users/view-profile", {
         headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
       });
       const { role, profileImage } = response.data; 
@@ -87,64 +87,81 @@ const Navbar = () => {
           {isLoggedIn ? (
             <>
               <li className="nav-item">
-                <a className="nav-link" href="/Home">
-                  Courses
-                </a>
+                <a className="nav-link" href="/Home">Courses</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/courses">
-                  Notes
-                </a>
+                <a className="nav-link" href="/courses">Notes</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/Home">
-                  Chat
-                </a>
+                <a className="nav-link" href="/Home">Chat</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/Home">
-                  Notifications
-                </a>
+                <a className="nav-link" href="/Home">Notifications</a>
               </li>
-              <li className="nav-item dropdown-container">
+
+              {/* Role-based navigation items */}
+              {userRole === "student" && (
+                <>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/student/dashboard">Student Dashboard</a>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/student/courses">My Courses</a>
+                  </li>
+                </>
+              )}
+
+              {userRole === "instructor" && (
+                <>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/instructor/dashboard">Instructor Dashboard</a>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/instructor/manage-courses">Manage Courses</a>
+                  </li>
+                </>
+              )}
+
+              {userRole === "admin" && (
+                <>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/admin/dashboard">Admin Dashboard</a>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/admin/users">Manage Users</a>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/admin/courses">Manage Courses</a>
+                  </li>
+                </>
+              )}
+
+              {/* Dropdown with profile settings */}
+              <li className={`nav-item dropdown-container ${dropdownOpen ? 'active' : ''}`}>
                 <div className="avatar" onClick={toggleDropdown}>
                   <img src={profileImage} alt="Profile" />
                 </div>
-                {dropdownOpen && (
-                  <div className="dropdown-menu">
-                    <a href="/profile">My Profile</a>
-                    <a href="/updates">Updates</a>
-                    <a href="/settings">Settings</a>
-                    <button onClick={handleLogout}>Logout</button>
-                  </div>
-                )}
-              </li>
-              {/* Display user role */}
-              <li className="nav-item">
-                <span className="nav-link">Role: {userRole}</span>
+                <div className="dropdown-menu">
+                  <a href="/profile">My Profile</a>
+                  <a href="/updates">Updates</a>
+                  <a href="/settings">Settings</a>
+                  <button  onClick={handleLogout}>Logout</button>
+                </div>
               </li>
             </>
           ) : (
             <>
               <li className="nav-item">
-                <a className="nav-link" href="/courses">
-                  Courses
-                </a>
+                <a className="nav-link" href="/courses">Courses</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/report">
-                  Teach on BananaBread
-                </a>
+                <a className="nav-link" href="/report">Teach on BananaBread</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/login">
-                  Login
-                </a>
+                <a className="nav-link" href="/login">Login</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/signup">
-                  Signup
-                </a>
+                <a className="nav-link" href="/signup">Signup</a>
               </li>
             </>
           )}

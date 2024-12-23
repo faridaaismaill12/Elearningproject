@@ -112,9 +112,10 @@ async getQuestionsByModule(
 }
 
 @Roles('instructor')
-@Get('/quiz-responses/:userId/:quizId')
-async findResponsesForQuiz(@Param('userId') userId: string,@Param('quizId') quizId:string,  @Req() req: any): Promise<QuizResponse[]> {
-    return await this.instructorQuizzesService.findResponsesForQuiz(req.user.id,quizId);
+@Get('/quiz-responses/:quizId')
+async findResponsesForQuiz(@Param('quizId') quizId:string,  @Req() req: any): Promise<QuizResponse[]> {
+  const userId = req.user.id; 
+  return await this.instructorQuizzesService.findResponsesForQuiz(userId,quizId);
 }
 
 

@@ -218,6 +218,15 @@ async deleteQuiz(moduleId: string, quizId: string): Promise<{ message: string }>
     if (!quiz) {
       throw new NotFoundException(`Quiz with ID ${quizId} not found.`);
     }
+    
+    const attemptedUsers = quiz.attemptedUsers || [];
+
+ 
+    if (attemptedUsers.length > 0) {
+      throw new BadRequestException('Quiz cannot be deleted as it has been attempted by users.');
+    }
+
+    
 
     const moduleUpdateResult = await this.moduleModel.updateOne(
       { _id: module_id },
@@ -382,6 +391,10 @@ async updateQuestion(
     if (!quiz) {
       throw new NotFoundException('Quiz not found');
     }
+
+    if (quiz.attemptedUsers.length > 0) {
+      throw new BadRequestException('Quiz cannot be deleted as it has been attempted by users.');
+    }
  
     if (updateQuizDto.name && updateQuizDto.name !== quiz.name) {
       const existingName = await this.quizModel.findOne({ name: updateQuizDto.name });
@@ -463,7 +476,7 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
     _id: new Types.ObjectId(quizId), 
     createdBy: userId
     
-  });
+  }).populate('name _id duration difficultyLevel quizType');
 
 
   if (!quiz) {
@@ -473,6 +486,26 @@ async findResponsesForQuiz(userId: string, quizId: string): Promise<QuizResponse
 
   return responses;
 }
+
+
+async findResponsesForQuiz1(userId: string, quizId: string): Promise<{ quiz: any; responses: QuizResponse[] }> {
+  const instructor = await this.userModel.findById(userId);
+  if (!instructor || instructor.role !== 'instructor') {
+    throw new NotFoundException('Instructor not found or not authorized');
+  }
+
+  const quiz = await this.quizModel
+    .findOne({ _id: quizId, createdBy: userId })
+    .populate('name duration difficultyLevel quizType');
+
+  if (!quiz) {
+    throw new NotFoundException('Quiz not found or you are not the creator of this quiz');
+  }
+
+  const responses = await this.responseModel.find({ quiz: quizId });
+  return { quiz, responses };
+}
+
 
 async averageCourseQuizzes(courseId: string): Promise<number> {
   if (!Types.ObjectId.isValid(courseId)) {

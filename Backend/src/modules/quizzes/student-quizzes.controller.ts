@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException, UseGuards, Req,Put, Patch, InternalServerErrorException } from '@nestjs/common';
 import { StudentQuizzesService } from './student-quizzes.service';
 import { SubmitResponseDto } from './dto/response.dto';
 import { Quiz } from './schemas/quiz.schema';
@@ -8,6 +8,7 @@ import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard';
 import { Roles } from '../../decorators/roles.decorators'; 
+import { User } from '../user/schemas/user.schema';
 
 
 @Controller('student/quizzes')
@@ -99,9 +100,24 @@ async startQuiz(
       throw error;
     }
   }
+
+  }
+  
+
+
+
+
+
+
+
+
+
+
+
   
   
-  
-    }
+    
+
+
 
 
