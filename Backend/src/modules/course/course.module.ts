@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -14,9 +14,11 @@ import { ModuleService } from './module.service';
 import { Course, CourseSchema } from './schemas/course.schema';
 import { LessonSchema } from './schemas/lesson.schema';
 import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
+// import { NoteModel } from '.././notes/schemas/note.schema';
 
 @Module({
   imports: [
+    // NoteModel, // Break circular dependency
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -31,7 +33,7 @@ import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schem
       { name: Course.name, schema: CourseSchema },
       { name: ModuleSchema.name, schema: ModuleSchemaDef },
       { name: 'Lesson', schema: LessonSchema },
-      { name: User.name, schema:UserSchema}
+      { name: User.name, schema: UserSchema }
     ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Serve `uploads` from the project root
@@ -43,4 +45,3 @@ import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schem
   exports: [CourseService, ModuleService, LessonService, MongooseModule],
 })
 export class CourseModule {}
-

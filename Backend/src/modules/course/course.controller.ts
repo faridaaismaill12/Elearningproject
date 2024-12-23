@@ -51,6 +51,9 @@ const videoStorage = diskStorage({
   },
 });
 
+
+
+
 @Controller('courses')
 @UseGuards(JwtAuthGuard, RolesGuard) // Global guard for all endpoints in this controller
 export class CourseController {

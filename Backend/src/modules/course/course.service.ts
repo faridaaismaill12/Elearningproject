@@ -22,7 +22,7 @@ export class CourseService {
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    @InjectModel(Note.name) private noteModel: Model<Note>,
+    // @InjectModel(Note.name) private noteModel: Model<Note>,
   private readonly moduleService: ModuleService
   ) {}
 
