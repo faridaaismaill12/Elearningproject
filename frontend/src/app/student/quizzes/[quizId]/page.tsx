@@ -47,7 +47,7 @@ const QuizPage = () => {
 
     axios
       .post(
-        `http://localhost:6185/student/quizzes/start/${quizId}`,
+        `http://localhost:4000/student/quizzes/start/${quizId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -91,7 +91,7 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:6185/student/quizzes/submit/${quizId}`,
+        `http://localhost:4000/student/quizzes/submit/${quizId}`,
         { submittedAnswers },
         { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );

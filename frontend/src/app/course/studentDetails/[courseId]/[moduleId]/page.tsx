@@ -2,25 +2,26 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { FiDownload } from "react-icons/fi"; // Importing a download icon
+import { FiDownload } from "react-icons/fi";
 
 const ModuleDetailsPage = () => {
-  const { courseId, moduleId } = useParams(); // Capture dynamic route params
+  const { courseId, moduleId } = useParams();
   const router = useRouter();
   const [moduleDetails, setModuleDetails] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]); // To store quizzes
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
+    const storedToken = localStorage.getItem("authToken");
     if (storedToken) {
       setToken(storedToken);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
-      router.push("/login"); // Redirect to login if token is not found
+      router.push("/login");
     }
   }, []);
 
@@ -33,36 +34,67 @@ const ModuleDetailsPage = () => {
 
       try {
         // Fetch module details
-        const moduleResponse = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const moduleResponse = await fetch(
+          `http://localhost:4000/courses/${courseId}/modules/${moduleId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!moduleResponse.ok) {
-          throw new Error(`Failed to fetch module details: ${moduleResponse.statusText}`);
+          throw new Error(
+            `Failed to fetch module details: ${moduleResponse.statusText}`
+          );
         }
 
         const moduleData = await moduleResponse.json();
         setModuleDetails(moduleData);
 
-        // Fetch lessons for the module
-        const lessonsResponse = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}/lessons`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        // Fetch lessons
+        const lessonsResponse = await fetch(
+          `http://localhost:4000/courses/${courseId}/modules/${moduleId}/lessons`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!lessonsResponse.ok) {
-          throw new Error(`Failed to fetch lessons: ${lessonsResponse.statusText}`);
+          throw new Error(
+            `Failed to fetch lessons: ${lessonsResponse.statusText}`
+          );
         }
 
         const lessonsData = await lessonsResponse.json();
         setLessons(lessonsData);
+
+        // Fetch quizzes
+        const quizzesResponse = await fetch(
+          `http://localhost:4000/student/quizzes/all/${moduleId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!quizzesResponse.ok) {
+          throw new Error(
+            `Failed to fetch quizzes: ${quizzesResponse.statusText}`
+          );
+        }
+
+        const quizzesData = await quizzesResponse.json();
+        setQuizzes(quizzesData);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -78,20 +110,51 @@ const ModuleDetailsPage = () => {
   }, [courseId, moduleId, token]);
 
   const handleLessonClick = (lessonId: string) => {
-    console.log(`Navigating to lessonId: ${lessonId}`); // Debugging
     router.push(`/course/studentDetails/${courseId}/${moduleId}/${lessonId}`);
+  };
+
+  const handleStartQuiz = async (quizId: string) => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:4000/student/quizzes/start/${quizId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to start quiz: ${response.statusText}`);
+      }
+
+      const quizData = await response.json();
+      alert("Quiz started successfully!");
+
+      // Redirect to the quiz page
+      router.push(`/student/quizzes/${quizId}`);
+    } catch (err: any) {
+      alert(`Error starting quiz: ${err.message}`);
+    }
   };
 
   const handleDownloadFiles = async () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to download files: ${response.statusText}`);
@@ -114,7 +177,14 @@ const ModuleDetailsPage = () => {
   if (error) return <div style={{ color: "red" }}>{error}</div>;
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif", maxWidth: "800px", margin: "0 auto" }}>
+    <div
+      style={{
+        padding: "2rem",
+        fontFamily: "Arial, sans-serif",
+        maxWidth: "800px",
+        margin: "0 auto",
+      }}
+    >
       <h1>Module Details</h1>
       <p>
         <strong>Title:</strong> {moduleDetails?.title || "N/A"}
@@ -160,6 +230,43 @@ const ModuleDetailsPage = () => {
         </ul>
       ) : (
         <p>No lessons available for this module.</p>
+      )}
+
+      <h2>Quizzes</h2>
+      {quizzes.length > 0 ? (
+        <ul>
+          {quizzes.map((quiz) => (
+            <li key={quiz._id} style={{ marginBottom: "1rem" }}>
+              <p>
+                <strong>Name:</strong> {quiz.name}
+              </p>
+              <p>
+                <strong>Number of Questions:</strong> {quiz.numberOfQuestions}
+              </p>
+              <p>
+                <strong>Type:</strong> {quiz.quizType}
+              </p>
+              <p>
+                <strong>Duration:</strong> {quiz.duration} minutes
+              </p>
+              <button
+                onClick={() => handleStartQuiz(quiz._id)}
+                style={{
+                  padding: "0.5rem",
+                  backgroundColor: "#28a745",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Start Quiz
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No quizzes available for this module.</p>
       )}
     </div>
   );

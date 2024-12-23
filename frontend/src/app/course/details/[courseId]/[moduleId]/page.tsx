@@ -175,6 +175,12 @@ const ModuleDetails = () => {
         <button onClick={() => setShowAddFileForm(true)} style={buttonStyle("#ffc107")}>
           Add Files
         </button>
+        <button onClick={() => router.push(`/instructor/${moduleId}/quizzes/create`)} style={buttonStyle("#6f42c1")}>
+          Create Quiz
+        </button>
+        <button onClick={() => router.push(`/instructor/${moduleId}/quizzes/dashboard`)} style={buttonStyle("#20c997")}>
+          Go to Dashboard
+        </button>
       </div>
 
       {/* Render CreateLesson Form */}

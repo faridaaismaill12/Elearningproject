@@ -35,7 +35,7 @@ export default function ViewAllForums() {
 
         // Fetch forums
         const forumsResponse = await axios.get(
-          `http://localhost:6165/forums/by-course/${courseId}`,
+          `http://localhost:4000/forums/by-course/${courseId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -43,7 +43,7 @@ export default function ViewAllForums() {
         const forumsWithCreators = await Promise.all(
           forumsResponse.data.map(async (forum: Omit<Forum, 'createdByName'>) => {
             const userResponse = await axios.get(
-              `http://localhost:6165/users/find-user/${forum.createdBy}`,
+              `http://localhost:4000/users/find-user/${forum.createdBy}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             return { ...forum, createdByName: userResponse.data.name || "Unknown User" };
@@ -54,7 +54,7 @@ export default function ViewAllForums() {
 
         // Fetch course details to get the course name
         const courseResponse = await axios.get(
-          `http://localhost:6165/courses/${courseId}`,
+          `http://localhost:4000/courses/${courseId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCourseName(courseResponse.data.title || "Unknown Course");
@@ -80,14 +80,14 @@ export default function ViewAllForums() {
       }
 
       const response = await axios.post(
-        "http://localhost:6165/forums/create",
+        "http://localhost:4000/forums/create",
         { title: newForumContent, course: courseId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       // Add the new forum to the list
       const userResponse = await axios.get(
-        `http://localhost:6165/users/find-user/${response.data.createdBy}`,
+        `http://localhost:4000/users/find-user/${response.data.createdBy}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const newForum: Forum = { 
