@@ -20,15 +20,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
-import { createObjectCsvWriter } from 'csv-writer';
-import * as qrcode from 'qrcode';
-import * as speakeasy from 'speakeasy';
-import * as nodemailer from 'nodemailer';
-
-interface RecordData {
-    userId: string;
-    courseId: string;
-  }
 import { HydratedDocument } from 'mongoose';
 import { createObjectCsvWriter } from 'csv-writer';
 import * as qrcode from 'qrcode';
@@ -98,6 +89,24 @@ export class UserService {
             console.error('Error during registration:', error);
             throw error;
         }
+    }
+
+    async login(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
+        const { email, passwordHash } = loginUserDto;
+
+        const user = await this.userModel.findOne({ email });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
+        if (!isPasswordValid) {
+            throw new BadRequestException('Invalid credentials');
+        }
+
+        const payload = { id: user._id, email: user.email, role:user.role }; // Define payload
+        const accessToken = this.jwtService.sign(payload); // Sign the token
+        return { accessToken };
     }
 
 
@@ -427,13 +436,7 @@ export class UserService {
         return users;
     }
 
-    async searchStudents(searchStudentDto: SearchStudentDto, instructorId: string) {
-        const instructor = await this.userModel.findById(instructorId).exec();
-
-        if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('Only instructors can search for students');
-        }
-
+    async searchStudents(searchStudentDto: SearchStudentDto) {
         const query: Record<string, any> = { role: 'student' };
 
         if (searchStudentDto.name) {
