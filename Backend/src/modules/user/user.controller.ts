@@ -160,14 +160,12 @@ export class UserController {
 
     // create account for student (instructor only)
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin') // Only admins can create student accounts
+    @Roles('instructor') 
     @Post('create-student')
     async createStudentAccount(
-        @Body() createStudentDto: CreateStudentDto,
-        @Req() req: any
+        @Body() createStudentDto: CreateStudentDto
     ) {
-        const instructorId = req.user.sub; // Extract instructor ID from token
-        return this.userService.createStudentAccount(instructorId, createStudentDto);
+        return this.userService.createStudentAccount(createStudentDto);
     }
 
 

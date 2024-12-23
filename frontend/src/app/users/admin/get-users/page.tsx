@@ -19,7 +19,7 @@ export default function ViewUsersPage() {
       if (!token) {
         setError("You must log in first.");
         setTimeout(() => {
-          router.push("/users/login");
+          router.push("http://localhost:4001/users/login");
         }, 3000);
         return;
       }

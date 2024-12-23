@@ -344,13 +344,8 @@ export class UserService {
         return { message: 'Course assigned successfully', student };
     }
 
-    async createStudentAccount(instructorId: string, createStudentDto: CreateStudentDto) {
-        const instructor = await this.userModel.findById(instructorId);
-        if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('You are not authorized to create a student account');
-        }
-
-        const { name, email, passwordHash } = createStudentDto;
+    async createStudentAccount(createStudentDto: CreateStudentDto) {
+        const { name, email, passwordHash , studentLevel } = createStudentDto;
 
         const existingStudent = await this.userModel.findOne({ email });
         if (existingStudent) {
@@ -364,6 +359,7 @@ export class UserService {
             email: email,
             passwordHash: hashedPassword,
             role: 'student',
+            studentLevel: studentLevel
         });
 
         await student.save();
