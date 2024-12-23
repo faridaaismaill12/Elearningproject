@@ -27,25 +27,6 @@ export default function SearchInstructorsPage() {
         }, 3000);
         return;
       }
-
-      try {
-        const response = await axios.get("http://localhost:5010/users/get-role", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const role = response.data;
-        if (role !== "instructor") {
-          setError("You do not have permission to access this page.");
-          setTimeout(() => {
-            router.push("/users/login");
-          }, 3000);
-        }
-      } catch (err) {
-        setError("Failed to verify access. Please log in again.");
-        setTimeout(() => {
-          router.push("/users/login");
-        }, 3000);
-      }
     };
 
     checkAccess();
