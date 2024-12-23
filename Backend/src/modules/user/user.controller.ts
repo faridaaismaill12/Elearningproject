@@ -30,6 +30,7 @@ import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
 import { JwtService } from '@nestjs/jwt/dist/jwt.service';
 import { UpdateRole } from './dto/update-student-level.dto';
+import { AssignCourseDto } from './dto/assign-course.dto';
 
 @Controller('users')
 export class UserController {
@@ -148,15 +149,11 @@ export class UserController {
      */
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('instructor') // Only instructors can assign courses
-    @Post('assign-course/:studentId/:courseId')
-    async assignCourse(
-        @Param('studentId') studentId: string,
-        @Param('courseId') courseId: string,
-        @Req() req: any
-    ) {
-        const instructorId = req.user.sub; // Extract instructor ID from token
-        return this.userService.assignCourse(instructorId, studentId, courseId);
-}
+    @Post('assign-course')
+    async assignCourse(@Body() assignCourseDto: AssignCourseDto, @Req() req: any) {
+      const instructorId = req.user.id; // Extract instructor ID from token
+      return this.userService.assignCourse(instructorId, assignCourseDto);
+    }
 
 
     // create account for student (instructor only)

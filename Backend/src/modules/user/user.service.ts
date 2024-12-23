@@ -27,6 +27,7 @@ import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import * as nodemailer from 'nodemailer';
 import { UpdateRole } from './dto/update-student-level.dto';
+import { AssignCourseDto } from './dto/assign-course.dto';
 
 interface RecordData {
     userId: string;
@@ -307,45 +308,47 @@ export class UserService {
         return user;
     }
 
-    async assignCourse(instructorId: string, studentId: string, courseId: string) {
+    async assignCourse(instructorId: string, assignCourseDto: AssignCourseDto) {
+        const { email, courseId } = assignCourseDto;
+    
         // Validate instructor
         const instructor = await this.userModel.findById(instructorId);
         if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('Only instructors can assign courses');
+          throw new ForbiddenException('Only instructors can assign courses');
         }
-
+    
         // Validate student
-        const student = await this.userModel.findById(studentId);
+        const student = await this.userModel.findOne({ email });
         if (!student) {
-            throw new NotFoundException('Student not found');
+          throw new NotFoundException('Student not found');
         }
-
+    
         // Validate course
         const course = await this.courseModel.findById(courseId);
         if (!course) {
-            throw new NotFoundException('Course not found');
+          throw new NotFoundException('Course not found');
         }
-
+    
         // Ensure `enrolledCourses` is initialized
         if (!student.enrolledCourses) {
-            student.enrolledCourses = [];
+          student.enrolledCourses = [];
         }
-
+    
         // Safely check if already enrolled using `ObjectId.equals`
         const isAlreadyEnrolled = student.enrolledCourses.some((enrolledCourse) =>
-            enrolledCourse.equals(course._id),
+          enrolledCourse.equals(course._id),
         );
-
+    
         if (isAlreadyEnrolled) {
-            throw new BadRequestException('Student is already enrolled in this course');
+          throw new BadRequestException('Student is already enrolled in this course');
         }
-
+    
         // Push the course ObjectId directly without converting to string
         student.enrolledCourses.push(course._id);
-
+    
         // Save the changes
         await student.save();
-
+    
         return { message: 'Course assigned successfully', student };
     }
 
