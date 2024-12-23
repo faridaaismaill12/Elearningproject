@@ -1,4 +1,3 @@
-
 import {
     Controller,
     HttpCode,
@@ -25,10 +24,13 @@ import { ResetPasswordDto } from './dto/password-reset.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
+import { EnrollUserDto } from './dto/enroll-user.dto';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard'; // Import RolesGuard
 import { Roles } from '../../decorators/roles.decorator'; // Import Roles decorator
 import { JwtService } from '@nestjs/jwt/dist/jwt.service';
+import { UpdateRole } from './dto/update-student-level.dto';
+import { AssignCourseDto } from './dto/assign-course.dto';
 
 @Controller('users')
 export class UserController {
@@ -45,7 +47,7 @@ export class UserController {
         console.log('Register endpoint invoked.');
         return this.userService.register(createUserDto);
     } // tested
-
+ 
     /**
      * Log in an existing user
      */
@@ -89,20 +91,20 @@ export class UserController {
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'instructor') // Only admins and instructors can enroll users
-    @Post(':id/enroll/:courseId')
-    @HttpCode(200)
-    async enrollUser(
-        @Param('id') userId: string,
-        @Param('courseId') courseId: string
-    ): Promise<any> {
-        if (!userId || !courseId) {
-            throw new BadRequestException('User ID and Course ID are required.');
-        }
-        return await this.userService.enrollUser(userId, courseId);
+    @Roles('student')
+    @Post('enroll-user')
+    async enrollUser(@Body() enrollUser: EnrollUserDto,@Req() req: any) {
+        const studentId = req.user.id;
+        return await this.userService.enrollUser(studentId , enrollUser);
     }
 
 
+    @UseGuards(JwtAuthGuard , RolesGuard)
+    @Roles('admin')
+    @Patch('update-student-level')
+    async updateLevel(@Body() updateRole: UpdateRole) {
+        return this.userService.updateLevel(updateRole);
+    }
 
     /**
      * Update user profile
@@ -117,17 +119,7 @@ export class UserController {
         return this.userService.updateProfile(updateUserDto, userIdFromToken);
     } // tested
 
-    /**
-     * Delete user profile
-     */
-    @UseGuards(JwtAuthGuard)
-    @Delete('delete-profile')
-    async deleteProfile(@Req() req: any) {
-        const userIdFromToken = req.user.id;
-
-        console.log('Delete Profile endpoint invoked.');
-        return this.userService.deleteProfile(userIdFromToken);
-    } // tested
+   
 
     /**
      * Get user profile by ID
@@ -147,28 +139,20 @@ export class UserController {
      */
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('instructor') // Only instructors can assign courses
-    @Post('assign-course/:studentId/:courseId')
-    async assignCourse(
-        @Param('studentId') studentId: string,
-        @Param('courseId') courseId: string,
-        @Req() req: any
-    ) {
-        const instructorId = req.user.sub; // Extract instructor ID from token
-        return this.userService.assignCourse(instructorId, studentId, courseId);
-}
-
-
+    @Post('assign-course')
+    async assignCourse(@Body() assignCourseDto: AssignCourseDto, @Req() req: any) {
+      const instructorId = req.user.id; // Extract instructor ID from token
+      return this.userService.assignCourse(instructorId, assignCourseDto);
+    }
     // create account for student (instructor only)
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin') // Only admins can create student accounts
+    @Roles('instructor') 
     @Post('create-student')
     async createStudentAccount(
-        @Body() createStudentDto: CreateStudentDto,
-        @Req() req: any
+        @Body() createStudentDto: CreateStudentDto
     ) {
-        const instructorId = req.user.sub; // Extract instructor ID from token
-        return this.userService.createStudentAccount(instructorId, createStudentDto);
-    }
+        return this.userService.createStudentAccount(createStudentDto);
+    }
 
 
     // /**
@@ -177,7 +161,8 @@ export class UserController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can delete users
     @Delete('delete-user')
-    async deleteUser(@Body('userId') userId: string) {
+    async deleteUser(
+        @Body('userId') userId: string) {
         return this.userService.deleteUser(userId);
     }
 // tested
@@ -217,23 +202,14 @@ export class UserController {
         return this.userService.searchInstructors(searchInstructorDto);
     } // tested
 
-    @Get('get-role/:id')
-    async getUserRole(@Param('id') userId: string) {
+    @UseGuards(JwtAuthGuard)
+    @Get('get-role')
+    async getUserRole(@Req() req: any) {
+        const userId = req.user.id;
         console.log('Get User Role endpoint invoked.');
 
-        if (!userId) {
-            throw new BadRequestException('User Id is required');
-        }
-
-        const role = await this.userService.getUserRole(userId);
-
-        if (!role) {
-            throw new BadRequestException('User not found');
-        }
-
-        return { role };
+        return this.userService.getUserRole(userId);
     }
-
 
     /**
      * Get users and courses
@@ -376,6 +352,7 @@ export class UserController {
         console.log('Find User by ID endpoint invoked.');
         return this.userService.findUserById(id);
     } // tested
+    
 
 }
 
