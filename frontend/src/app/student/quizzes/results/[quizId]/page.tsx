@@ -14,7 +14,7 @@ interface QuizResponse {
 
 const QuizResults = () => {
   const { quizId } = useParams() as { quizId: string };
-  const [quizTitle, setQuizTitle] = useState<string>('Loading...');
+  const [name, setQuizName] = useState<string>('Loading...');
   const [quizResponse, setQuizResponse] = useState<QuizResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,14 +32,14 @@ const QuizResults = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:4000/student/quizzes/user-response/${quizId}`,
+          `http://localhost:6190/student/quizzes/user-response/${quizId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         if (response.data?.quiz) {
-          setQuizTitle(response.data.quiz.name || 'Untitled Quiz');
+          setQuizName(response.data.quiz.name || 'Untitled Quiz');
           setQuizResponse({
             score: response.data.score || 0,
             correctAnswers: response.data.correctAnswers || 0,
@@ -74,10 +74,8 @@ const QuizResults = () => {
         return <h3>Excellent work! You nailed it!</h3>;
       } else if (quizResponse.score > 50) {
         return <h3>Good effort! Keep practicing, and you'll improve even more!</h3>;
-      } else if (quizResponse.score >= 25) {
-        return <h3>You need to restudy the module again</h3>;
       }else {
-        return <h3>Don't give up! Keep trying, and you'll get there!</h3>;
+        return <h3>You need to review the module again!</h3>;
       }
     }
     return null;
@@ -86,7 +84,7 @@ const QuizResults = () => {
   return (
     <div className="quiz-results-container">
       <Toaster position="top-center" />
-      <h1>Quiz Results: {quizTitle}</h1>
+      <h1>Quiz Results: {name}</h1>
 
       <div className="left-side">
         <Image

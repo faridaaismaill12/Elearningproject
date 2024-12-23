@@ -10,6 +10,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SocketProvider } from "../../context/SocketProvider"; // Update this to your correct path
 import Navbar from "./_components/navbar/Navbar";
+import Footer from "./_components/footer/Footer";
 
 export default function RootLayout({
   children,
@@ -21,7 +22,9 @@ export default function RootLayout({
       <head>
         {/* You can place meta tags, links, etc. here */}
       </head>
-      <body className={`${geistSans.className} ${geistMono.className} antialiased`}>
+      <body
+        className={`${geistSans.className} ${geistMono.className} antialiased`}
+      >
         {/* Provide Socket Context Globally */}
         <SocketProvider>
           {/* Navbar */}
@@ -42,6 +45,9 @@ export default function RootLayout({
 
           {/* Render Page Content */}
           {children}
+
+          {/* Footer */}
+          <Footer />
         </SocketProvider>
       </body>
     </html>
