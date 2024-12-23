@@ -18,7 +18,7 @@ export class AdminQuizzesService {
   ) {}
 
   async getQuizzes(): Promise<Quiz[]> {
-    const quizzes = await this.quizModel.find().sort({ createdAt: -1 }).exec();
+    const quizzes = await this.quizModel.find().populate('difficultyLevel').sort({ createdAt: -1 }).exec();
     return quizzes; // Returns an empty array if no quizzes exist
   }
 

@@ -1,0 +1,279 @@
+.dashboard_container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 50px 70px;
+  flex-wrap: wrap;
+}
+
+h1 {
+  font-weight: 600;
+  font-size: 2rem;
+}
+
+.box_left,
+.box_right {
+  background-color: #000000;
+  border: 1px solid #cdcdcd;
+  border-radius: 24px;
+  padding: 20px;
+  height: 220px;
+  width: 48%; /* Adjust to make them responsive */
+  max-width: 600px;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.box_left h3,
+.box_right h3 {
+  font-weight: 600;
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.box_left p,
+.box_right p {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.box_left button,
+.box_right button {
+  width: 40%;
+  background-color: #7700ff;
+  color: #ffffff;
+  border: none;
+  margin: 14px 0;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.box_left button:hover,
+.box_right button:hover {
+  background-color: #6b06df;
+  transform: translateY(-3px);
+}
+
+.box_left:hover,
+.box_right:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
+}
+
+.module-quizzes-container {
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 50px;
+  font-weight: 600;
+  font-size: 2rem;
+}
+
+.quiz-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-around;
+}
+
+.quiz-card {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 15px;
+  width: 350px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.quiz-card:hover {
+  transform: scale(1.05);
+}
+
+.quiz-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #000000;
+  font-weight: 600;
+}
+
+.quiz-card p {
+  margin: 5px 0;
+  color: #000000;
+  font-weight: 200;
+}
+
+.quiz-card strong {
+  font-weight: bold;
+}
+
+p {
+  font-size: 1rem;
+  color: #000000;
+}
+
+.quiz-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.action-icon {
+  font-size: 20px;
+  cursor: pointer;
+  color: #000000;
+  transition: color 0.3s;
+}
+
+.action-icon:hover {
+  color: #7700ff;
+}
+
+.icon {
+  margin-right: 8px;
+  color: #7700FF;
+}
+
+button:hover {
+  background-color: #5e00cc;
+}
+
+.quiz-card h3 .quiz-icon {
+  margin-right: 5px;
+  color: #7700FF;
+}
+
+.quiz-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.action-icon {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.additional-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 40px;
+  padding: 0 70px;
+}
+
+.box_additional {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  width: 60%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  text-align: center;
+}
+
+.box_additional h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #000000;
+  font-weight: 600;
+}
+
+.box_additional p {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #000000;
+}
+
+.box_additional button {
+  background-color: #7700ff;
+  color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.box_additional button:hover {
+  background-color: #6b06df;
+  transform: translateY(-3px);
+}
+
+.update-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog-content {
+  background-color: #ffff;
+  padding: 2rem;
+  width: 600px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.dialog-content h3 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #040404;
+  font-weight: 600;
+}
+
+.dialog-content form div {
+  margin-bottom: 1rem;
+}
+
+.dialog-content form label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.dialog-content input,
+.dialog-content select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.dialog input:focus,
+.dialog select:focus {
+  outline: none;
+  border-color: #7700ff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  width: 100%;
+}
+
+.dialog-content button {
+  margin-right: 10px;
+  background-color: #6b06df;
+  width: 100%;
+  border-radius: 50px;
+  color: #fff;
+  margin: 4px;
+  height: 34px;
+}

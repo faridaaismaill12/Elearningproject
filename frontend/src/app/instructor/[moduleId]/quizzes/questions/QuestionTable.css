@@ -1,0 +1,199 @@
+.question_container {
+  padding: 1.5rem;
+  margin: auto;
+  max-width: 1250px;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+h2{
+  font-weight: 600;
+  font-size: 2rem;
+}
+
+/* Table Styling */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.table th, .table td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.table th {
+  background-color: #010101;
+  font-weight: bold;
+  color: white;
+}
+
+.table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-add {
+  background-color: #1ad49f;
+  color: #212529;
+}
+
+
+.btn-warning:hover {
+  background-color: #e0a800;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-primary {
+  background-color: #7700ff;
+  color: white;
+  width: 100%;
+  border-radius: 50px;
+  font-weight: 300;
+}
+
+.btn-primary:hover {
+  background-color:  #6b06df;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  width: 100%;
+  border-radius: 50px;
+  font-weight: 300;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+
+.dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+
+.dialog {
+  background-color: #ffff;
+  padding: 2rem;
+  width: 600px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.dialog h3 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #040404;
+  font-weight: 600;
+
+ 
+}
+
+.dialog form div {
+  margin-bottom: 1rem;
+}
+
+.dialog label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: bold;
+}
+
+.dialog input,
+.dialog select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.dialog input:focus,
+.dialog select:focus {
+  outline: none;
+  border-color: #7700ff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  width: 100%;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    text-align: left;
+    padding: 0.5rem;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: 1rem;
+  }
+}

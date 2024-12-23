@@ -33,12 +33,9 @@ export class Quiz {
 
 
 
-    @Prop({ type: Types.ObjectId, ref:"User"}) 
-    attemptedUsers!:[{
-        user:Types.ObjectId;
-
-       }]
-
+    @Prop({ type: [{ user: { type: Types.ObjectId, ref: "User" } }], default: [] }) 
+    attemptedUsers!: { user: Types.ObjectId }[];
+    
 
 
     @Prop({ type: Types.ObjectId, ref:"User"})

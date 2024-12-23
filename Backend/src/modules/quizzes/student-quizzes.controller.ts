@@ -1,22 +1,31 @@
-import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, NotFoundException, ForbiddenException, BadRequestException, UseGuards, Req,Put, Patch, InternalServerErrorException } from '@nestjs/common';
 import { StudentQuizzesService } from './student-quizzes.service';
 import { SubmitResponseDto } from './dto/response.dto';
 import { Quiz } from './schemas/quiz.schema';
 import { Question } from './schemas/question.schema';
 import { QuizResponse } from './schemas/response.schema';
 import { Types } from 'mongoose';
+import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
+import { RolesGuard } from '../security/guards/role.guard';
+import { Roles } from '../../decorators/roles.decorators'; 
+import { User } from '../user/schemas/user.schema';
 
 
 @Controller('student/quizzes')
+@UseGuards(JwtAuthGuard,RolesGuard)
+
 export class StudentQuizzesController {
   constructor(private readonly studentQuizzesService: StudentQuizzesService) {}
 
+  @Roles('student')
   @Post('start/:quizId')
 async startQuiz(
   @Param('quizId') quizId: string,
-  @Body('userId') userId: string,
+  //@Body('userId') userId: string,
+  @Req() req: any,
 ): Promise<{ response: QuizResponse; questions: Question[] }> {
   try {
+  const userId = req.user.id;
   const {response, questions} = await this.studentQuizzesService.startQuiz(quizId, userId);
   return  {response, questions};
   } catch (error) {
@@ -30,24 +39,65 @@ async startQuiz(
   }
 }
 
-@Post('/submit/:userId/:quizId')
+@Roles('student')
+@Post('/submit/:quizId')
   async submitQuiz(
     @Param('quizId') quizId: string,
-    @Param('userId') userId: string,
-    @Body() submittedAnswers: { questionId: string; answer: string }[],
+    //@Param('userId') userId: string,
+    @Req() req: any,
+    @Body('submittedAnswers') submittedAnswers: { questionId: string; answer: string }[],
   ) {
+    const userId = req.user.id;
+    console.log('userId', userId);
+    console.log(submittedAnswers);
     return this.studentQuizzesService.submitQuiz(quizId, userId, submittedAnswers);
   }
 
-  @Get('/user-response/:userId/:quizId')
+  @Roles('student')
+  @Get('/user-response/:quizId')
   async getUserQuizResponse(
     @Param('quizId') quizId: string,
-    @Param('userId') userId: string,
+    @Req() req: any,
   ): Promise<QuizResponse> {
-    return this.studentQuizzesService.getUserResponse(quizId, userId);
+    const userId = req.user.id;
+    return this.studentQuizzesService.getUserResponse(userId, quizId);
+  }
+
+  @Roles('student')  
+  @Get('average-scores/:courseId')
+  async getAverageScores(
+    @Param('courseId') courseId: string,
+    @Req() req: any,
+  ): Promise<{ averageScore: number }> {
+    const userId = req.user.id;  
+    try {
+      const averageScore = await this.studentQuizzesService.getAverageScores(courseId, userId); 
+      return { averageScore };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);  
+      }
+      throw new BadRequestException('An error occurred while calculating the average score'); 
+    }
+  }
+
   }
   
 
 
 
-}
+
+
+
+
+
+
+
+
+  
+  
+    
+
+
+
+

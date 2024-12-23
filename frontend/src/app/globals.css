@@ -1,10 +1,17 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background-color: #f0f0f0;
+  background-color: #ffffff;
+}
+
+@layer utilities {
+  .border-border {
+    @apply border border-gray-300; /* Replace with your desired border styles */
+  }
 }
 
 
