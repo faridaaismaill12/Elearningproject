@@ -4,12 +4,12 @@ import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from './schemas/course.schema';
 import { Module as ModuleSchema, ModuleDocument } from './schemas/module.schema';
 import { Lesson, LessonDocument } from './schemas/lesson.schema';
-
+import { LessonService } from './lesson.service';
+import { ModuleService } from './module.service';
 import archiver from 'archiver';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-
 
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
@@ -19,10 +19,11 @@ export class CourseService {
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
+  private readonly moduleService: ModuleService
   ) {}
 
   // Other service methods
-
+  
 
 
   // Create a course
@@ -31,29 +32,35 @@ export class CourseService {
       ...courseData,
       instructor: instructorEmail, // Set instructor's email
     });
-
+  
     return newCourse.save();
   }
   
 
   // Get all courses
   async findAll(): Promise<Course[]> {
-    return this.courseModel.find().exec();
+    return this.courseModel.find({
+      $or: [{ deleted: { $exists: false } }, { deleted: { $ne: true } }]
+    }).exec();
   }
+  
+  
 
   // Get a specific course by MongoDB _id
   async findCourseById(courseId: string): Promise<Course> {
     if (!Types.ObjectId.isValid(courseId)) {
       throw new BadRequestException('Invalid course ID format.');
     }
-
-    const course = await this.courseModel.findById(courseId);
+  
+    const course = await this.courseModel.findOne({ _id: courseId, deleted: { $ne: true } });
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
-
+  
     return course;
   }
+  
+  
 
   // Delete a course by instructor
   async deleteCourseByInstructor(courseId: string): Promise<string> {
@@ -61,14 +68,19 @@ export class CourseService {
       throw new BadRequestException('Invalid course ID format.');
     }
   
+    // Find the course
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found.');
     }
   
-    await this.courseModel.deleteOne({ _id: courseId });
-    return 'Course has been deleted successfully.';
+    // Mark the course as deleted
+    course.deleted = true;
+    await course.save();
+  
+    return 'Course has been marked as deleted.';
   }
+  
   
 
   // Create a module for a specific course
@@ -84,20 +96,21 @@ export class CourseService {
     if (!Types.ObjectId.isValid(courseId)) {
       throw new BadRequestException('Invalid course ID format.');
     }
-
+  
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
-
+  
     const newModule = new this.moduleModel({
       ...moduleData,
       courseId,
       lessons: [],
     });
-
+  
     const savedModule = await newModule.save();
-
+  
+    // Save module information in the course's modules array (if required)
     course.modules.push({
       _id: savedModule._id.toHexString(),
       title: savedModule.title,
@@ -105,14 +118,12 @@ export class CourseService {
       difficultyLevel: savedModule.difficultyLevel,
       lessons: savedModule.lessons,
     });
-
   
     await course.save();
-
-
-
+  
     return savedModule;
   }
+  
 
   async addFilesToModule(courseId: string, moduleId: string, fileLocations: string[]): Promise<ModuleSchema> {
     if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
@@ -131,8 +142,6 @@ export class CourseService {
     // Save the updated module
     return module.save();
   }
-
-
 
 
   // Get all modules for a specific course
@@ -194,7 +203,6 @@ export class CourseService {
       completions: [],
       resources: [],
     };
-
   
     // Save the lesson in the Lesson collection
     const createdLesson = new this.lessonModel(newLesson);
@@ -223,7 +231,6 @@ export class CourseService {
   }
   
 
-
   // Update a course by MongoDB _id
   async updateCourse(courseId: string, updatedData: Partial<Course>): Promise<Course> {
     if ('modules' in updatedData) {
@@ -244,7 +251,6 @@ export class CourseService {
 
     return updatedCourse;
   }
-
 
 
   async getFilesForModule(
@@ -321,7 +327,12 @@ export class CourseService {
   async updateModule(
     courseId: string,
     moduleId: string,
-    updatedData: Partial<{ title: string; content: string; difficultyLevel: 'easy' | 'medium' | 'hard' }>,
+    updatedData: Partial<{
+      title: string;
+      content: string;
+      difficultyLevel: 'easy' | 'medium' | 'hard';
+      outdated: boolean;
+    }>
   ): Promise<ModuleSchema> {
     // Validate IDs
     if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
@@ -342,6 +353,7 @@ export class CourseService {
     if (updatedData.title) module.title = updatedData.title;
     if (updatedData.content) module.content = updatedData.content;
     if (updatedData.difficultyLevel) module.difficultyLevel = updatedData.difficultyLevel;
+    if (typeof updatedData.outdated === 'boolean') module.outdated = updatedData.outdated; // Handle outdated field
   
     // Save the updated module
     const updatedModule = await module.save();
@@ -357,20 +369,178 @@ export class CourseService {
   
     return updatedModule;
   }
-   // Get courses by instructor email
-async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
-  if (!instructorEmail || instructorEmail.trim() === '') {
-    throw new BadRequestException('Instructor email must be provided.');
-  }
-
-  const courses = await this.courseModel.find({ instructor: instructorEmail }).exec();
-
-  if (!courses || courses.length === 0) {
-    throw new NotFoundException('No courses found for instructor with email ${instructorEmail}.');
-  }
-
-  return courses;
-}
   
+  // Get courses by instructor email
+  async findCoursesByInstructor(instructorEmail: string): Promise<Course[]> {
+    if (!instructorEmail || instructorEmail.trim() === '') {
+      throw new BadRequestException('Instructor email must be provided.');
+    }
+  
+    const courses = await this.courseModel.find({
+      instructor: instructorEmail,
+      $or: [{ deleted: { $exists: false } }, { deleted: { $ne: true } }], // Exclude deleted courses
+    }).exec();
+  
+    if (!courses || courses.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with email ${instructorEmail}.`);
+    }
+  
+    return courses;
+  }
+async getLessonsForModule(courseId: string, moduleId: string): Promise<any[]> {
+  const course = await this.courseModel.findById(courseId).exec();
+  if (!course) {
+    throw new NotFoundException(`Course with ID ${courseId} not found`);
+  }
+
+  console.log('Modules:', course.modules); // Debugging log to inspect modules
+
+  const module = course.modules.find(
+    (mod) => mod && mod._id && mod._id.toString() === moduleId
+  );
+
+  if (!module) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found`);
+  }
+
+  return module.lessons || [];
+}
+
+
+async getLessonDetails(courseId: string, moduleId: string, lessonId: string): Promise<any> {
+  if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
+    throw new BadRequestException('Invalid course or module ID format.');
+  }
+
+  // Find the course by its ID
+  const course = await this.courseModel.findById(courseId).exec();
+  if (!course) {
+    throw new NotFoundException(`Course with ID ${courseId} not found.`);
+  }
+
+  // Find the specific module within the course
+  const module = course.modules.find((mod) => mod._id?.toString() === moduleId);
+  if (!module) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
+  }
+
+  // Find the specific lesson within the module
+  const lesson = module.lessons.find((lesson) => lesson._id?.toString() === lessonId);
+  if (!lesson) {
+    throw new NotFoundException(`Lesson with ID ${lessonId} not found in module ${moduleId}.`);
+  }
+
+  // Return the lesson details (title and content)
+  return {
+    title: lesson.title,
+    content: lesson.content,
+  };
+}
+
+async addVideosToModule(courseId: string, moduleId: string, videoLocations: string[]): Promise<ModuleSchema> {
+  if (!Types.ObjectId.isValid(courseId) || !Types.ObjectId.isValid(moduleId)) {
+    throw new BadRequestException('Invalid course or module ID format.');
+  }
+
+  const module = await this.moduleModel.findById(moduleId);
+  if (!module || module.courseId.toString() !== courseId) {
+    throw new NotFoundException(`Module with ID ${moduleId} not found in course ${courseId}.`);
+  }
+
+  module.videos = [...module.videos, ...videoLocations];
+  return module.save();
+}
+
+
+async getCompletedCoursesForInstructor(courseId: string): Promise<number> {
+  // Find the course and populate the enrolled students
+  const course = await this.courseModel.findOne({ courseId: courseId })
+    .populate('enrolledStudents')
+    .exec();
+
+  if (!course) {
+    throw new NotFoundException(`Course with ID ${courseId} not found.`);
+  }
+
+  // Check if there are any enrolled students
+  if (!course.enrolledStudents || course.enrolledStudents.length === 0) {
+    throw new NotFoundException(`No enrolled students found for course with ID ${courseId}.`);
+  }
+
+  let completedCount = 0;
+
+  // Loop through each enrolled student
+  for (const student of course.enrolledStudents) {
+    let isCompleted = true;
+
+    // Loop through each module in the course
+    for (const moduleRef of course.modules) {
+      // Check if the module reference has a valid ID
+      if (!moduleRef._id) {
+        isCompleted = false;
+        break;
+      }
+
+      try {
+        // Check if the student has completed the module
+        const isModuleCompleted = await this.moduleService.isModuleCompletedByStudent(
+          moduleRef._id.toString(),
+          student._id.toString(),
+        );
+
+        if (!isModuleCompleted) {
+          isCompleted = false;
+          break;
+        }
+      } catch (error) {
+        console.error(
+          `Error checking module completion for module ID: ${moduleRef._id} and student ID: ${student._id}`,
+          error,
+        );
+        isCompleted = false;
+        break;
+      }
+    }
+
+    // If all modules are completed by the student, increment the count
+    if (isCompleted) {
+      completedCount++;
+    }
+  }
+
+  return completedCount;
+}
+
+
+async getCompletedCoursesForStudent(studentId: string): Promise<Course[]> {
+  const courses = await this.courseModel.find({
+    enrolledStudents: studentId
+  }).exec();
+
+  const completedCourses = [];
+
+  for (const course of courses) {
+    let isCompleted = true;
+  
+    for (const moduleRef of course.modules) {
+      if (!moduleRef._id) {
+        isCompleted = false;
+        break;
+      }
+
+      const isModuleCompleted = await this.moduleService.isModuleCompletedByStudent(moduleRef._id, studentId);
+      if (!isModuleCompleted) {
+        isCompleted = false;
+        break;
+      }
+    }
+
+    if (isCompleted) {
+      completedCourses.push(course);
+    }
+  }
+
+  return completedCourses;
+}
 
 }

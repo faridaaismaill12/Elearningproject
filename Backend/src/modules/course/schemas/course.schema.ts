@@ -59,7 +59,6 @@ export class Course {
   }>;
 
 
-
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Chat' }],
     default: [],
@@ -73,6 +72,10 @@ export class Course {
     default: [],
   })
   enrolledStudents?: Types.ObjectId[];
+
+  @Prop({ type: Boolean, default: false }) // Default to not deleted
+deleted!: boolean;
+
   
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Rating' }],
