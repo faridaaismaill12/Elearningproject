@@ -10,6 +10,8 @@ const ModuleDetailsPage = () => {
   const [moduleDetails, setModuleDetails] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]); // To store quizzes
+  const [files, setFiles] = useState<string[]>([]); // Store file paths
+  const [videos, setVideos] = useState<string[]>([]); // Store video paths
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -25,6 +27,7 @@ const ModuleDetailsPage = () => {
     }
   }, []);
 
+  // Fetch module details, lessons, files, and videos
   useEffect(() => {
     const fetchModuleDetails = async () => {
       if (!token) return;
@@ -53,8 +56,11 @@ const ModuleDetailsPage = () => {
 
         const moduleData = await moduleResponse.json();
         setModuleDetails(moduleData);
+        setFiles(moduleData.files || []); // Files in the module
+        setVideos(moduleData.videos || []); // Videos in the module
 
         // Fetch lessons
+        // Fetch lessons for the module
         const lessonsResponse = await fetch(
           `http://localhost:4000/courses/${courseId}/modules/${moduleId}/lessons`,
           {
@@ -109,6 +115,7 @@ const ModuleDetailsPage = () => {
     }
   }, [courseId, moduleId, token]);
 
+  // Navigate to lesson details
   const handleLessonClick = (lessonId: string) => {
     router.push(`/course/studentDetails/${courseId}/${moduleId}/${lessonId}`);
   };
@@ -173,7 +180,6 @@ const ModuleDetailsPage = () => {
   };
 
   if (loading) return <div>Loading module details...</div>;
-
   if (error) return <div style={{ color: "red" }}>{error}</div>;
 
   return (
@@ -192,6 +198,7 @@ const ModuleDetailsPage = () => {
       <p>
         <strong>Content:</strong> {moduleDetails?.content || "N/A"}
       </p>
+
       <button
         onClick={handleDownloadFiles}
         style={{
@@ -266,7 +273,29 @@ const ModuleDetailsPage = () => {
           ))}
         </ul>
       ) : (
-        <p>No quizzes available for this module.</p>
+        <p>No files available for this module.</p>
+      )}
+
+      <h2>Videos</h2>
+      {videos.length > 0 ? (
+        videos.map((videoUrl, index) => (
+          <div key={index} style={{ marginBottom: "1rem" }}>
+            <video
+              controls
+              style={{
+                width: "100%",
+                maxHeight: "400px",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+              }}
+            >
+              <source src={`http://localhost:4000/uploads/${videoUrl}`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        ))
+      ) : (
+        <p>No videos available for this module.</p>
       )}
     </div>
   );

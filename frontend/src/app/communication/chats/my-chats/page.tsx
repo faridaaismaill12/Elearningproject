@@ -1,16 +1,14 @@
-'use client';
+"use client";
 
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import './MyChat.css'; 
 import io, { Socket } from "socket.io-client";
 
-interface ChatRoom {
-  _id: string;
-  title: string;
-  participants: { name: string }[];
-  lastMessage?: { sender: { name: string }; content: string; timestamp: string };
-}
+export default function MyChats() {
+  const [chats, setChats] = useState([]);
+  const [error, setError] = useState("");
 
 interface Message {
   chatRoomId: string;
@@ -31,8 +29,7 @@ export default function ChatPage() {
 
   const fetchChatRooms = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Authentication token not found.');
+      const token = localStorage.getItem("authToken");
 
       const response = await axios.get('http://localhost:6165/communication/chats', {
         headers: { Authorization: `Bearer ${token}` },
@@ -103,17 +100,8 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
-    fetchChatRooms();
-    fetchCurrentUser();
-
-    return () => {
-      if (socket) socket.disconnect();
-    };
+    fetchChats(); // Call the function when the component mounts
   }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   return (
     <div className="chat-page">
@@ -176,7 +164,7 @@ export default function ChatPage() {
             <p>Select a chat to view messages</p>
           </div>
         )}
-      </div>
+      </ul>
     </div>
   );
 }

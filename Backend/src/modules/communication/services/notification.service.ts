@@ -1,57 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Notification, NotificationDocument } from '../schemas/notification.schema';
-import { NotificationGateway } from '../notifications.gateway';
+import { Notification, notificationDocument } from '../schemas/notification.schema';
 
 @Injectable()
 export class NotificationService {
-  constructor(
-    @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
-    private readonly notificationGateway: NotificationGateway,
-  ) {}
+constructor(
+    @InjectModel(Notification.name) private readonly notificationModel: Model<notificationDocument>
+) {}
 
-  // notification.service.ts
-        async createNotification(
-            recipient: string | Types.ObjectId,
-            message: string,
-            type: string
-        ): Promise<Notification> {
-            const notification = new this.notificationModel({
-                recipient: new Types.ObjectId(recipient),
-                message,
-                type,
-                read: false,
-            });
-
-            return await notification.save();
-        }
-
-
-
-
-    async getNotifications(userId: string) {
-    const objectId = new Types.ObjectId(userId); // Convert string to ObjectId
-    const notifications = await this.notificationModel
-        .find({ recipient: objectId })
-        .sort({ createdAt: -1 })
-        .exec();
-    
-    // console.log('Fetched Notifications:', notifications); // Debugging
-    return notifications;
+async createNotification(recipient: Types.ObjectId, type: string, message: string): Promise<notificationDocument> {
+    const notification = new this.notificationModel({ recipient, type, message });
+    return notification.save();
 }
 
-async markNotificationAsRead(notificationId: string) {
-    return this.notificationModel.findByIdAndUpdate(
-      notificationId,
-      { read: true },
-      { new: true }
-    );
-
+async markAsRead(notificationId: string): Promise<notificationDocument | null> {
+    return this.notificationModel.findByIdAndUpdate(notificationId, { read: true }, { new: true }).exec();
 }
-
-async deleteNotification(notificationId: string) {
-    return this.notificationModel.findByIdAndDelete(notificationId);
-  }
-
 }

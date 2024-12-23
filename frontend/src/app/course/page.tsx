@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CoursePage from "./coursePage"; // Instructor view
 import StudentCoursePage from "./studentCoursePage"; // Student view
+import AdminPage from "./AdminPage"; // Admin view
 
 export default function Page() {
   const router = useRouter();
@@ -29,6 +30,8 @@ export default function Page() {
     return <CoursePage />;
   } else if (userRole === "student") {
     return <StudentCoursePage />;
+  } else if (userRole === "admin") {
+    return <AdminPage />;
   } else {
     // Handle unknown roles
     return <div>Unauthorized: Unknown role</div>;

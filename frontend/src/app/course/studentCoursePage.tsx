@@ -63,9 +63,10 @@ const StudentCoursePage = () => {
 
   const handleCourseClick = (courseId: string | undefined) => {
     if (!courseId) {
-      console.error("Invalid courseId:", courseId);
+      console.error("Invalid courseId:", courseId); // Debug undefined courseId
       return;
     }
+    console.log("Navigating to:", `/studentDetails/${courseId}`); // Log route
     router.push(`/course/studentDetails/${courseId}`);
   };
 

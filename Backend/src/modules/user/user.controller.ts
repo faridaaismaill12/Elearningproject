@@ -13,6 +13,7 @@ import {
     Req,
     UnauthorizedException,
     ForbiddenException,
+    Put,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -34,10 +35,7 @@ import { AssignCourseDto } from './dto/assign-course.dto';
 
 @Controller('users')
 export class UserController {
-    constructor(private readonly userService: UserService,
-                private readonly jwtService: JwtService,
-    )
-     { }
+    constructor(private readonly userService: UserService) { }
 
     /**
      * Register a new user
@@ -75,20 +73,19 @@ export class UserController {
     /**
      * Reset password using a token
      */
-    @Post('reset')
-    async resetPassword(
-        @Query('token') token: string,
-        @Body() resetPasswordDto: ResetPasswordDto,
-    ): Promise<{ message: string }> {
-        const { newPassword } = resetPasswordDto;
+    @Post('reset-password')
+    async resetPassword(@Query('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
+        console.log('Token:', token);
+        console.log('New Password DTO:', resetPasswordDto);
 
-        if (!token || !newPassword) {
+        if (!token || !resetPasswordDto.newPassword) {
             throw new BadRequestException('Token and new password are required');
         }
 
-        // Call the service to handle the password reset logic
-        return await this.userService.resetPassword(token, newPassword);
-    }
+        return await this.userService.resetPassword(token, resetPasswordDto.newPassword);
+    } // tested
+
+
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('student')
@@ -110,14 +107,21 @@ export class UserController {
      * Update user profile
      */
     @UseGuards(JwtAuthGuard)
-    @Patch('update-profile')
+    @Patch('update/:id')
     async updateProfile(
-        @Body() updateUserDto: UpdateUserDto, @Req() req: any) {
-        const userIdFromToken = req.user.id; // Extract user ID from JWT payload
+        @Param('id') id: string,
+        @Body() updateUserDto: UpdateUserDto,
+        @Req() req: Request & { user: { sub: string; email: string } },
+    ) {
+        const userIdFromToken = req.user.sub; // Extract user ID from JWT payload
+
+        if (userIdFromToken !== id) {
+            throw new ForbiddenException('You can only update your own profile');
+        }
 
         console.log('Update Profile endpoint invoked.');
-        return this.userService.updateProfile(updateUserDto, userIdFromToken);
-    } // tested
+        return this.userService.updateProfile(updateUserDto, id);
+    } // tested 
 
    
 
@@ -125,14 +129,17 @@ export class UserController {
      * Get user profile by ID
      */
     @UseGuards(JwtAuthGuard)
-    @Get('view-profile')
-    async getProfile(@Req() req: any) {
-        const userIdFromToken = req.user.id;
+    @Get('view-profile/:id')
+    async getProfile(@Param('id') id: string, @Req() req: any) {
+        const userIdFromToken = req.user.sub;
+
+        if (userIdFromToken !== id) {
+            throw new UnauthorizedException('You can only access your own profile');
+        }
 
         console.log('Get Profile endpoint invoked.');
-        return this.userService.viewProfile(userIdFromToken);
+        return this.userService.viewProfile(id);
     } // tested
-
 
     /**
      * Assign courses to a student (Instructor only)
@@ -173,8 +180,9 @@ export class UserController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin') // Only admins can view all users
     @Get('get-all-users')
-    async getAllUsers() {
-        return this.userService.getAllUsers();
+    async getAllUsers(@Req() req: any) {
+        const adminId = req.user.sub; // Extract admin ID from token
+        return this.userService.getAllUsers(adminId);
     }
 
 
@@ -254,93 +262,45 @@ export class UserController {
             throw new UnauthorizedException('Authorization header is missing');
         }
     
-        const token = authHeader.split(' ')[1];
-        if (!token) {
-            throw new UnauthorizedException('Invalid Authorization header format');
-        }
-    
-        // Verify token and extract payload
-        const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
-        const userId = payload.id;
-        // console.log('User ID:', userId);
-        // console.log('OTP:', body.otp);
-        
-        if (!userId) {
-            throw new UnauthorizedException('Invalid token');
-        }
-        // console.log('Verify 2FA endpoint invoked.');
-        // Verify OTP
-        const isValid = await this.userService.verify2FA(userId, body.otp);
-        // console.log(isValid);
-        if (!isValid) {
-            throw new UnauthorizedException('Invalid OTP');
-        }
-
-        
-    
-        return { message: '2FA successful', success: true };
+        console.log(`Fetching enrolled courses for student ${userId}`);
+        return this.userService.getUserEnrolledCourses(userId);
     }
-
 
 
     @UseGuards(JwtAuthGuard) // JWT authentication only
-    @Get('my-enrolled-courses')
-    async getMyEnrolledCourses(@Req() req: any): Promise<any> {
-      const { id: userId, role } = req.user;
-    
-      console.log('JWT Payload:', req.user); // Debugging
-    
-      if (role !== 'student') {
+@Get('my-enrolled-courses')
+async getMyEnrolledCourses(@Req() req: any): Promise<any> {
+    // Extract the user ID and role from the token payload
+    const { id: userId, role } = req.user;
+
+    console.log('JWT Payload:', req.user); // Debugging
+
+    // Check if the logged-in user is a student
+    if (role !== 'student') {
         throw new ForbiddenException('Only students can access this endpoint');
-      }
-    
-      console.log(`Fetching enrolled courses for student with ID: ${userId}`);
-      const enrolledCourses = await this.userService.getUserEnrolledCourses(userId);
-    
-      console.log('Enrolled courses response:', enrolledCourses); // Debugging
-      return enrolledCourses;
     }
 
+    console.log(`Fetching enrolled courses for student with ID: ${userId}`);
+    return this.userService.getUserEnrolledCourses(userId);
+}
 
-
-//     @UseGuards(JwtAuthGuard, RolesGuard)
-//     @Roles('instructor')
-//     @Get(':id/enrolled-courses')
-//     async getUserEnrolledCourses(
-//         @Param('id') userId: string,
-//         @Req() req: any
-//     ): Promise<any> {
-//         console.log('JWT User Payload:', req.user); // Debugging
-//         const { role } = req.user;
-    
-//         if (role !== 'instructor') {
-//             throw new ForbiddenException('Only instructors can access this endpoint');
-//         }
-    
-//         console.log(`Fetching enrolled courses for student ${userId}`);
-//         return this.userService.getUserEnrolledCourses(userId);
-//     }
-
-
-//     @UseGuards(JwtAuthGuard) // JWT authentication only
-// @Get('my-enrolled-courses')
-// async getMyEnrolledCourses(@Req() req: any): Promise<any> {
-//     // Extract the user ID and role from the token payload
-//     const { id: userId, role } = req.user;
-
-//     console.log('JWT Payload:', req.user); // Debugging
-
-//     // Check if the logged-in user is a student
-//     if (role !== 'student') {
-//         throw new ForbiddenException('Only students can access this endpoint');
-//     }
-
-//     console.log(`Fetching enrolled courses for student with ID: ${userId}`);
-//     return this.userService.getUserEnrolledCourses(userId);
-// }
-
+//create find user by id
+@Get('find-user/:id')
+async findUserById(@Param('id') id: string) {
+    console.log('Find User by ID endpoint invoked.');
+    return this.userService.findUserById(id);
+} // tested
 
     
+@Put(':userId/complete-module/:moduleId')
+  async completeModule(
+    @Param('userId') userId: string,
+    @Param('moduleId') moduleId: string,
+  ): Promise<any> {
+    // Call the service method to mark the module as completed for the user
+    const updatedUser = await this.userService.addCompletedModule(userId, moduleId);
+    return updatedUser;
+  }
 
 
 
@@ -355,5 +315,4 @@ export class UserController {
     
 
 }
-
 

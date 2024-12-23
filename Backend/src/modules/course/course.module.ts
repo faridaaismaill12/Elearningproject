@@ -2,19 +2,18 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CourseController } from './course.controller';
 import { CourseService } from './course.service';
-import { LessonController } from './lesson.controller';
+import { Course, CourseSchema } from './schemas/course.schema';
+import { LessonSchema } from './schemas/lesson.schema';
+import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
+import { ModuleService } from './module.service';
 import { LessonService } from './lesson.service';
 import { ModuleController } from './module.controller';
-
-import { ModuleService } from './module.service';
-import { Course, CourseSchema } from './schemas/course.schema';
-import { Lesson, LessonSchema } from './schemas/lesson.schema';
-import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
-
-// import { LessonController } from './lesson.controller';
+import { LessonController } from './lesson.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { User, UserSchema } from '../user/schemas/user.schema';
 
 @Module({
   imports: [
@@ -30,14 +29,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     MongooseModule.forFeature([
       { name: Course.name, schema: CourseSchema },
+      { name: ModuleSchema.name, schema: ModuleSchemaDef },
       { name: 'Lesson', schema: LessonSchema },
-      { name: 'Module', schema: ModuleSchemaDef },
+      { name: User.name, schema:UserSchema}
     ]),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Serve `uploads` from the project root
+      serveRoot: '/uploads', // Expose the uploads folder via `/uploads`
+    }),
   ],
-
-  controllers: [CourseController,ModuleController,LessonController],
-  providers: [CourseService,ModuleService,LessonService],
-  exports: [CourseService,ModuleService,LessonService, MongooseModule],
-
+  controllers: [CourseController, ModuleController, LessonController],
+  providers: [CourseService, ModuleService, LessonService],
+  exports: [CourseService, ModuleService, LessonService, MongooseModule],
 })
 export class CourseModule {}
+

@@ -30,8 +30,6 @@ export class LessonService {
           if (!lesson) {
             throw new NotFoundException(`Lesson not found`);
           }
-        
-          // Check if the user already marked this lesson as finished
           const alreadyCompleted = lesson.completions.some(
             (completion) => completion?.userId?.toString() === userId
           );
@@ -39,17 +37,24 @@ export class LessonService {
           if (alreadyCompleted) {
             throw new Error('Lesson already marked as completed by this user');
           }
-        
-          // Add the user's completion record
           lesson.completions.push({
             userId,
             completedAt: new Date(),
+            state: 'completed'
           });
-        
           await lesson.save();
           return { message: 'Lesson successfully marked as completed' };
         }
 
         
-        
+        async isLessonCompletedByStudent(lessonId: string, userId: string): Promise<{ completed: boolean }> {
+          const lesson = await this.lessonModel.findOne({ lessonId }).exec();
+          if (!lesson) {
+              throw new NotFoundException('Lesson not found');
+          } 
+          const completionRecord = lesson.completions.find(
+              (completion) => completion.userId === userId && completion.state === 'completed'
+          );
+          return { completed: !!completionRecord };
+      }
 }
