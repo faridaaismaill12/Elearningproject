@@ -420,13 +420,7 @@ export class UserService {
         return users;
     }
 
-    async searchStudents(searchStudentDto: SearchStudentDto, instructorId: string) {
-        const instructor = await this.userModel.findById(instructorId).exec();
-
-        if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('Only instructors can search for students');
-        }
-
+    async searchStudents(searchStudentDto: SearchStudentDto) {
         const query: Record<string, any> = { role: 'student' };
 
         if (searchStudentDto.name) {

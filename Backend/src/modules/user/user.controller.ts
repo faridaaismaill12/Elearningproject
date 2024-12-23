@@ -197,13 +197,10 @@ export class UserController {
     @Roles('instructor') // Only instructors can search for students
     @Get('search-students')
     async searchStudents(
-        @Query() searchStudentDto: SearchStudentDto,
-        @Req() req: any
+        @Query() searchStudentDto: SearchStudentDto
     ) {
-        const instructorId = req.user.sub; // Extract instructor ID from token
-        return this.userService.searchStudents(searchStudentDto, instructorId);
+        return this.userService.searchStudents(searchStudentDto);
     }
-
 
     /**
      * Search for instructors
