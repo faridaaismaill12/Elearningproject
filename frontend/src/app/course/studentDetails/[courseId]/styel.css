@@ -1,0 +1,83 @@
+.container {
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .module-item,
+  .student-item {
+    padding: 0.75rem;
+    background-color: #e6f7ff;
+    border: 1px solid #b3e5fc;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+  }
+  
+  .module-item:hover,
+  .student-item:hover {
+    background-color: #d0f0ff;
+  }
+  
+  .chat-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 0.5rem;
+  }
+  
+  .group-button,
+  .forum-button {
+    display: block;
+    margin: 1rem auto;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .forum-button {
+    background-color: #ff5722;
+  }
+  
+  .error {
+    color: red;
+    text-align: center;
+  }
+  
+  .loading {
+    text-align: center;
+    font-size: 1.2rem;
+  }
+  

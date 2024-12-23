@@ -20,6 +20,7 @@ const CourseDetails = () => {
   const [token, setToken] = useState<string | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [averageScore, setAverageScore] = useState<number | null>(null); // State for average score
 
   // Retrieve token from localStorage
   useEffect(() => {
@@ -70,6 +71,26 @@ const CourseDetails = () => {
 
     if (courseId) fetchCourseDetails();
   }, [courseId, token]);
+
+  // Fetch average quiz score
+  useEffect(() => {
+    const fetchAverageScore = async () => {
+      if (!token || !courseId) return;
+
+      try {
+        const response = await axios.get(`http://localhost:4000/instructor/quizzes/${courseId}/average-quizzes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("API Response:", response.data);
+        setAverageScore(response.data.averageScore); // Ensure the shape is consistent
+      } catch (err) {
+        console.error("Failed to fetch average quiz score:", err.response?.data || err.message);
+      }
+      
+    };
+
+    fetchAverageScore();
+  }, [token, courseId]);
 
   // Open Menu
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, moduleId: string) => {
@@ -189,6 +210,10 @@ const CourseDetails = () => {
           <h1 style={{ marginBottom: "1rem", fontSize: "2rem", color: "#333" }}>{courseDetails.title}</h1>
           <p>
             <strong>Description:</strong> {courseDetails.description}
+          </p>
+          <p>
+            <strong>Average Quiz Score:</strong>{" "}
+            {averageScore !== null ? `${averageScore.toFixed(2)}%` : "No quizzes taken yet."}
           </p>
         </div>
       ) : (

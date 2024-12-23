@@ -451,7 +451,6 @@ async findResponsesForQuiz1(userId: string, quizId: string): Promise<{ quiz: any
   return { quiz, responses };
 }
 
-
 async averageCourseQuizzes(courseId: string): Promise<number> {
   if (!Types.ObjectId.isValid(courseId)) {
     throw new BadRequestException('Invalid Course ID');
@@ -460,19 +459,30 @@ async averageCourseQuizzes(courseId: string): Promise<number> {
   if (!course) {
     throw new NotFoundException('Course not found');
   }
+  console.log('Course:', course);
+
   const moduleIds = course.modules.map((module) => module._id);
+  console.log('Module IDs:', moduleIds);
+
   if (moduleIds.length === 0) {
     throw new NotFoundException('No modules found for this course');
   }
+
   const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
+  console.log('Quizzes:', quizzes);
+
   if (quizzes.length === 0) {
     throw new NotFoundException('No quizzes found for this course');
   }
+
   const quizIds = quizzes.map((quiz) => quiz._id);
   const responses = await this.responseModel.find({ quiz: { $in: quizIds } });
+  console.log('Responses:', responses);
+
   if (responses.length === 0) {
     return 0;
   }
+
   const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
   return totalScore / responses.length;
 }
