@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -6,6 +6,7 @@ import {UpdateNoteDto} from './dto/update-note.dto';
 import { Note } from './schemas/note.schema';
 import { validate } from 'class-validator';
 import { Course } from '../course/schemas/course.schema';
+
 
 @Injectable()
 export class NoteService {
@@ -33,9 +34,21 @@ export class NoteService {
       );
     }
 
+    const c = await this.courseModel.findOne(course);
+    if(!c){
+      throw new NotFoundException('Course Not Found');
+    }
+    let addPublic = c.notespace;
+  
+
     // Save the new note
     try {
       const savedNote = await newNote.save();
+      if (c && addPublic) {
+        if (!c.notes) c.notes = [];
+        c.notes.push(savedNote._id);
+        await c.save();
+      }
       return savedNote;
     } catch (error: any) {
       throw new HttpException(
@@ -43,6 +56,8 @@ export class NoteService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  
+    
   }
 
   async getNotes(): Promise<Note[]>{
@@ -178,25 +193,7 @@ export class NoteService {
     }
   }
 
-  //get all notes in a course
-  /*async getAllCourseNotes(courseId: string): Promise<Note[]>{
-    try {
-
-      if (!Types.ObjectId.isValid(courseId)) {
-        throw new HttpException(
-          { message: 'Invalid Course ID' },
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      const notes = await this.courseModel.findById( new Types.ObjectId(courseId)).populate('notes');
-      return notes;
-    } catch (error: any) {
-      throw new HttpException(
-        { message: 'Failed to fetch notes' },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    
-    }*/
+ 
 
   }
 
