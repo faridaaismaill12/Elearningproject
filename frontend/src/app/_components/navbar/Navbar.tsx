@@ -26,7 +26,7 @@ const Navbar = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get("http://localhost:6090/users/view-profile", {
+      const response = await axios.get("http://localhost:6165/users/view-profile", {
         headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
       });
       const { role, profileImage } = response.data; 

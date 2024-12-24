@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { io, Socket } from 'socket.io-client';
-import { showToast } from '../../../../utils/toastHelper';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import io, { Socket } from "socket.io-client";
+import { showToast } from "../../../../utils/toastHelper";
+import "./Notification.css";
 
 interface Notification {
   _id: string;
@@ -16,20 +17,20 @@ interface Notification {
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<typeof Socket | null>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/notifications', {
+        const response = await axios.get("http://localhost:6165/notifications", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
         });
         setNotifications(response.data);
       } catch (error) {
-        console.error('Error fetching notifications:', error);
-        showToast('Failed to load notifications!', 'error');
+        console.error("Error fetching notifications:", error);
+        showToast("Failed to load notifications!", "error");
       } finally {
         setLoading(false);
       }
@@ -37,15 +38,18 @@ const NotificationsPage: React.FC = () => {
 
     fetchNotifications();
 
-    const newSocket = io('http://localhost:4000', {
-      query: { token: localStorage.getItem('authToken') },
+    const newSocket = io("http://localhost:6165", {
+      query: { token: localStorage.getItem("authToken") },
     });
 
     setSocket(newSocket);
 
-    newSocket.on('newNotification', (newNotification: Notification) => {
-      setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-      showToast('You have a new notification!', 'info');
+    newSocket.on("newNotification", (newNotification: Notification) => {
+      setNotifications((prevNotifications) => [
+        newNotification,
+        ...prevNotifications,
+      ]);
+      showToast("You have a new notification!", "info");
     });
 
     return () => {
@@ -55,11 +59,15 @@ const NotificationsPage: React.FC = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await axios.patch(`http://localhost:4000/notifications/${id}/read`, null, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
+      await axios.patch(
+        `http://localhost:6165/notifications/${id}/read`,
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) =>
           notification._id === id
@@ -67,67 +75,67 @@ const NotificationsPage: React.FC = () => {
             : notification
         )
       );
-      showToast('Notification marked as read!', 'success');
+      showToast("Notification marked as read!", "success");
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-      showToast('Failed to mark notification as read!', 'error');
+      console.error("Error marking notification as read:", error);
+      showToast("Failed to mark notification as read!", "error");
     }
   };
 
   const deleteNotification = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:4000/notifications/${id}`, {
+      await axios.delete(`http://localhost:6165/notifications/${id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
       });
       setNotifications((prevNotifications) =>
         prevNotifications.filter((notification) => notification._id !== id)
       );
-      showToast('Notification deleted!', 'success');
+      showToast("Notification deleted!", "success");
     } catch (error) {
-      console.error('Error deleting notification:', error);
-      showToast('Failed to delete notification!', 'error');
+      console.error("Error deleting notification:", error);
+      showToast("Failed to delete notification!", "error");
     }
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Notifications</h1>
+    <div className="notification_container">
+      <h1 className="heading">Notifications</h1>
       {loading ? (
-        <div className="flex justify-center items-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-blue-500"></div>
+        <div className="spinner-container">
+          <div className="spinner"></div>
         </div>
       ) : notifications.length > 0 ? (
-        <ul className="space-y-6">
+        <ul className="notification-list">
           {notifications.map((notification) => (
             <li
               key={notification._id}
-              className={`p-5 rounded-lg shadow-md transform transition-all ${
-                notification.read
-                  ? 'bg-white hover:shadow-lg hover:scale-105'
-                  : 'bg-blue-50 border-l-4 border-blue-500 hover:shadow-lg hover:scale-105'
+              className={`notification-item ${
+                notification.read ? "read" : "unread"
               }`}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-lg font-medium text-gray-800">{notification.message}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="notification-message">
+                    {notification.message}
+                  </p>
+                  <p className="notification-date">
                     {new Date(notification.createdAt).toLocaleString()}
                   </p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="action-buttons">
                   {!notification.read && (
                     <button
                       onClick={() => markAsRead(notification._id)}
-                      className="text-blue-600 font-medium hover:text-blue-800"
+                      className="action-button read"
                     >
                       Mark as Read
                     </button>
                   )}
                   <button
                     onClick={() => deleteNotification(notification._id)}
-                    className="text-red-500 font-medium hover:text-red-700"
+                    className="action-button delete"
                   >
                     Delete
                   </button>
@@ -137,9 +145,9 @@ const NotificationsPage: React.FC = () => {
           ))}
         </ul>
       ) : (
-        <div className="text-center text-gray-600">
+        <div className="text-center">
           <p className="text-lg">No notifications found</p>
-          <p className="text-sm mt-2">You’re all caught up!</p>
+          <p className="text-sm">You’re all caught up!</p>
         </div>
       )}
     </div>

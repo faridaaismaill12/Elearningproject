@@ -9,7 +9,7 @@ export default function UpdateProfilePage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    profilePictureUrl: "",
+    profilePicture: "",
     birthday: "",
     bio: "",
     preferences: "",
@@ -42,7 +42,7 @@ export default function UpdateProfilePage() {
         setFormData({
           name: name || "",
           email: email || "",
-          profilePictureUrl: profilePictureUrl || "",
+          profilePicture: profilePictureUrl || "",
           birthday: birthday ? new Date(birthday).toISOString().split("T")[0] : "",
           bio: bio || "",
           preferences: preferences || {},
@@ -103,6 +103,13 @@ export default function UpdateProfilePage() {
         <form onSubmit={handleSubmit}>
           {/* Name Field */}
           <div className="mb-4">
+          <div className="kaggle-profile-pic-wrapper-modal">
+              <img
+                src={formData.profilePicture || "/avatar-placeholder.png"}
+                alt="Profile"
+                className="kaggle-profile-pic"
+              />
+            </div>
             <label htmlFor="name" className="block font-medium mb-1">
               Name
             </label>
@@ -132,23 +139,6 @@ export default function UpdateProfilePage() {
               placeholder="Enter your email"
             />
           </div>
-
-          {/* Profile Picture Field */}
-          <div className="mb-4">
-            <label htmlFor="profilePictureUrl" className="block font-medium mb-1">
-              Profile Picture URL
-            </label>
-            <input
-              type="text"
-              name="profilePictureUrl"
-              id="profilePictureUrl"
-              className="w-full p-2 border rounded"
-              value={formData.profilePictureUrl}
-              onChange={handleChange}
-              placeholder="Enter a URL for your profile picture"
-            />
-          </div>
-
           {/* Birthday Field */}
           <div className="mb-4">
             <label htmlFor="birthday" className="block font-medium mb-1">

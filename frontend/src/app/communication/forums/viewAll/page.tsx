@@ -5,14 +5,24 @@ import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
 
+// Define the type for a forum
+interface Forum {
+  _id: string;
+  title: string;
+  description?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+}
+
 export default function ViewAllForums() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId");
-  const [forums, setForums] = useState([]);
-  const [courseName, setCourseName] = useState("");
-  const [newForumContent, setNewForumContent] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [forums, setForums] = useState<Forum[]>([]); // Add explicit type
+  const [courseName, setCourseName] = useState<string>("");
+  const [newForumContent, setNewForumContent] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   useEffect(() => {
     const fetchForumsAndCourse = async () => {
@@ -25,15 +35,15 @@ export default function ViewAllForums() {
 
         // Fetch forums
         const forumsResponse = await axios.get(
-          `http://localhost:4000/forums/by-course/${courseId}`,
+          `http://localhost:6165/forums/by-course/${courseId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         // Fetch user details for each forum's creator
         const forumsWithCreators = await Promise.all(
-          forumsResponse.data.map(async (forum) => {
+          forumsResponse.data.map(async (forum: Omit<Forum, 'createdByName'>) => {
             const userResponse = await axios.get(
-              `http://localhost:4000/users/find-user/${forum.createdBy}`,
+              `http://localhost:6165/users/find-user/${forum.createdBy}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             return { ...forum, createdByName: userResponse.data.name || "Unknown User" };
@@ -44,7 +54,7 @@ export default function ViewAllForums() {
 
         // Fetch course details to get the course name
         const courseResponse = await axios.get(
-          `http://localhost:4000/courses/${courseId}`,
+          `http://localhost:6165/courses/${courseId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCourseName(courseResponse.data.title || "Unknown Course");
@@ -70,18 +80,20 @@ export default function ViewAllForums() {
       }
 
       const response = await axios.post(
-        "http://localhost:4000/forums/create",
+        "http://localhost:6165/forums/create",
         { title: newForumContent, course: courseId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       // Add the new forum to the list
       const userResponse = await axios.get(
-        `http://localhost:4000/users/find-user/${response.data.createdBy}`,
+        `http://localhost:6165/users/find-user/${response.data.createdBy}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const newForum = { ...response.data, createdByName: userResponse.data.name || "Unknown User" };
-      // console.log(newForum);
+      const newForum: Forum = { 
+        ...response.data, 
+        createdByName: userResponse.data.name || "Unknown User" 
+      };
 
       setForums((prevForums) => [...prevForums, newForum]);
       setNewForumContent("");

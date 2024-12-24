@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
+import './MyChat.css'; 
 import io, { Socket } from "socket.io-client";
 
 interface ChatRoom {
@@ -18,7 +19,7 @@ interface Message {
   timestamp: string;
 }
 
-let socket: Socket | null = null;
+let socket: typeof Socket | null = null;
 
 export default function ChatPage() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -26,16 +27,14 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState({ id: '', name: '' });
-  const [participants, setParticipants] = useState({ id: '', name: '' });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch chat rooms
   const fetchChatRooms = async () => {
     try {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error('Authentication token not found.');
 
-      const response = await axios.get('http://localhost:4000/communication/chats', {
+      const response = await axios.get('http://localhost:6165/communication/chats', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setChatRooms(response.data);
@@ -44,51 +43,31 @@ export default function ChatPage() {
     }
   };
 
-  // Fetch messages for a chat room
   const fetchChatDetails = async (chatId: string) => {
     try {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error('Authentication token not found.');
 
       const response = await axios.get(
-        `http://localhost:4000/communication/chat-history/${chatId}`,
+        `http://localhost:6165/communication/chat-history/${chatId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      const users=response.data.participants;
-      //each loop on the users get the name of the user and the id of the user
-      //call the get user by userid on all the users
-      //get the name of the user and the id of the user
-      //store the name and id of the user in the participants state
-      
-
 
       setMessages(response.data.messages || []);
       setSelectedChat(response.data);
 
-      // Establish socket connection for the selected chat
       if (socket) socket.disconnect();
 
-      socket = io(`http://localhost:4000?token=${token}`, {
-        // auth: { token },
+      socket = io(`http://localhost:6165?token=${token}`, {
         query: { chatRoomId: chatId },
       });
 
-      // Listen for incoming messages for the specific chat
-      socket.on('receiveMessage', async (message: Message) => {
+      socket.on('receiveMessage', (message: Message) => {
         if (message.chatRoomId === chatId) {
           setMessages((prev) => [...prev, message]);
-          const response = await axios.get(
-            `http://localhost:4000/users/find-user/${message.sender}`,
-            // { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          // message.sender.name = response.data.name;
-          setParticipants({ id: response.data._id, name: response.data.name });
         }
       });
 
-      // Cleanup on component unmount or chat switch
       return () => {
         if (socket) {
           socket.off('receiveMessage');
@@ -100,25 +79,14 @@ export default function ChatPage() {
     }
   };
 
-  // Fetch current user details
   const fetchCurrentUser = async () => {
     const token = localStorage.getItem('authToken');
     if (!token) return;
 
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
-    const user = await axios.get(
-      `http://localhost:4000/users/view-profile`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    // console.log(user.data);
-    setCurrentUser({ id: decodedToken.id, name: user.data.name });
+    setCurrentUser({ id: decodedToken.id, name: decodedToken.name });
   };
 
-  // Handle sending messages
   const sendMessage = () => {
     if (socket && newMessage.trim() && selectedChat) {
       const messageToSend = {
@@ -148,92 +116,64 @@ export default function ChatPage() {
   }, [messages]);
 
   return (
-    <div className="flex h-screen">
-      {/* Left Column - Chat Rooms */}
-      <div className="w-1/3 bg-gray-900 text-white border-r border-gray-800 overflow-y-auto">
-        <h2 className="text-xl font-bold p-4 bg-gray-800">Chats</h2>
+    <div className="chat-page">
+      <div className="chat-room-list">
+        <h2>Chats</h2>
         <ul>
           {chatRooms.map((chat) => (
             <li
               key={chat._id}
               onClick={() => fetchChatDetails(chat._id)}
-              className={`p-4 cursor-pointer ${
-                selectedChat?._id === chat._id
-                  ? 'bg-gray-700'
-                  : 'hover:bg-gray-800'
-              }`}
+              className={`chat-room-item ${selectedChat?._id === chat._id ? 'selected' : ''}`}
             >
-              <h3 className="font-semibold">{chat.title}</h3>
-              <p className="text-sm text-gray-400">
-                Participants: {chat.participants.map((p) => p.name).join(', ')}
-              </p>
+              <h3>{chat.title}</h3>
+              <p>Participants: {chat.participants.map((p) => p.name).join(', ')}</p>
               {chat.lastMessage ? (
-                <p className="text-xs text-gray-500">
-                  <span className="font-medium">{chat.lastMessage.sender.name}:</span>{' '}
-                  {chat.lastMessage.content}
-                  <span className="ml-2 text-gray-400">
-                    {new Date(chat.lastMessage.timestamp).toLocaleTimeString()}
-                  </span>
+                <p className="last-message">
+                  <span>{chat.lastMessage.sender.name}:</span> {chat.lastMessage.content}
+                  <span>{new Date(chat.lastMessage.timestamp).toLocaleTimeString()}</span>
                 </p>
               ) : (
-                <p className="text-xs text-gray-600">No messages yet</p>
+                <p>No messages yet</p>
               )}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Right Column - Chat Room */}
-      <div className="w-2/3 bg-gray-100 flex flex-col">
+      <div className="chat-room">
         {selectedChat ? (
           <>
-            <div className="p-4 border-b border-gray-300 bg-gray-200">
-              <h2 className="text-xl font-bold">{selectedChat.title}</h2>
+            <div className="chat-room-header">
+              <h2>{selectedChat.title}</h2>
             </div>
-            <div className="flex-grow overflow-y-auto p-4">
+            <div className="messages-container">
               {messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`flex ${
-                    message.sender._id === currentUser.id ? 'justify-end' : 'justify-start'
-                  } mb-2`}
+                  className={`chat-bubble ${
+                    message.sender._id === currentUser.id ? 'bubble-sent' : 'bubble-received'
+                  }`}
                 >
-                    <div
-                      className={`p-2 rounded-md shadow ${
-                        message.sender._id === currentUser.id
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-300'
-                      }`}
-                    >
-                      <p className="font-semibold">{message.sender.name}:</p>
-                      <p>{message.content}</p>
-                      <small className="text-xs">
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </small>
-                    </div>
+                  <p><strong>{message.sender.name}:</strong> {message.content}</p>
+                  <small>{new Date(message.timestamp).toLocaleTimeString()}</small>
                 </div>
               ))}
               <div ref={messagesEndRef}></div>
             </div>
-            <div className="p-4 border-t border-gray-300 flex items-center bg-gray-200">
+            <div className="chat-input-container">
               <input
                 type="text"
-                className="flex-grow border rounded px-4 py-2"
-                placeholder="Type your message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
               />
-              <button
-                className="ml-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={sendMessage}
-              >
-                Send
-              </button>
+              <button onClick={sendMessage}>Send</button>
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-center flex-grow">
-            <p className="text-gray-600">Select a chat to view messages</p>
+          <div className="empty-chat-message">
+            <p>Select a chat to view messages</p>
           </div>
         )}
       </div>

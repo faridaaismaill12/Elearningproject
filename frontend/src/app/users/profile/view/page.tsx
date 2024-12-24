@@ -5,12 +5,13 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import UpdateProfilePage from "../update/page";
+import "./ViewUserProfile.css";
 
 export default function ViewProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // Modal state
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,14 +27,9 @@ export default function ViewProfilePage() {
       }
 
       try {
-        const response = await axios.get(
-          `http://localhost:5010/users/view-profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axios.get(`http://localhost:6165/users/view-profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         setProfileData(response.data);
       } catch (err) {
@@ -57,16 +53,10 @@ export default function ViewProfilePage() {
     }
 
     try {
-      const response = await axios.delete(
-        `http://localhost:5010/users/delete-profile`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`http://localhost:6165/users/delete-profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      console.log(response.data);
       Cookies.remove("authToken");
       router.push("/users/login");
     } catch (err) {
@@ -76,50 +66,72 @@ export default function ViewProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+    <div className="kaggle-container">
+      {error && <p className="kaggle-error">{error}</p>}
       {profileData ? (
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full">
-          <h2 className="text-2xl font-semibold mb-4">User Profile</h2>
-          <div>
-            <p>
-              <strong>Name: </strong> {profileData.name || "N/A"}
-            </p>
-            <p>
-              <strong>Email: </strong> {profileData.email || "N/A"}
-            </p>
-            <p>
-              <strong>Role: </strong> {profileData.role || "N/A"}
-            </p>
-            <p>
-              <strong>Birthday: </strong> {profileData.birthday || "N/A"}
-            </p>
-            <p>
-              <strong>Student Level: </strong> {profileData.studentLevel || "N/A"}
-            </p>
-            <p>
-              <strong>Bio: </strong> {profileData.bio || "N/A"}
-            </p>
-            <p>
-              <strong>Preferences: </strong> {profileData.preferences || "N/A"}
-            </p>
+        <div className="kaggle-profile">
+          {/* Cover Section */}
+          <div className="kaggle-cover">
+            <img
+              src={ "/carbon-fiber-texture-slides-background.jpg"}
+              alt="Cover"
+              className="kaggle-cover-image"
+            />
+            <div className="kaggle-profile-pic-wrapper">
+              <img
+                src={profileData.profilePicture || "/avatar-placeholder.png"}
+                alt="Profile"
+                className="kaggle-profile-pic"
+              />
+            </div>
 
-            <p className="mt-4">
-              <strong>Enrolled Courses:</strong>
-            </p>
+            {/* Profile Info Over the Cover Image */}
+            <div className="kaggle-profile-details">
+              <h1 className="kaggle-name">{profileData.name || "User Name"}</h1>
+              <p className="kaggle-detail">
+                <strong>Email:</strong> {profileData.email || "N/A"}
+              </p>
+              <p className="kaggle-detail">
+                <strong>Role:</strong> {profileData.role || "N/A"}
+              </p>
+              <p className="kaggle-detail">
+                <strong>Student level:</strong> {profileData.studentLevel || "N/A"}
+              </p>
+              <p className="kaggle-detail">
+                <strong>Bio:</strong> {profileData.bio|| "N/A"}
+              </p>
+            </div>
+          </div>
+          <div className="kaggle-information">
+            <h2>Details</h2>
+           
+              <ul className="information-item">
+              
+                  <li className="kaggle-information-item">
+                    <div className="kaggle-informtion-title">{profileData.title}</div>
+               
+                      <strong>Preferences:</strong> {profileData.preferences || "N/A"}
+                  
+                  </li>
+             
+              </ul>
+          </div>
+
+          {/* Enrolled Courses */}
+          <div className="kaggle-courses">
+            <h2>Enrolled Courses</h2>
             {profileData.enrolledCourses && profileData.enrolledCourses.length > 0 ? (
-              <ul className="ml-4 space-y-2">
+              <ul className="kaggle-course-list">
                 {profileData.enrolledCourses.map((course: any) => (
-                  <li key={course._id} className="p-2 bg-gray-50 border rounded-md">
-                    <div className="font-semibold">{course.title}</div>
-                    <div className="text-sm text-gray-600">
+                  <li key={course._id} className="kaggle-course-item">
+                    <div className="kaggle-course-title">{course.title}</div>
+                    <div className="kaggle-course-info">
                       <strong>Description:</strong> {course.description || "N/A"}
+                      
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <strong>Difficulty Level:</strong> {course.difficultyLevel || "N/A"}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <strong>Course ID:</strong> {course._id}
+                    <div className="kaggle-course-info">
+                      <strong>Description:</strong> {course.difficultyLevel || "N/A"}
+                      
                     </div>
                   </li>
                 ))}
@@ -128,69 +140,42 @@ export default function ViewProfilePage() {
               <p>No enrolled courses</p>
             )}
           </div>
+          
 
-          {/* Update Profile Button */}
-          <div className="mt-6">
-            <button
-              onClick={() => setIsUpdateModalOpen(true)}
-              className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition mb-4"
-            >
+          {/* Action Buttons */}
+          <div className="kaggle-actions">
+            <button className="kaggle-btn kaggle-btn-update" onClick={() => setIsUpdateModalOpen(true)}>
               Update Profile
             </button>
-          </div>
-
-          {/* Reset Password Button */}
-          <div className="mt-6">
-          <button
-            onClick={() => router.push(`/users/profile/reset-password`)}
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition mb-4"
-          >
-            Reset Password
-          </button>
-          </div>
-
-          {/* Delete Profile Button */}
-          <div className="mt-6">
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="w-full bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
-            >
+            <button className="kaggle-btn kaggle-btn-reset" onClick={() => router.push(`/users/profile/reset-password`)}>
+              Reset Password
+            </button>
+            <button className="kaggle-btn kaggle-btn-delete" onClick={() => setConfirmDelete(true)}>
               Delete Profile
             </button>
-
-            {/* Confirmation Modal */}
-            {confirmDelete && (
-              <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center">
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-                  <h3 className="text-lg font-semibold">Are you sure?</h3>
-                  <p className="mb-4">Once you delete your profile, it cannot be undone.</p>
-                  <div className="flex justify-between">
-                    <button
-                      onClick={handleDeleteProfile}
-                      className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
-                    >
-                      Yes, Delete
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete(false)}
-                      className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Update Modal */}
+          {/* Delete Confirmation */}
+          {confirmDelete && (
+            <div className="kaggle-modal">
+              <div className="kaggle-modal-content">
+                <h3>Are you sure?</h3>
+                <p>Once you delete your profile, it cannot be undone.</p>
+                <button className="kaggle-btn kaggle-btn-delete" onClick={handleDeleteProfile}>
+                  Yes, Delete
+                </button>
+                <button className="kaggle-btn" onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Update Profile Modal */}
           {isUpdateModalOpen && (
-            <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-                <button
-                  onClick={() => setIsUpdateModalOpen(false)}
-                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
-                >
+            <div className="kaggle-modal">
+              <div className="kaggle-modal-content">
+                <button className="kaggle-modal-close" onClick={() => setIsUpdateModalOpen(false)}>
                   ✕
                 </button>
                 <UpdateProfilePage />

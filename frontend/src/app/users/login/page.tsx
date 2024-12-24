@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5010/users/login", {
+      const response = await axios.post("http://localhost:6165/users/login", {
         email: formData.email,
         passwordHash: formData.password,
       });
