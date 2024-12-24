@@ -346,16 +346,7 @@ async streamVideo(
 }
 
 
-// API to get all users who have completed the course
-@Roles('instructor') // Only instructors can access this route
-@Get('completed/:courseId')
-async getUsersCompletedCourse(
-  @Param('courseId') courseId: string,
-  @Req() req: any
-) {
-  // Pass the courseId and instructor info to the service
-  return await this.courseService.getUsersCompletedCourse(courseId, req.user);
-}
+
 
 
 }

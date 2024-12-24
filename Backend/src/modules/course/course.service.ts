@@ -10,7 +10,6 @@ import archiver from 'archiver';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { User } from '../user/schemas/user.schema';
 
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
@@ -20,7 +19,6 @@ export class CourseService {
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
-    @InjectModel(User.name) private readonly userModel: Model<User>,
   private readonly moduleService: ModuleService
   ) {}
 
@@ -543,37 +541,6 @@ async getCompletedCoursesForStudent(studentId: string): Promise<Course[]> {
   }
 
   return completedCourses;
-}
-
-async getUsersCompletedCourse(courseId: string, user: any): Promise<User[]> {
-  // Find the course by courseId
-  const course = await this.courseModel.findOne({ courseId }).exec();
-
-  if (!course) {
-    throw new NotFoundException(`Course with ID ${courseId} not found.`);
-  }
-
-  // Check if the user object or user.userId is undefined
-  if (!user || !user.userId) {
-    throw new ForbiddenException('User is not authenticated.');
-  }
-
-  if (course.instructor !== user.userId.toString()) {
-    throw new ForbiddenException('You are not authorized to view this information.');
-  }
-  
-
-  // Get all users enrolled in the course
-  const users = await this.userModel.find({
-    enrolledCourses: course._id,  // Ensure the user is enrolled in this course
-  });
-
-  // Filter users who have completed the course
-  const completedUsers = users.filter((user) =>
-    user.completedCourses?.includes('course._id'), // Check if the course is in the completedCourses array
-  );
-
-  return completedUsers;
 }
 
 }

@@ -22,7 +22,6 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
 import { HydratedDocument } from 'mongoose';
-import { Module } from '../course/schemas/module.schema';
 
 export type UserDocument = HydratedDocument<User> & {
     enrolledCourses: Types.ObjectId[] | Course[];
@@ -34,7 +33,6 @@ export class UserService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @InjectModel(Course.name) private readonly courseModel: Model<Course>,
-        @InjectModel(Module.name) private moduleModel: Model<Module>,
         private readonly jwtService: JwtService,
     ) { }
 
@@ -466,45 +464,9 @@ export class UserService {
         // Return only the course titles
         return courses.map((course) => ({ title: course.title }));
     }
-
-    async findUserById(id: string): Promise<any> {
-
-        // Implement the logic to find a user by ID
-
-        // For example:
-
-        const user = await this.userModel.findById(id).exec();
-
-        if (!user) {
-
-            throw new NotFoundException('User not found');
-
-        }
-
-        return user;
-
-    }
     
-    // Example of adding completed module by string ID
-async addCompletedModule(userId: string, moduleId: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(userId);
-  
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found.`);
-    }
-  
-    // Ensure completedModules is initialized
-    if (!user.completedModules) {
-      user.completedModules = [];
-    }
-  
-    // Add the moduleId as a string to the array
-    if (!user.completedModules.includes(moduleId)) {
-      user.completedModules.push(moduleId);
-      await user.save();
-    }
-  
-    return user;
-  }
-  
+    
+    
+
+
 }

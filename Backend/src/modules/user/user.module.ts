@@ -7,15 +7,13 @@ import { User , UserSchema } from './schemas/user.schema';
 import { Course , CourseSchema } from '../course/schemas/course.schema';
 import { JwtModule } from '@nestjs/jwt'; // Optional: for JWT authentication
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ModuleSchema } from '../course/schemas/module.schema';
 
 @Module({
 
   imports: [
     MongooseModule.forFeature([
       { name: User.name , schema: UserSchema },
-      { name: Course.name , schema: CourseSchema },
-      { name: Module.name , schema: ModuleSchema},
+      { name: Course.name , schema: CourseSchema }
     ]),
      JwtModule.registerAsync({
       imports: [ConfigModule],
