@@ -9,6 +9,7 @@ import { QuizResponse } from './schemas/response.schema';
 import { User } from '../user/schemas/user.schema';
 import { Module, ModuleDocument } from '../course/schemas/module.schema';
 import {Course} from '../course/schemas/course.schema'; // Added Course schema
+import { populate } from 'dotenv';
 
 @Injectable()
 export class StudentQuizzesService {
@@ -288,7 +289,7 @@ export class StudentQuizzesService {
         console.log('User not found:', userId);
         throw new NotFoundException('User not found');
     }
-    const quiz = await this.quizModel.findById(quizObjectId);
+    const quiz = await this.quizModel.findById(quizObjectId).populate('name');
     if (!quiz) {
         console.log('Quiz not found:', quizId);
         throw new NotFoundException('Quiz not found');
