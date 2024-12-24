@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
+import Cookies from "js-cookie";
 // import "./style.css";
 
 
@@ -21,10 +22,10 @@ const CourseDetailsPage = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      setToken(storedToken);
-      const decodedToken = JSON.parse(atob(storedToken.split(".")[1]));
+    const token = Cookies.get("authToken");
+    if (token) {
+      setToken(token);
+      const decodedToken = JSON.parse(atob(token.split(".")[1]));
       setCurrentUserId(decodedToken.id);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");

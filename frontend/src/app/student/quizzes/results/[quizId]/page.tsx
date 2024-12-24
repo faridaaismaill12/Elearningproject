@@ -5,6 +5,7 @@ import './Result.css';
 import toast, { Toaster } from 'react-hot-toast';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import Cookies from 'js-cookie';
 
 interface QuizResponse {
   score: number;
@@ -21,7 +22,7 @@ const QuizResults = () => {
 
   useEffect(() => {
     const fetchResponse = async () => {
-      const token = localStorage.getItem('authToken');
+      const token = Cookies.get("authToken");
 
       if (!token) {
         toast.error('Missing authentication token.');
@@ -32,7 +33,7 @@ const QuizResults = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:6190/student/quizzes/user-response/${quizId}`,
+          `http://localhost:6280/student/quizzes/user-response/${quizId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

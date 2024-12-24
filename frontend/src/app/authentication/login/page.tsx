@@ -1,85 +1,132 @@
 "use client";
+
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
-import "./Login.css";
-
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [passwordHash, setPasswordHash] = useState("");
+export default function LoginPage() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:6190/users/login", {
-        email,
-        passwordHash,
+      const response = await axios.post("http://localhost:4000/users/login", {
+        email: formData.email,
+        passwordHash: formData.password,
       });
 
-      console.log("Login successful:", response.data);
+      const token = response?.data?.accessToken;
+      const isMfaEnabled = response?.data?.mfaEnabled;
 
-      // Save token to local storage
-      localStorage.setItem("authToken", response.data.accessToken);
+      Cookies.set("authToken", token, { expires: 1 });
+      router.push("/users/profile/view"); // Redirect to dashboard after successful login
 
-      // Redirect to homepage
-      router.push("/");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Invalid login credentials");
+      // if (isMfaEnabled) {
+      //   router.push("/authentication/mfa/verify");
+      // } else {
+      //   router.push("/authentication/mfa/enable");
+      // }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        setError(err.response.data.message || "Login failed. Please try again.");
       } else {
         setError("An unexpected error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    Cookies.remove("authToken");
+    router.push("/");
+  };
+
+  const handleForgotPassword = () => {
+    router.push("/authentication/password/forgot");
+  };
+
   return (
-    <div className="login_container">
-      <div className="formWrapper">
-        <h2 className="title">Login</h2>
-        <form onSubmit={handleLogin}>
-          <div className="inputGroup">
-            <label htmlFor="email" className="label">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center relative">
+      <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
+        <h2 className="text-2xl font-semibold mb-4">Login</h2>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block font-medium mb-1">
               Email
             </label>
             <input
               type="email"
+              name="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input"
+              className="w-full p-2 border rounded"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
               required
             />
           </div>
-          <div className="inputGroup">
-            <label htmlFor="password" className="label">
+
+          <div className="mb-4">
+            <label htmlFor="password" className="block font-medium mb-1">
               Password
             </label>
             <input
               type="password"
+              name="password"
               id="password"
-              value={passwordHash}
-              onChange={(e) => setPasswordHash(e.target.value)}
-              className="input"
+              className="w-full p-2 border rounded"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={handleChange}
               required
             />
           </div>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" className="button">
-            Login
+
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p className="signupLink">
+
+        <p className="mt-4 text-center text-sm">
           Don't have an account?{" "}
-          <a href="/authentication/signup" className="link">
-            Sign up
+          <a href="/users/register" className="text-blue-500">
+            Register
           </a>
         </p>
+        <p
+          onClick={handleForgotPassword}
+          className="mt-2 text-center text-sm text-blue-500 cursor-pointer"
+        >
+          Forgot Password?
+        </p>
       </div>
+      <button
+        onClick={handleLogout}
+        className="absolute bottom-4 right-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+      >
+        Logout
+      </button>
     </div>
   );
 }

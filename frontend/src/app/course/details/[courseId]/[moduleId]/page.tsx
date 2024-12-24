@@ -1,5 +1,5 @@
 "use client";
-
+import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UpdateModule from "../../../Course_Components/update_module";
@@ -26,7 +26,7 @@ const ModuleDetails = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = Cookies.get("authToken");
     if (token) {
       setToken(token);
     } else {

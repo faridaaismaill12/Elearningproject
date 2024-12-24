@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import Cookies from "js-cookie";
 
 const UploadVideo = ({ courseId, moduleId, onClose }: { courseId: string; moduleId: string; onClose: () => void }) => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const token = localStorage.getItem('authToken'); 
+  const token = Cookies.get("authToken");
   const handleVideoUpload = async () => {
     if (!videoFile) {
       setError("Please select a video file.");

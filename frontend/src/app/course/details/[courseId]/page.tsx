@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CreateModule from "../../Course_Components/create_module";
+import Cookies from "js-cookie";
 import axios from "axios";
 
 const CourseDetails = () => {
@@ -24,10 +25,10 @@ const CourseDetails = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      setToken(storedToken);
-      const decodedToken = JSON.parse(atob(storedToken.split(".")[1]));
+    const token = Cookies.get("authToken");
+    if (token) {
+      setToken(token);
+      const decodedToken = JSON.parse(atob(token.split(".")[1]));
       setCurrentUserId(decodedToken.id); // Extract current user's ID
     } else {
       console.error("No token found in localStorage. Redirecting to login...");

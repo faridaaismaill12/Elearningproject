@@ -5,6 +5,7 @@ import axios from "axios";
 import { FaTrash, FaEdit, FaPlus } from "react-icons/fa";
 
 import { useParams } from "next/navigation";
+import Cookies from 'js-cookie';
 interface Question {
   _id: string;
   question: string;
@@ -34,7 +35,7 @@ const QuestionsTable: React.FC = () => {
     difficultyLevel: "easy",
   });
 
-  const token = localStorage.getItem("authToken");
+  const token = Cookies.get("authToken");
 
   useEffect(() => {
     if (moduleId && token) {

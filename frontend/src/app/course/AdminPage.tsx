@@ -1,5 +1,6 @@
 "use client";
 
+import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
 
 const AdminPage = () => {
@@ -7,7 +8,7 @@ const AdminPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const token = localStorage.getItem('authToken'); 
+  const token = Cookies.get("authToken");
   // Fetch all courses
   useEffect(() => {
     const fetchCourses = async () => {

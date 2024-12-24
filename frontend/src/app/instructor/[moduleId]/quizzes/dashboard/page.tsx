@@ -34,7 +34,7 @@ const ModuleQuizzes: React.FC = () => {
     quizType: 'easy',
   });
 
-  const token = Cookies.get('authToken');
+  const token = Cookies.get("authToken");
 
   useEffect(() => {
     if (moduleId) {

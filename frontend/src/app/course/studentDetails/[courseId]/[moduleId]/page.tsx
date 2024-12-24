@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { FiDownload } from "react-icons/fi";
+import Cookies from "js-cookie";
 
 const ModuleDetailsPage = () => {
   const { courseId, moduleId } = useParams();
@@ -18,9 +19,9 @@ const ModuleDetailsPage = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      setToken(storedToken);
+    const token = Cookies.get("authToken");
+    if (token) {
+      setToken(token);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
       router.push("/login");

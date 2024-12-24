@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
 import './Quiz.css';
 import toast, { Toaster } from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 interface Question {
   _id: string;
@@ -39,7 +40,7 @@ const QuizPage = () => {
 
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error('Missing token');
       return;
@@ -47,7 +48,7 @@ const QuizPage = () => {
 
     axios
       .post(
-        `http://localhost:6190/student/quizzes/start/${quizId}`,
+        `http://localhost:6280/student/quizzes/start/${quizId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -91,7 +92,7 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:6190/student/quizzes/submit/${quizId}`,
+        `http://localhost:6280/student/quizzes/submit/${quizId}`,
         { submittedAnswers },
         { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );

@@ -115,7 +115,9 @@ export class UserService {
     
         // Validate student (should match the studentId in the token)
         const student = await this.userModel.findById(studentId);
-        if (!student || student.email !== email) {
+        console.log(student);
+        console.log(email);
+        if (!student ) {
           throw new ForbiddenException('You can only enroll yourself.');
         }
     

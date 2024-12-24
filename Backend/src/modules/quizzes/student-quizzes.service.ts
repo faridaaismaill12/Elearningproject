@@ -10,6 +10,7 @@ import { User } from '../user/schemas/user.schema';
 import { Module, ModuleDocument } from '../course/schemas/module.schema';
 import {Course} from '../course/schemas/course.schema'; // Added Course schema
 import { populate } from 'dotenv';
+import { LessonDocument } from '../course/schemas/lesson.schema';
 
 @Injectable()
 export class StudentQuizzesService {
@@ -384,29 +385,36 @@ export class StudentQuizzesService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+  
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found');
     }
+  
     const moduleIds = course.modules.map((module) => module._id);
     if (moduleIds.length === 0) {
       throw new NotFoundException('No modules found for this course');
     }
+  
     const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
     if (quizzes.length === 0) {
-      throw new NotFoundException('No quizzes found for this course');
+      return 0; // Return a default value if no quizzes are found
     }
+  
     const quizIds = quizzes.map((quiz) => quiz._id);
     const responses = await this.responseModel.find({
       quiz: { $in: quizIds },
-      user: new Types.ObjectId(userId),  
+      user: new Types.ObjectId(userId),
     });
+  
     if (responses.length === 0) {
-      return 0;
+      return 0; // Return 0 if the user has no responses
     }
+  
     const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
     return totalScore / responses.length;
   }
+  
   
 
   async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: number; quizType: string; duration: number }[]> {
@@ -434,5 +442,63 @@ export class StudentQuizzesService {
       duration: quiz.duration,
     }));
   }
+
+
+  async isModuleCompletedByStudent(moduleId: string, userId: string): Promise<boolean> {
+    const module = await this.moduleModel.findById(new Types.ObjectId(moduleId)).populate('lessons quizzes');
+    if (!module) {
+        throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+    }
+
+    console.log('user ID' , userId)
+    const userObjectId = new Types.ObjectId(userId);
+
+    console.log('USER Object id', userObjectId)
+
+    if (!module.quizzes || module.quizzes.length === 0) {
+        throw new NotFoundException(`No quizzes found for module with ID ${moduleId}.`);
+    }
+
+    const moduleQuizzes = module.quizzes.map((quiz) => quiz._id);
+
+    console.log('Module quizzes:', moduleQuizzes);
+
+    const responses = await this.responseModel.find({
+      user: userObjectId,
+      quiz: { $in: moduleQuizzes.map(id => new Types.ObjectId(id)) },  // Cast IDs explicitly to ObjectId
+  });
+  
+    console.log('User responses:', responses);
+
+    const totalScore = responses.reduce((sum, response) => {
+        const score = response.score ?? 0; // Default to 0 if score is missing
+        return sum + score;
+    }, 0);
+
+
+    const averageScore = totalScore / moduleQuizzes.length;
+
+
+    await this.userModel.updateOne(
+      { _id: userId },
+      { $addToSet: { completedModules: module._id } }  
+  );
+
+    // Debug log to check the average score
+    console.log('Average Score:', averageScore);
+
+    return averageScore >= 60; // Ensure this threshold is the desired value
+}
+
+
+
+
+
+
+
+
+
+  
+
   
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Cookies from "js-cookie";
 import React, { useState } from "react";
 
 interface AddFileProps {
@@ -32,7 +33,7 @@ const AddFile: React.FC<AddFileProps> = ({ courseId, moduleId, onClose }) => {
     }
 
     try {
-      const token = localStorage.getItem('authToken'); 
+      const token = Cookies.get("authToken");
       const response = await fetch(
         `http://localhost:4000/courses/${courseId}/modules/${moduleId}/files`,
         {

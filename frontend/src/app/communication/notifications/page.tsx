@@ -5,6 +5,7 @@ import axios from "axios";
 import io, { Socket } from "socket.io-client";
 import { showToast } from "../../../utils/toastHelper";
 import "./Notification.css";
+import Cookies from "js-cookie";
 
 interface Notification {
   _id: string;
@@ -24,7 +25,7 @@ const NotificationsPage: React.FC = () => {
       try {
         const response = await axios.get("http://localhost:4000/notifications", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${ Cookies.get("authToken")}`,
           },
         });
         setNotifications(response.data);
@@ -39,7 +40,7 @@ const NotificationsPage: React.FC = () => {
     fetchNotifications();
 
     const newSocket = io("http://localhost:4000", {
-      query: { token: localStorage.getItem("authToken") },
+      query: { token:  Cookies.get("authToken") },
     });
 
     setSocket(newSocket);
@@ -64,7 +65,7 @@ const NotificationsPage: React.FC = () => {
         null,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${ Cookies.get("authToken")}`,
           },
         }
       );
@@ -86,7 +87,7 @@ const NotificationsPage: React.FC = () => {
     try {
       await axios.delete(`http://localhost:4000/notifications/${id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${ Cookies.get("authToken")}`,
         },
       });
       setNotifications((prevNotifications) =>
