@@ -27,7 +27,7 @@ export default function ViewProfilePage() {
       }
 
       try {
-        const response = await axios.get(`http://localhost:4000/users/view-profile`, {
+        const response = await axios.get(`http://localhost:6305/users/view-profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
