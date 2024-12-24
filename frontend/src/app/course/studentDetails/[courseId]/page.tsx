@@ -17,6 +17,10 @@ const CourseDetailsPage = () => {
   const [token, setToken] = useState<string | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [newNoteContent, setNewNoteContent] = useState<string>("");
+  const [isAddingNote, setIsAddingNote] = useState<boolean>(false);
+  const [instructor, setInstructor] = useState<any>(null);
 
   useEffect(() => {
     const token = Cookies.get("authToken");
@@ -31,7 +35,7 @@ const CourseDetailsPage = () => {
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
-      if (!token) return;
+      if (!token || !currentUserId) return;
 
       setLoading(true);
       setError(null);
@@ -45,6 +49,7 @@ const CourseDetailsPage = () => {
           }
         );
         setCourseDetails(courseResponse.data);
+        setInstructor(courseResponse.data.instructor); // Set the instructor
 
         // Fetch modules
         const modulesResponse = await axios.get(
@@ -54,6 +59,15 @@ const CourseDetailsPage = () => {
           }
         );
         setModules(modulesResponse.data);
+
+        // Fetch notes
+        const notesResponse = await axios.get(
+          `http://localhost:4000/notes/getAllNotes?creator=${currentUserId}&courseId=${courseId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setNotes(notesResponse.data);
 
         // Fetch enrolled students
         const studentPromises = courseResponse.data.enrolledStudents.map(
@@ -65,6 +79,10 @@ const CourseDetailsPage = () => {
                   headers: { Authorization: `Bearer ${token}` },
                 }
               );
+              if(userResponse.data.role==="instructor")
+              {
+                setInstructor(userResponse.data);
+              }
               return userResponse.data;
             } catch (err) {
               console.error(`Error fetching student data for ID ${studentId}`, err);
@@ -82,7 +100,6 @@ const CourseDetailsPage = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log(averageScoreResponse.data);
         setAverageScore(averageScoreResponse.data.averageScore);
       } catch (err: any) {
         console.error("Error fetching data:", err.message);
@@ -93,7 +110,50 @@ const CourseDetailsPage = () => {
     };
 
     if (courseId) fetchCourseDetails();
-  }, [courseId, token]);
+  }, [courseId, token, currentUserId]);
+
+  const handleAddNote = async () => {
+    try {
+      const newNote = {
+        creator: currentUserId,
+        content: newNoteContent.trim(),
+        course: courseId,
+        module: null, // Optional for course-level notes
+        lesson: null, // Optional for course-level notes
+      };
+
+      const response = await axios.post(
+        `http://localhost:4000/notes/createNote`,
+        newNote,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setNotes([...notes, response.data]); // Update the notes list
+      setNewNoteContent(""); // Clear the note input field
+      setIsAddingNote(false); // Close the add note section
+    } catch (err: any) {
+      console.error("Error adding note:", err.message);
+      setError("Failed to add note.");
+    }
+  };
+
+  const handleEnroll = async () => {
+    try {
+      await axios.post(
+        `http://localhost:4000/courses/enroll`,
+        { courseId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("Enrolled successfully!");
+    } catch (err: any) {
+      console.error("Error enrolling in course:", err.message);
+      alert("Failed to enroll in the course.");
+    }
+  };
 
   const handleModuleClick = (moduleId: string) => {
     router.push(`/course/studentDetails/${courseId}/${moduleId}`);
@@ -196,6 +256,17 @@ const CourseDetailsPage = () => {
           <strong>Your Average Quiz Score:</strong>{" "}
           {averageScore !== null ? `${averageScore.toFixed(2)}%` : "No scores yet"}
         </p>
+        {instructor && (
+          <p className="text-lg font-semibold text-blue-500">
+            <strong>Instructor:</strong> {instructor.name || "N/A"}
+          </p>
+        )}
+        <button
+          onClick={handleEnroll}
+          className="bg-green-500 text-white px-4 py-2 rounded-lg mt-4"
+        >
+          Enroll in Course
+        </button>
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">Modules</h2>
@@ -211,12 +282,57 @@ const CourseDetailsPage = () => {
         ))}
       </ul>
 
+      <h2 className="text-2xl font-semibold mt-8 mb-4">Notes</h2>
+      <ul className="space-y-4 mb-6">
+        {notes.map((note) => (
+          <li
+            key={note._id}
+            className="bg-gray-50 p-4 rounded-lg shadow-md cursor-pointer hover:bg-gray-100"
+            onClick={() => router.push(`/student/notes/${note._id}`)}
+          >
+            {note.content || "No content available"}
+          </li>
+        ))}
+      </ul>
+
+      {isAddingNote ? (
+        <div className="space-y-4">
+          <textarea
+            value={newNoteContent}
+            onChange={(e) => setNewNoteContent(e.target.value)}
+            placeholder="Write your note here..."
+            className="w-full p-2 border border-gray-300 rounded-lg"
+          />
+          <button
+            onClick={handleAddNote}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+          >
+            Save Note
+          </button>
+          <button
+            onClick={() => setIsAddingNote(false)}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsAddingNote(true)}
+          className="bg-green-500 text-white px-4 py-2 rounded-lg"
+        >
+          + Add Note
+        </button>
+      )}
+
       <h2 className="text-2xl font-semibold mt-8 mb-4">Enrolled Students</h2>
       <ul className="space-y-4">
         {enrolledStudents.map((student) => (
           <li
             key={student._id}
-            className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow-md"
+            className={`flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow-md ${
+              student._id === instructor?._id ? "bg-yellow-100" : ""
+            }`}
           >
             <span>{student.email}</span>
             <div className="flex items-center space-x-4">

@@ -64,17 +64,17 @@ export class NotesController {
      }
    }
 
-  @Get(':userId')
-  async getAllNotes(@Param('userId') userId: string,): Promise<Note[]> {
-    try {
-      return await this.notesService.getAllNotes(userId);
-    } catch (error: any) {
-      throw new HttpException(
-        { message: 'Failed to fetch notes', error: error.message },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
+  // @Get(':userId')
+  // async getAllNotes(@Param('userId') userId: string,): Promise<Note[]> {
+  //   try {
+  //     return await this.notesService.getAllNotes(userId);
+  //   } catch (error: any) {
+  //     throw new HttpException(
+  //       { message: 'Failed to fetch notes', error: error.message },
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+  // }
 
 
    // Update a note
@@ -128,17 +128,22 @@ export class NotesController {
   }
 
 // Get your notes by Module
-@Get(':userId/:moduleId')
-  async getNotesByModule(@Param('userId') @Param('moduleId') userId: string, moduleId: string): Promise<Note[]> {
+@Get('modules/:userId/:moduleId')
+async getNotesByModule(
+    @Param('userId') userId: string,
+    @Param('moduleId') moduleId: string
+): Promise<Note[]> {
     try {
-      return await this.notesService.getNotesbyModule(userId,moduleId);
+        return await this.notesService.getNotesbyModule(userId, moduleId);
     } catch (error: any) {
-      throw new HttpException(
-        { message: 'Failed to fetch notes', error: error.message },
-        HttpStatus.BAD_REQUEST,
-      );
+        throw new HttpException(
+            { message: 'Failed to fetch notes', error: error.message },
+            HttpStatus.BAD_REQUEST,
+        );
     }
-  }
+}
+
+
 
 
                                                                                             

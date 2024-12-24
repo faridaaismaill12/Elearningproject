@@ -190,35 +190,29 @@ export class NoteService {
   //get your notes by module
   async getNotesbyModule(userId: string, moduleId: string): Promise<Note[]> {
     try {
-      if (!Types.ObjectId.isValid(userId)) {
-        throw new HttpException(
-          { message: 'Invalid User ID' },
-          HttpStatus.NOT_FOUND,
-        );
-      }
+        if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(moduleId)) {
+            throw new HttpException('Invalid User or Module ID', HttpStatus.BAD_REQUEST);
+        }
 
-      if (!Types.ObjectId.isValid(moduleId)) {
-        throw new HttpException(
-          { message: 'Invalid Module ID' },
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      const notes = await this.noteModel.find({
-        $and: [
-          {'creator': userId},
-          {'module': moduleId}
-        ]
-      });
-      return notes;
+        const notes = await this.noteModel.find({
+            creator: userId,
+            module: moduleId,
+        });
+
+        if (!notes.length) {
+            throw new HttpException('No notes found for this module', HttpStatus.NOT_FOUND);
+        }
+
+        return notes;
     } catch (error: any) {
-      throw new HttpException(
-        { message: 'Failed to fetch notes' },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    
+        throw new HttpException(
+            { message: 'Failed to fetch notes', error: error.message },
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
-  }
+}
 
+  
  
 
   }
