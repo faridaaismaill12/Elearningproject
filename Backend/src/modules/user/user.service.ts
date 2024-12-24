@@ -1,4 +1,3 @@
-
 import {
     Injectable,
     BadRequestException,
@@ -21,6 +20,27 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { SearchStudentDto } from './dto/search-student.dto';
 import { SearchInstructorDto } from './dto/search-instructor.dto';
+import { HydratedDocument } from 'mongoose';
+import { createObjectCsvWriter } from 'csv-writer';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
+import * as nodemailer from 'nodemailer';
+import { UpdateRole } from './dto/update-student-level.dto';
+import { AssignCourseDto } from './dto/assign-course.dto';
+import { EnrollUserDto } from './dto/enroll-user.dto';
+
+interface RecordData {
+    userId: string;
+    courseId: string;
+  }
+
+
+
+export type UserDocument = HydratedDocument<User> & {
+    enrolledCourses: Types.ObjectId[] | Course[];
+};
+
+
 
 @Injectable()
 export class UserService {
@@ -90,41 +110,82 @@ export class UserService {
     }
 
 
-    async enrollUser(userId: string, courseId: string): Promise<{ message: string }> {
-        // Validate MongoDB _id format
-        if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(courseId)) {
-            throw new BadRequestException('Invalid user or course ID format.');
+    async enrollUser(studentId: string, enrollUserDto: EnrollUserDto) {
+        const { email, courseId } = enrollUserDto;
+    
+        // Validate student (should match the studentId in the token)
+        const student = await this.userModel.findById(studentId);
+        console.log(student);
+        console.log(email);
+        if (!student ) {
+          throw new ForbiddenException('You can only enroll yourself.');
         }
-
-        // Find the user by MongoDB _id
-        const user = await this.userModel.findById(userId);
-        if (!user) {
-            throw new NotFoundException('User with ID ${userId} not found');
-        }
-
-        // Ensure enrolledCourses is initialized as an array
-        if (!user.enrolledCourses) {
-            user.enrolledCourses = [];
-        }
-
-        // Find the course by _id
+    
+        // Validate course
         const course = await this.courseModel.findById(courseId);
         if (!course) {
-            throw new NotFoundException('Course with ID ${courseId} not found');
+          throw new NotFoundException('Course not found');
+        }
+    
+        // Ensure enrolledCourses is initialized for the student
+        if (!student.enrolledCourses) {
+          student.enrolledCourses = [];
         }
 
-        // Check if the course title is already in the enrolledCourses array
-        if (user.enrolledCourses.some((enrolledCourse) => enrolledCourse.equals(course._id))) {
-            throw new BadRequestException('User is already enrolled in course "${course.title}"');
+        if (!course.enrolledStudents) {
+            course.enrolledStudents = [];
         }
+    
+        // Check if the student is already enrolled in the course
+        const isAlreadyEnrolled = student.enrolledCourses.some((enrolledCourse) =>
+          enrolledCourse.equals(course._id),
+        );
+    
+        if (isAlreadyEnrolled) {
+          throw new BadRequestException('You are already enrolled in this course');
+        }
+    
+        // Enroll the student by adding the course ObjectId to enrolledCourses
+        student.enrolledCourses.push(course._id);
 
-        // Add the course title to the user's enrolledCourses array
-        user.enrolledCourses.push(course._id);
-        await user.save();
-
-        return { message: `User ${userId} successfully enrolled in course "${course.title}"` };
+        course.enrolledStudents.push(student.id);
+    
+        // Save the changes
+        await student.save();
+        await course.save();
+    
+        return { message: 'Successfully enrolled in the course', student };
+      }
+    
+    async getUserName(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId).select('name').exec();
+        return user ? user.name : 'null';
     }
+    
 
+
+
+
+    /**
+     * Logs in a user and generates a JWT token.
+     */
+    // async login(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
+    //     const { email, passwordHash } = loginUserDto;
+
+    //     const user = await this.userModel.findOne({ email });
+    //     if (!user) {
+    //         throw new NotFoundException('User not found');
+    //     }
+
+    //     const isPasswordValid = await bcrypt.compare(passwordHash, user.passwordHash);
+    //     if (!isPasswordValid) {
+    //         throw new BadRequestException('Invalid credentials');
+    //     }
+
+    //     const payload = { id: user._id, email: user.email, role:user.role }; // Define payload
+    //     const accessToken = this.jwtService.sign(payload); // Sign the token
+    //     return { accessToken };
+    // }
 
     /**
      * Generates a JWT token for a user.
@@ -158,10 +219,15 @@ export class UserService {
 
         const resetToken = this.jwtService.sign(
             { sub: user._id, email: user.email },
-            { secret: process.env.JWT_SECRET, expiresIn: '15m' },
+            { secret: process.env.JWT_SECRET, expiresIn: '5m' },
         );
 
-        console.log(`Password reset link: http://localhost:${process.env.PORT}/users/reset-password?token=${resetToken}`);
+        const resetLink = `http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`;
+
+        await this.sendPasswordResetEmail(user.email, resetLink);
+
+        
+        console.log(`Password reset link: http://localhost:${process.env.PORT}/authentication/passwords/reset?token=${resetToken}`);
 
         return { message: 'Password reset link sent to your email' };
     }
@@ -172,7 +238,9 @@ export class UserService {
     async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
         try {
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+            console.log(payload);
             const user = await this.userModel.findById(payload.sub);
+            console.log(user);
 
             if (!user) {
                 throw new NotFoundException('User not found');
@@ -196,7 +264,21 @@ export class UserService {
             throw new BadRequestException('An unknown error occurred');
         }
     }
-
+    async updateLevel(updateRole: UpdateRole) {
+        const { email, role } = updateRole;
+    
+        const updatedUser = await this.userModel.findOneAndUpdate(
+            { email },
+            { role },
+            { new: true }
+        );
+    
+        if (!updatedUser) {
+            throw new NotFoundException('User not found');
+        }
+    
+        return { message: 'Student Level updated successfully' };
+    }
     /**
      * Updates a user's profile.
      */
@@ -206,7 +288,7 @@ export class UserService {
             const uploadResult = await this.uploadToCloudinary(updateUserDto.profilePictureUrl);
             updateUserDto.profilePictureUrl = uploadResult.secure_url;
         }
-
+        
         const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
         if (!updatedUser) {
             throw new NotFoundException('User not found');
@@ -255,58 +337,67 @@ export class UserService {
             throw new NotFoundException('User not found');
         }
 
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
         return user;
     }
 
-    async assignCourse(instructorId: string, studentId: string, courseId: string) {
+   
+    async assignCourse(instructorId: string, assignCourseDto: AssignCourseDto) {
+        const { email, courseId } = assignCourseDto;
+    
         // Validate instructor
         const instructor = await this.userModel.findById(instructorId);
         if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('Only instructors can assign courses');
+          throw new ForbiddenException('Only instructors can assign courses');
         }
-
+    
         // Validate student
-        const student = await this.userModel.findById(studentId);
+        const student = await this.userModel.findOne({ email });
         if (!student) {
-            throw new NotFoundException('Student not found');
+          throw new NotFoundException('Student not found');
         }
-
+    
         // Validate course
         const course = await this.courseModel.findById(courseId);
         if (!course) {
-            throw new NotFoundException('Course not found');
+          throw new NotFoundException('Course not found');
         }
-
-        // Ensure `enrolledCourses` is initialized
+    
+        // Ensure enrolledCourses is initialized
         if (!student.enrolledCourses) {
-            student.enrolledCourses = [];
+          student.enrolledCourses = [];
         }
 
-        // Safely check if already enrolled using `ObjectId.equals`
+        if (!course.enrolledStudents) {
+            course.enrolledStudents = [];
+        }
+    
+        // Safely check if already enrolled using ObjectId.equals
         const isAlreadyEnrolled = student.enrolledCourses.some((enrolledCourse) =>
-            enrolledCourse.equals(course._id),
+          enrolledCourse.equals(course._id),
         );
-
+    
         if (isAlreadyEnrolled) {
-            throw new BadRequestException('Student is already enrolled in this course');
+          throw new BadRequestException('Student is already enrolled in this course');
         }
-
+    
         // Push the course ObjectId directly without converting to string
         student.enrolledCourses.push(course._id);
 
+        course.enrolledStudents.push(student.id)
+    
         // Save the changes
         await student.save();
-
+        await course.save();
+    
         return { message: 'Course assigned successfully', student };
     }
+        
 
-    async createStudentAccount(instructorId: string, createStudentDto: CreateStudentDto) {
-        const instructor = await this.userModel.findById(instructorId);
-        if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('You are not authorized to create a student account');
-        }
-
-        const { name, email, passwordHash } = createStudentDto;
+    async createStudentAccount(createStudentDto: CreateStudentDto) {
+        const { name, email, passwordHash , studentLevel } = createStudentDto;
 
         const existingStudent = await this.userModel.findOne({ email });
         if (existingStudent) {
@@ -320,20 +411,16 @@ export class UserService {
             email: email,
             passwordHash: hashedPassword,
             role: 'student',
+            studentLevel: studentLevel
         });
 
         await student.save();
         return { message: 'Student created successfully', student };
     }
 
-    async deleteUser(adminId: string, userId: string) {
-        const admin = await this.userModel.findById(adminId);
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to delete users');
-        }
-
-        // Find the user to delete
+    async deleteUser(userId: string) {
         const userToDelete = await this.userModel.findByIdAndDelete(userId);
+        
         if (!userToDelete) {
             throw new NotFoundException('User not found');
         }
@@ -341,16 +428,9 @@ export class UserService {
         return { message: 'User deleted successfully' };
     }
 
-
-    async getAllUsers(userId: string): Promise<User[]> {
-        const admin = await this.userModel.findById(userId);
-
-        // Check if the user making the request is an admin
-        if (!admin || admin.role !== 'admin') {
-            throw new ForbiddenException('You are not authorized to access this resource');
-        }
-
-        const users = await this.userModel.find().select('-passwordHash');
+    async getAllUsers(): Promise<User[]> {
+        const users = await this.userModel.find().select('-passwordHash').populate('enrolledCourses').exec();
+        
         if (!users || users.length === 0) {
             throw new NotFoundException('No users found');
         }
@@ -358,13 +438,7 @@ export class UserService {
         return users;
     }
 
-    async searchStudents(searchStudentDto: SearchStudentDto, instructorId: string) {
-        const instructor = await this.userModel.findById(instructorId).exec();
-
-        if (!instructor || instructor.role !== 'instructor') {
-            throw new ForbiddenException('Only instructors can search for students');
-        }
-
+    async searchStudents(searchStudentDto: SearchStudentDto) {
         const query: Record<string, any> = { role: 'student' };
 
         if (searchStudentDto.name) {
@@ -413,4 +487,197 @@ export class UserService {
         return user ? user.role : null;
     }
 
+
+    //return user name by given user id
+    async getUserEnrolledCourses(userId: string): Promise<{ _id: string; title: string }[]> {
+        if (!Types.ObjectId.isValid(userId)) {
+          throw new BadRequestException('Invalid user ID format');
+        }
+      
+        // Fetch the user's enrolled courses (ObjectIds)
+        const user = await this.userModel.findById(userId).exec();
+      
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+      
+        if (!user.enrolledCourses || user.enrolledCourses.length === 0) {
+          return []; // Return an empty array if no courses are enrolled
+        }
+      
+        // Fetch course titles and IDs from the Course collection
+        const courses = await this.courseModel
+          .find({ _id: { $in: user.enrolledCourses } })
+          .select('_id title') // Ensure _id and title are selected
+          .exec();
+      
+        return courses.map((course) => ({ _id: course._id.toString(), title: course.title }));
+      }
+    
+
+
+    async findUserById(id: string): Promise<any> {
+
+        // Implement the logic to find a user by ID
+
+        // For example:
+
+        const user = await this.userModel.findById(id).exec();
+
+        if (!user) {
+
+            throw new NotFoundException('User not found');
+
+        }
+
+        return user;
+
+    }
+  
+  
+    async getAllData(): Promise<Record<string, string[]>> {
+        const users = await this.userModel.find({ enrolledCourses: { $exists: true, $ne: [] } })
+          .select('_id enrolledCourses')
+          .lean();
+    
+        const groupedData = users.reduce((acc, user) => {
+          const validCourses = user.enrolledCourses?.filter(courseId => Types.ObjectId.isValid(courseId)) || [];
+          acc[`UserID: ${user._id}`] = validCourses.map(courseId => `CourseID: ${courseId}`);
+          return acc;
+        }, {} as Record<string, string[]>);
+    
+        return groupedData;
+      }
+    
+      async generateCSV(): Promise<string> {
+        const data = await this.getAllData();
+    
+        // Group courses by user and join the courses as a single comma-separated string
+        const groupedRecords = Object.entries(data).map(([userId, courses]) => ({
+          userId,
+          courseIds: courses.join(', '),
+        }));
+    
+        // Set up CSV writer
+        const csvWriter = createObjectCsvWriter({
+          path: 'exported_data.csv',
+          header: [
+            { id: 'userId', title: 'UserID' },
+            { id: 'courseIds', title: 'CourseIDs' },
+          ],
+        });
+    
+        // Write the grouped data to the CSV
+        await csvWriter.writeRecords(groupedRecords);
+    
+        return 'exported_data.csv';
+    }
+
+
+
+    async enable2FA(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+    
+        const secret = speakeasy.generateSecret({ name: `GIU E-Learning Platform (${user.email})` });
+        user.twoFactorSecret = secret.base32;
+        user.isTwoFactorEnabled = true;
+        await user.save();
+    
+        if (!secret.otpauth_url) {
+            throw new BadRequestException('Failed to generate OTP Auth URL');
+        }
+        const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
+        return qrCodeUrl;
+    }
+
+
+
+    async verify2FA(userId: string, otp: string): Promise<string> {
+        // console.log('Verifying 2FA...');
+        const user = await this.userModel.findById(userId);
+        // console.log(user)
+        if (!user || !user.twoFactorSecret) {
+            throw new UnauthorizedException('2FA is not enabled');
+        }
+        
+        // console.log({ secret: user.twoFactorSecret, otp });
+        
+
+        const isValid = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: otp,
+        });
+    
+        console.log({ secret: user.twoFactorSecret, otp, isValid });
+
+        if(isValid)
+        {
+            const token= this.jwtService.sign({id:userId});
+            return token;
+        }
+        return '';
+    }
+
+    
+    private transporter = nodemailer.createTransport({
+        service: 'Gmail', // Use your email provider
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+        },
+    });
+
+
+
+
+    
+    async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+        await this.transporter.sendMail({
+            from: `"GIU E-learning Platform" <no-reply@wearethebest.com>`,
+            to: email,
+            subject: 'Password Reset Request',
+            html: `
+        <p>You requested a password reset. Click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>If you did not request this reset, please ignore this email.</p>
+        `,
+        });
+    }
+    
+
+    //get user by email
+    async getUserByEmail(email: string): Promise<User> {
+        const user = await this.userModel.findOne({ email }).exec();
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        return user;
+        
+    }
+
+    async addCompletedModule(userId: string, moduleId: string): Promise<UserDocument> {
+        const user = await this.userModel.findById(userId);
+      
+        if (!user) {
+          throw new NotFoundException(`User with ID ${userId} not found.`);
+        }
+      
+        // Ensure completedModules is initialized
+        if (!user.completedModules) {
+          user.completedModules = [];
+        }
+      
+        // Add the moduleId as a string to the array
+        if (!user.completedModules.includes(moduleId)) {
+          user.completedModules.push(moduleId);
+          await user.save();
+        }
+      
+        return user;
+    }
+    
 }

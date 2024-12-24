@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: false, unique: true }) // Optional courseId
-  courseId?: string;
+  @Prop({ unique: true })
+  courseId!: string;
 
   @Prop({ required: true })
   title!: string;
@@ -25,22 +25,23 @@ export class Course {
   difficultyLevel!: string;
 
   @Prop({
+    type: [String],
+    default: [],
+  })
+  keywords!: string[];
+
+  @Prop({
     type: [
       {
         title: { type: String, required: true },
         content: { type: String, required: true },
         difficultyLevel: {
           type: String,
-          enum: ['hard', 'medium', 'easy'], // Use consistent values
+          enum: ['hard', 'medium', 'easy'],
           required: true,
           default: 'medium',
         },
-        lessons: [
-          {
-            title: { type: String, required: true },
-            content: { type: String, required: true },
-          },
-        ],
+        lessons:[{ type: MongooseSchema.Types.ObjectId, ref: 'Lesson' }]
       },
     ],
     default: [],
@@ -56,17 +57,57 @@ export class Course {
       content: string;
     }>;
   }>;
+
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Chat' }],
+    default: [],
+  })
+  chats?: Types.ObjectId[];
+
+  // add enrolledStudents field
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  enrolledStudents?: Types.ObjectId[];
+
+  @Prop({ type: Boolean, default: false }) // Default to not deleted
+deleted!: boolean;
+
   
-  ratings!: Array<{
-    userId: string;
-    rating: number;
-    review?: string;
-  }>;
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Rating' }],
+    default: [],
+  })
+  ratings!: Types.ObjectId[];
 
   // Average rating for the course (calculated from the ratings)
   @Prop({ type: Number, default: 0 })
   averageRating!: number;
+
+  //enable notespace
+  @Prop({
+  type: Boolean, default: true
+})notespace!: boolean;
+
+  //note space 
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Note' }],
+    default: [],
+  })
+  notes?: Types.ObjectId[];
   
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
+
+
+// Use middleware to set courseId to _id after the document is initialized
+CourseSchema.pre('save', function (next) {
+  if (!this.courseId) {
+    this.courseId = this._id.toHexString(); // Set courseId to match _id
+  }
+  next();
+});

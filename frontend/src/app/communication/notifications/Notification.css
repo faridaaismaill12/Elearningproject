@@ -1,0 +1,121 @@
+.notification_container {
+    padding: 1.5rem;
+    max-width: 64rem;
+    margin: 0 auto;
+   
+  }
+  
+  .heading {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+  }
+  
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 12rem;
+  }
+  
+  .spinner {
+    animation: spin 1s linear infinite;
+    border-radius: 9999px;
+    height: 2rem;
+    width: 2rem;
+    border-top-width: 4px;
+    border-color: #6b06df;
+  }
+  
+  .notification-list {
+    margin: 1.5rem 0;
+  }
+  
+  .notification-item {
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+    transition: all 0.3s;
+    margin-bottom: 1.5rem;
+  }
+  
+  .notification-item:hover {
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transform: scale(1.05);
+  }
+  
+  .notification-item.read {
+    background-color: #ffffff;
+  }
+  
+  .notification-item.unread {
+    background-color: #eff0ff;
+    border-left: 5px solid  #7700ff;
+  }
+  
+  .notification-message {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1f2937;
+  }
+  
+  .notification-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  .action-buttons {
+    display: flex;
+    background-color: transparent;
+    gap: 1rem;
+  }
+  
+  .action-button {
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s;
+   
+  }
+  
+  .action-button.read {
+    color: #7700ff;
+  }
+  
+  .action-button.read:hover {
+    color:  #6b06df;
+  }
+  
+  .action-button.delete {
+    color: #ef4444;
+    background-color: none;
+  }
+  
+  .action-button.delete:hover {
+    color: #dc2626;
+  }
+  
+  .text-center {
+    text-align: center;
+    color: #4b5563;
+  }
+  
+  .text-lg {
+    font-size: 1.125rem;
+  }
+  
+  .text-sm {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  

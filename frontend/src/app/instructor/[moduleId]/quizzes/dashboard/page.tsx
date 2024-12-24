@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'; // Import useRouter
 import { FaTrash, FaEdit } from 'react-icons/fa';
 import { MdQuiz } from 'react-icons/md';
 import { Types } from 'mongoose';
+import Cookies from 'js-cookie';
 
 interface Quiz {
   _id: any;
@@ -33,7 +34,7 @@ const ModuleQuizzes: React.FC = () => {
     quizType: 'easy',
   });
 
-  const token = localStorage.getItem('authToken');
+  const token = Cookies.get("authToken");
 
   useEffect(() => {
     if (moduleId) {
@@ -49,7 +50,7 @@ const ModuleQuizzes: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:6098/instructor/quizzes/all/${moduleId}`,
+        `http://localhost:6305/instructor/quizzes/all/${moduleId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,7 +74,7 @@ const ModuleQuizzes: React.FC = () => {
 
     try {
       await axios.delete(
-        `http://localhost:6098/instructor/quizzes/delete/${moduleId}/${quizId}`,
+        `http://localhost:6305/instructor/quizzes/delete/${moduleId}/${quizId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -102,7 +103,7 @@ const ModuleQuizzes: React.FC = () => {
       };
 
       await axios.patch(
-        `http://localhost:6098/instructor/quizzes/update/${quizId}`,
+        `http://localhost:6305/instructor/quizzes/update/${quizId}`,
         updatedQuiz,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -140,6 +141,19 @@ const ModuleQuizzes: React.FC = () => {
     }
   };
 
+  const navigateToViewQuestion = () => {
+    if (moduleId) {
+      router.push(`/instructor/${moduleId}/quizzes/questions`);
+    }
+  };
+
+  const navigateToResultsTable = () => {
+    if (moduleId) {
+      router.push(`/instructor/${moduleId}/quizzes/result-table`);
+    }
+  };
+
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // Prevent the page from refreshing
     if (currentQuiz) {
@@ -159,25 +173,19 @@ const ModuleQuizzes: React.FC = () => {
         </div>
         <div className="box_right">
           <h3>View Questions</h3>
-          <p>Manage the questions in your module’s question bank. View questions to ensure your assessments are comprehensive and balanced for your students.</p>
-          <button type="button" onClick={navigateToCreateQuiz}>
-            Go to Create Quiz
+          <p>Track student performance across quizzes and assess trends to improve learning outcomes.</p>
+          <button type="button" onClick={navigateToCreateQuestion}>
+          Go to Create Question
           </button>
         </div>
         <div className="box_left">
           <h3>View Scores</h3>
           <p>Track student performance across quizzes and assess trends to improve learning outcomes.</p>
-          <button type="button" onClick={navigateToCreateQuestion}>
-            Go to Create Question
+          <button type="button" onClick={navigateToViewQuestion}>
+            View Question Bank
           </button>
         </div>
-        <div className="box_left">
-          <h3>Create Question</h3>
-          <p>Add questions to the module's question bank. Customize question types, difficulty levels for effective assessments.</p>
-          <button type="button" onClick={navigateToCreateQuestion}>
-            Go to Create Question
-          </button>
-        </div>
+  
       </div>
       <div className="module-quizzes-container">
         <h2>Available Quizzes</h2>

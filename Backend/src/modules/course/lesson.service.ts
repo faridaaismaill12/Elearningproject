@@ -30,8 +30,6 @@ export class LessonService {
           if (!lesson) {
             throw new NotFoundException(`Lesson not found`);
           }
-        
-          // Check if the user already marked this lesson as finished
           const alreadyCompleted = lesson.completions.some(
             (completion) => completion?.userId?.toString() === userId
           );
@@ -39,28 +37,27 @@ export class LessonService {
           if (alreadyCompleted) {
             throw new Error('Lesson already marked as completed by this user');
           }
-        
-          // Add the user's completion record
           lesson.completions.push({
             userId,
             completedAt: new Date(),
+            state: 'completed'
           });
-        
           await lesson.save();
           return { message: 'Lesson successfully marked as completed' };
         }
 
-        async createLesson(createLessonDto: CreateLessonDto): Promise<LessonDocument> {
-          const { lessonId } = createLessonDto;
-      
-          // Check if a lesson with the same `lessonId` already exists
-          const existingLesson = await this.lessonModel.findOne({ lessonId });
-          if (existingLesson) {
-            throw new BadRequestException('Lesson with this ID already exists');
+        async isLessonCompletedByStudent(lessonId: string, userId: string): Promise<{ completed: boolean }> {
+          const lesson = await this.lessonModel.findOne({ lessonId }).exec();
+          if (!lesson) {
+              throw new NotFoundException('Lesson not found');
           }
+  
+          const completionRecord = lesson.completions.find(
+              (completion) => completion.userId === userId && completion.state === 'completed'
+          );
+  
+          return { completed: !!completionRecord };
+      }
+
       
-          // Create and save the new lesson
-          const newLesson = new this.lessonModel(createLessonDto);
-          return newLesson.save();
-        }
-}
+      }

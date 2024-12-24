@@ -45,7 +45,7 @@ header {
   display: flex;
   align-items: center;
   position: relative;
-  right: 240px;
+  left: 20px;
 }
 
 .search-icon {

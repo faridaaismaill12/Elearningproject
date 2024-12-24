@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param } from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param, Req } from "@nestjs/common";
 import { ModuleService } from "./module.service";
 import { Module } from "./schemas/module.schema";
 
@@ -18,7 +18,25 @@ export class ModuleController {
         const module= await this.moduleService.findModuleById(moduleId);
         if (!module) {
             throw new NotFoundException('module not found');
-          }
-          return module;
-  }
+        }
+        return module;
+}
+
+
+@Get(':moduleId/completion-status')
+async isModuleCompletedByStudent(
+    @Param('moduleId') moduleId: string,
+    @Req() req: any,
+): Promise<{ completed: boolean }> {
+    const userId = req.user.id;
+    if (!userId) {
+        throw new NotFoundException('User ID is required.');
+    }
+
+    const completed = await this.moduleService.isModuleCompletedByStudent(moduleId, userId);
+    return { completed };
+}
+
+
+
 }

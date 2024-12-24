@@ -1,9 +1,12 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Get, NotFoundException, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { LessonService } from "./lesson.service";
 import { Lesson } from "./schemas/lesson.schema";
 import { CreateLessonDto } from "./dto/create-lesson.dto";
+import { JwtAuthGuard } from "../security/guards/jwt-auth.guard";
+import { RolesGuard } from "../security/guards/role.guard";
 
 @Controller('lessons')
+@UseGuards(JwtAuthGuard)
 export class LessonController {
     constructor(private lessonService: LessonService) { }
 
@@ -26,11 +29,12 @@ export class LessonController {
     async markLessonAsFinished(@Param('id') lessonId: string, @Body('userId') userId: string) {
         return this.lessonService.markLessonAsCompleted(lessonId, userId);
     }
+
+    @Get(':id/completed/:userId')
+    async isLessonCompletedByStudent(@Param('id') lessonId: string, @Param('userId') userId: string): Promise<{ completed: boolean }> {
+        return this.lessonService.isLessonCompletedByStudent(lessonId, userId);
+    }
     
-    @Post()
-    async createLesson(@Body() createLessonDto: CreateLessonDto) {
-        return this.lessonService.createLesson(createLessonDto);
-}
 
+    }
 
-}

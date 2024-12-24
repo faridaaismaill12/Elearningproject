@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
 import './Quiz.css';
 import toast, { Toaster } from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 interface Question {
   _id: string;
@@ -25,8 +26,6 @@ interface Feedback {
   correctAnswer: string;
 }
 
-
-
 const QuizPage = () => {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState<{ title: string }>({ title: '' });
@@ -35,29 +34,30 @@ const QuizPage = () => {
   const [quizResponseId, setQuizResponseId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Record<string, Feedback>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = Cookies.get('authToken');
     if (!token) {
-      console.error('Missing token');
+      toast.error('Authentication token missing. Please log in again.');
       return;
     }
 
     axios
       .post(
-        `http://localhost:6140/student/quizzes/start/${quizId}`,
+        `http://localhost:6318/student/quizzes/start/${quizId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then((response) => {
-        setQuiz({ title: response.data.title }); 
+        setQuiz({ title: response.data.title });
         setQuestions(response.data.questions);
         setQuizResponseId(response.data.response._id);
       })
       .catch((error) => {
         console.error('Error fetching quiz:', error);
+        toast.error('Failed to load quiz. Please try again later.');
       });
   }, [quizId]);
 
@@ -75,7 +75,7 @@ const QuizPage = () => {
 
   const handleSubmit = async () => {
     if (!quizResponseId) {
-      console.error('Missing quizResponseId');
+      toast.error('Unable to find quiz response ID. Please try reloading the page.');
       return;
     }
 
@@ -84,6 +84,8 @@ const QuizPage = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const submittedAnswers = answers.map((answer) => ({
         questionId: answer.questionId,
@@ -91,14 +93,13 @@ const QuizPage = () => {
       }));
 
       const response = await axios.post(
-        `http://localhost:6140/student/quizzes/submit/${quizId}`,
+        `http://localhost:6318/student/quizzes/submit/${quizId}`,
         { submittedAnswers },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
+        { headers: { Authorization: `Bearer ${Cookies.get('authToken')}` } }
       );
 
-      const { feedback } = response.data;
+      const { feedback, score } = response.data;
 
-      // Save the feedback into state
       const feedbackMap = feedback.reduce((acc: Record<string, Feedback>, curr: Feedback) => {
         acc[curr.questionId] = curr;
         return acc;
@@ -106,29 +107,23 @@ const QuizPage = () => {
 
       setFeedback(feedbackMap);
       setIsSubmitted(true);
-
-      toast.success(`Quiz Submitted! Your score is: ${response.data.score}`);
-
-      feedback.forEach((item: { selectedAnswer: any; correctAnswer: any; questionId: any; }) => {
-        const message = item.selectedAnswer === item.correctAnswer
-          ? `Correct answer for question ${item.questionId}!`
-          : `Incorrect answer for question ${item.questionId}. Correct answer was: ${item.correctAnswer}`;
-    
-      });
+      toast.success(`Quiz submitted successfully! Your score: ${score}`);
     } catch (error) {
       console.error('Error submitting quiz:', error);
       toast.error('Failed to submit quiz. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleViewResults = () => {
-    router.push(`${quizId}/results`);
+    router.push(`/student/quizzes/results/${quizId}`);
   };
 
   return (
     <div className="quiz-attempt-container">
       <Toaster position="top-center" />
-      <h1>Quiz</h1> 
+      <h1>Quiz</h1>
       {questions.length > 0 ? (
         <form onSubmit={(e) => e.preventDefault()}>
           {questions.map((question) => {
@@ -183,9 +178,9 @@ const QuizPage = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!allQuestionsAnswered()}
+              disabled={!allQuestionsAnswered() || isSubmitting}
             >
-              Submit Quiz
+              {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
             </button>
           )}
         </form>
@@ -193,7 +188,6 @@ const QuizPage = () => {
         <p>Loading questions...</p>
       )}
 
-   
       {isSubmitted && (
         <button type="button" onClick={handleViewResults}>
           View Results

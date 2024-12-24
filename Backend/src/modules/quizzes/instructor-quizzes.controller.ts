@@ -117,19 +117,26 @@ async findResponsesForQuiz(@Param('quizId') quizId:string,  @Req() req: any): Pr
   return await this.instructorQuizzesService.findResponsesForQuiz(userId,quizId);
 }
 
+
 @Roles('instructor')
-@Get(':courseId/average-quizzes')  
-  async getAverageCourseQuizzes(@Param('courseId') courseId: string): Promise<number> {
-    try {
-      const average = await this.instructorQuizzesService.averageCourseQuizzes(courseId);
-      return average;
-    } catch (error) {
+@Get(':courseId/average-quizzes')
+async getAverageCourseQuizzes(@Param('courseId') courseId: string): Promise<{ averageScore: number }> {
+  console.log('API Called for Course ID:', courseId);
+  try {
+    const average = await this.instructorQuizzesService.averageCourseQuizzes(courseId);
+    return { averageScore: average };
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error in getAverageCourseQuizzes:', error.message);
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;  
+        throw error;
       }
-      throw new NotFoundException('Error calculating average quiz score');
     }
+    throw new NotFoundException('Error calculating average quiz score');
   }
+}
+
+
 }
 
 
