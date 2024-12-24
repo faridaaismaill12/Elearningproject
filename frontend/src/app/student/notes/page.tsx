@@ -1,83 +1,135 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
-import "./Notes.css"; // Import the custom CSS for styling
-import { useParams } from "next/navigation";
+import "./notes.css";
 
 const NotesPage = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState("");
+  const router = useRouter();
 
-  // Extract creator from route parameters
-const { creator } = useParams();
-
-useEffect(() => {
+  useEffect(() => {
     const fetchNotes = async () => {
-    try {
+      try {
         const token = localStorage.getItem("authToken");
         if (!token) {
-        throw new Error("Authentication token not found");
+          console.error("Authentication token not found in localStorage.");
+          throw new Error("Authentication token not found");
         }
 
-        if (!creator) {
-        throw new Error("Creator ID is missing");
-        }
-
-        console.log("Fetching notes for creator:", creator);
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const creator = decodedToken.id;
 
         const response = await axios.get(
-        `http://localhost:3000/notes/getAllNotes?creator=${creator}`,
-        {
+          `http://localhost:5010/notes/getAllNotes?creator=${creator}`,
+          {
             headers: {
-            Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
-        }
+          }
         );
 
         setNotes(response.data);
-    } catch (err) {
-        console.error("Error fetching notes:", err);
+      } catch (err: any) {
+        console.error("Error fetching notes:", err.message || err);
         setError("Failed to fetch notes");
-    } finally {
+      } finally {
         setLoading(false);
-    }
+      }
     };
 
     fetchNotes();
-}, [creator]);
+  }, []);
+  const handleAddNote = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+  
+      const decodedToken = JSON.parse(atob(token.split(".")[1]));
+      const creator = decodedToken.id;
+  
+      // Construct new note payload
+      const newNote = {
+        creator,
+        content: newNoteContent.trim(),
+        course: "64b8f8d7a35f0c001c123457", // Replace with valid course ID if required
+        module: "64b8f8d7a35f0c001c123458", // Optional: Replace if applicable
+        lesson: "64b8f8d7a35f0c001c123459", // Optional: Replace if applicable
+      };
+  
+      // Call the correct API endpoint
+      const response = await axios.post(
+        "http://localhost:5010/notes/createNote", // Updated endpoint
+        newNote,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      setNotes([...notes, response.data]); // Add the new note to the list
+      setIsAddingNote(false); // Close the add note mode
+      setNewNoteContent(""); // Clear the new note content
+    } catch (err: any) {
+      console.error("Error adding note:", err.message || err);
+      setError("Failed to add note");
+    }
+  };
 
-if (loading) {
+  if (loading) {
     return <div className="loading">Loading notes...</div>;
-}
+  }
 
-if (error) {
+  if (error) {
     return <div className="error">{error}</div>;
-}
+  }
 
-return (
+  return (
     <div className="notes-container">
-    <h1 className="title">My Notes</h1>
-    {notes.length === 0 ? (
-        <p className="no-notes">You have no notes yet.</p>
-    ) : (
-        <div className="notes-grid">
+      <h1 className="title">My Notes</h1>
+
+      <div className="notes-grid">
         {notes.map((note: any) => (
-            <div key={note._id} className="note-card">
-            <h2>Course: {note.course}</h2>
-            {note.module && <p>Module: {note.module}</p>}
-            {note.lesson && <p>Lesson: {note.lesson}</p>}
-            <p>{note.content}</p>
-            <p className="last-modified">
-                Last Modified: {new Date(note.lastModified).toLocaleString()}
-            </p>
-            </div>
+          <div
+            key={note._id}
+            className="note-card"
+            onClick={() => router.push(`/student/notes/${note._id}`)} // Navigate on click
+          >
+            {note.content}
+          </div>
         ))}
-        </div>
-    )}
+        {isAddingNote && (
+          <div className="note-card new-note">
+            <textarea
+              autoFocus
+              placeholder="Write your note here..."
+              value={newNoteContent}
+              onChange={(e) => setNewNoteContent(e.target.value)}
+            />
+            <button className="save-note-button" onClick={handleAddNote}>
+              Save Note
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Add Note Button */}
+      <div className="add-note-button-container">
+        <button
+          className="add-note-button"
+          onClick={() => setIsAddingNote(!isAddingNote)}
+        >
+          + Add Note
+        </button>
+      </div>
     </div>
-);
+  );
 };
 
 export default NotesPage;

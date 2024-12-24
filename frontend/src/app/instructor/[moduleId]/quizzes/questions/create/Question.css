@@ -1,0 +1,112 @@
+.question-form {
+  padding: 24px;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  max-width: 700px;
+  margin: 0 auto;
+  margin-top: 40px;
+  box-shadow: black;
+}
+
+.question-form h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+
+.question-form input,
+.question-form select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.question-form label {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+
+.question-form button {
+  padding: 0.75rem;
+  background-color:#7700ff;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.question-form button:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.question-form button:hover {
+  background-color: #6b06df;
+}
+
+/* Option input fields */
+.question-form .options input {
+  margin-bottom: 0.5rem;
+}
+
+
+.question-form .options {
+  margin-bottom: 1rem;
+}
+
+
+.quiz-manager-container {
+  padding: 20px;
+}
+
+.question-form {
+  margin-bottom: 30px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quiz-list-container {
+  margin-top: 30px;
+}
+
+.quiz-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.quiz-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 15px;
+  width: 250px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.quiz-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.quiz-card p {
+  margin: 5px 0;
+}
+
+.error-message {
+  color: red;
+  font-size: 1rem;
+}

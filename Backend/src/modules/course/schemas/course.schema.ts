@@ -1,13 +1,12 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types, Schema as MongooseSchema } from "mongoose"; 
-import {User} from "../../user/schemas/user.schema"
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: true, unique: true})
-  courseId!: string; // Unique identifier for the course
+  @Prop({ required: false, unique: true }) // Optional courseId
+  courseId?: string;
 
   @Prop({ required: true })
   title!: string;
@@ -15,18 +14,59 @@ export class Course {
   @Prop({ required: true })
   description!: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: "User", required: true })
-  instructor!: MongooseSchema.Types.ObjectId; //does the same thing as createdBy
+  @Prop({ required: true })
+  instructor!: string;
 
-  @Prop({ default: 1 })
-  version!: number;
+  @Prop({
+    type: String,
+    enum: ['beginner', 'intermediate', 'advanced'],
+    required: true,
+  })
+  difficultyLevel!: string;
 
-  @Prop({ type: String, enum: ["beginner", "intermediate", "advanced"], required: true })
-  difficultyLevel!: string; 
+  @Prop({
+    type: [
+      {
+        title: { type: String, required: true },
+        content: { type: String, required: true },
+        difficultyLevel: {
+          type: String,
+          enum: ['hard', 'medium', 'easy'], // Use consistent values
+          required: true,
+          default: 'medium',
+        },
+        lessons: [
+          {
+            title: { type: String, required: true },
+            content: { type: String, required: true },
+          },
+        ],
+      },
+    ],
+    default: [],
+  })
+  modules!: Array<{
+    _id?: string;
+    title: string;
+    content: string;
+    difficultyLevel: 'hard' | 'medium' | 'easy';
+    lessons: Array<{
+      _id?: string;
+      title: string;
+      content: string;
+    }>;
+  }>;
+  
+  ratings!: Array<{
+    userId: string;
+    rating: number;
+    review?: string;
+  }>;
 
+  // Average rating for the course (calculated from the ratings)
+  @Prop({ type: Number, default: 0 })
+  averageRating!: number;
+  
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
-
-
-

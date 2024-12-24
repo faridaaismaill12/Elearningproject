@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class ForumThread extends Document {
@@ -15,18 +15,28 @@ export class ForumThread extends Document {
     @Prop({ type: String })
     content!: string;
 
-    @Prop([
-        {
-            user: { type: Types.ObjectId, ref: 'User', required: true },
-            message: { type: String, required: true },
-            timestamp: { type: Date, default: Date.now },
-        },
-    ])
-    replies?: {
-        user: Types.ObjectId;
-        message: string;
-        timestamp: Date;
-    }[];
+    @Prop([{ type: Types.ObjectId, ref: 'Reply' }]) // Allow ObjectId[] or populated Reply[]
+    replies?: (Types.ObjectId | Reply)[];
 }
 
 export const ForumThreadSchema = SchemaFactory.createForClass(ForumThread);
+
+@Schema({ timestamps: true })
+export class Reply extends Document {
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    user!: Types.ObjectId;
+
+    @Prop({ type: String, required: true })
+    message!: string;
+
+    @Prop([{ type: Types.ObjectId, ref: 'Reply' }]) // Allow ObjectId[] or populated Reply[]
+    replies?: (Types.ObjectId | Reply)[];
+
+    @Prop({ type: Types.ObjectId, ref: 'ForumThread', required: false }) // Link to parent thread
+    forumThread?: Types.ObjectId;
+
+    @Prop({ type: Types.ObjectId, ref: 'Reply', required: false }) // Link to parent reply
+    parent?: Types.ObjectId | null;
+}
+
+export const ReplySchema = SchemaFactory.createForClass(Reply);
