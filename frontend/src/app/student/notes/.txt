@@ -4,21 +4,17 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import "./notes.css";
-import Cookies from "js-cookie";
 
 const NotesPage = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddingNote, setIsAddingNote] = useState(false);
-  const [newNoteContent, setNewNoteContent] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        // const token = Cookies.get("authToken");
-        const token=localStorage.getItem("authToken");
+        const token = localStorage.getItem("authToken");
         if (!token) {
           console.error("Authentication token not found in localStorage.");
           throw new Error("Authentication token not found");
@@ -48,42 +44,43 @@ const NotesPage = () => {
 
     fetchNotes();
   }, []);
+
   const handleAddNote = async () => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
         throw new Error("Authentication token not found");
       }
-  
+
       const decodedToken = JSON.parse(atob(token.split(".")[1]));
       const creator = decodedToken.id;
-  
+
       // Construct new note payload
       const newNote = {
         creator,
-        content: newNoteContent.trim(),
+        content: "hegab",
         course: "64b8f8d7a35f0c001c123457", // Replace with valid course ID if required
         module: "64b8f8d7a35f0c001c123458", // Optional: Replace if applicable
         lesson: "64b8f8d7a35f0c001c123459", // Optional: Replace if applicable
       };
-  
-      console.log("Adding note:", newNote);
-      // Call the correct API endpoint
+
+      console.log("Creating note:", newNote);
+
       const response = await axios.post(
-        "http://localhost:4000/notes/createNote", // Updated endpoint
-        (newNote),
+        "http://localhost:4000/notes/createNote",
+        newNote,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
-      
-      setNotes([...notes, response.data]); // Add the new note to the list
-      setIsAddingNote(false); // Close the add note mode
-      setNewNoteContent(""); // Clear the new note content
+
+      const newNoteId = response.data._id;
+
+      // Redirect to the new note's page
+      router.push(`/student/notes/${newNoteId}`);
     } catch (err: any) {
-      console.error("Error adding note:", err.message || err);
-      setError("Failed to add note");
+      console.error("Error creating note:", err.message || err);
+      setError("Failed to create note");
     }
   };
 
@@ -108,29 +105,12 @@ const NotesPage = () => {
           >
             {note.content}
           </div>
-          
         ))}
-        {isAddingNote && (
-          <div className="note-card new-note">
-            <textarea
-              autoFocus
-              placeholder="Write your note here..."
-              value={newNoteContent}
-              onChange={(e) => setNewNoteContent(e.target.value)}
-            />
-            <button className="save-note-button" onClick={handleAddNote}>
-              Save Note
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Add Note Button */}
       <div className="add-note-button-container">
-        <button
-          className="add-note-button"
-          onClick={() => setIsAddingNote(!isAddingNote)}
-        >
+        <button className="add-note-button" onClick={handleAddNote}>
           + Add Note
         </button>
       </div>

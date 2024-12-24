@@ -18,7 +18,7 @@ const NoteDetailPage = () => {
       try {
         const token = localStorage.getItem("authToken");
         const response = await axios.get(
-          `http://localhost:5010/notes/${params.noteId}`,
+          `http://localhost:4000/notes/${params.noteId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -40,14 +40,14 @@ const NoteDetailPage = () => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.patch(
-        `http://localhost:5010/notes/${params.noteId}`,
+        `http://localhost:4000/notes/${params.noteId}`,
         { content: updatedContent },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       setAutosaveMessage(true);
-      setTimeout(() => setAutosaveMessage(false), 2000); 
+      setTimeout(() => setAutosaveMessage(false), 2000);
     } catch (err: any) {
       console.error("Error autosaving note:", err.message || err);
       setError("Failed to autosave note");
@@ -58,7 +58,7 @@ const NoteDetailPage = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (note) handleAutosave();
-    }, 2000); 
+    }, 2000);
 
     return () => clearTimeout(delayDebounceFn);
   }, [updatedContent, handleAutosave]);

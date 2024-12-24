@@ -67,16 +67,13 @@ export class NoteService {
   
       // Query notes by creator
       console.log("Querying database for notes with creator ID:", creator);
-      const notes = await this.noteModel.find({ creator: new Types.ObjectId(creator) }).exec();
+      const notes = await this.noteModel.find({ creator:(creator) }).exec();
   
       console.log("Fetched Notes:", notes);
   
       if (notes.length === 0) {
-        console.warn(`No notes found for creator ID: ${creator}`);
-        throw new HttpException(
-          { message: `No notes found for creator ID: ${creator}` },
-          HttpStatus.NOT_FOUND,
-        );
+        console.log(`No notes found for creator ID: ${creator}`);
+        return [];
       }
   
       return notes;
