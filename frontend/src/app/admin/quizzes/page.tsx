@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaTrash } from "react-icons/fa";
 
-import { LoadingSpinner } from "@/app/_components/LoadingSpinner";
+import { LoadingSpinner } from "../../_components/LoadingSpinner";
 import { Types } from "mongoose";
 import './Quizzes.css'
 

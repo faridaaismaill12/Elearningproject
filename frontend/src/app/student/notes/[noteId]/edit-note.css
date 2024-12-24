@@ -1,0 +1,91 @@
+/* edit-note.css */
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
+
+.note-container {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.title {
+  font-size: 2rem;
+  color: #4a4a4a;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.note-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+}
+
+textarea {
+  width: 100%;
+  min-height: 200px;
+  font-family: 'Arial', sans-serif;
+  font-size: 1rem;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  background: #f3e8ff; /* Light purple/lilac background */
+  color: #333;
+  resize: none;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1), -2px -2px 8px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease-in-out;
+}
+
+textarea:focus {
+  outline: none;
+  border: 2px solid #5a189a; /* Deep purple border on focus */
+  box-shadow: 0 0 10px rgba(90, 24, 154, 0.2);
+  background: #ffffff; /* White background for focus */
+}
+
+.update-button {
+  background-color: #5a189a; /* Deep purple */
+  color: white;
+  font-size: 1rem;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.update-button:hover {
+  background-color: #7b2cbf; /* Slightly lighter purple on hover */
+  transform: scale(1.05);
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.update-button:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(123, 44, 191, 0.5);
+}
+
+.error-message {
+  color: #d9534f;
+  font-size: 1.2rem;
+  margin-top: 15px;
+}
+
+.success-message {
+  color: #28a745;
+  font-size: 1.2rem;
+  margin-top: 15px;
+}

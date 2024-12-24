@@ -26,6 +26,7 @@ dotenv.config();
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const uri = configService.get<string>('MONGO_URI');
+        console.log('server is running on port', process.env.PORT);
         if (!uri) {
           console.error('MONGO_URI is not defined in the .env file');
           throw new Error('MONGO_URI is not defined');

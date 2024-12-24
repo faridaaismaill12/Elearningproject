@@ -12,7 +12,7 @@ export class NoteService {
 
   async create(createNoteDto: CreateNoteDto): Promise<Note> {
     const { creator, course, module, lesson, content } = createNoteDto;
-
+  
     const newNote = new this.noteModel({
       creator,
       course,
@@ -20,22 +20,26 @@ export class NoteService {
       lesson,
       content,
     });
-
+  
+    console.log("New note object before save:", newNote);
+  
     // Validate the new note object
     const errors = await validate(newNote);
     if (errors.length > 0) {
-      const validationErrors = { note: 'User input is not valid.' };
+      console.error("Validation errors:", errors);
       throw new HttpException(
-        { message: 'Input data validation failed', validationErrors },
+        { message: 'Input data validation failed', validationErrors: errors },
         HttpStatus.BAD_REQUEST,
       );
     }
-
+  
     // Save the new note
     try {
       const savedNote = await newNote.save();
+      console.log("Note saved successfully:", savedNote);
       return savedNote;
     } catch (error: any) {
+      console.error("Error saving note to database:", error.message || error);
       throw new HttpException(
         { message: 'Failed to save the note', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -48,31 +52,41 @@ export class NoteService {
     return notes;
   }
 
-
-  // See all your notes
   async getAllNotes(creator: string): Promise<Note[]> {
     try {
+      console.log("Received creator ID:", creator);
+  
+      // Validate creator ID
       if (!Types.ObjectId.isValid(creator)) {
+        console.error(`Invalid Creator ID: ${creator}`);
         throw new HttpException(
-          { message: 'Invalid ID' },
+          { message: `Invalid Creator ID: ${creator}` },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+  
+      // Query notes by creator
+      console.log("Querying database for notes with creator ID:", creator);
+      const notes = await this.noteModel.find({ creator: new Types.ObjectId(creator) }).exec();
+  
+      console.log("Fetched Notes:", notes);
+  
+      if (notes.length === 0) {
+        console.warn(`No notes found for creator ID: ${creator}`);
+        throw new HttpException(
+          { message: `No notes found for creator ID: ${creator}` },
           HttpStatus.NOT_FOUND,
         );
       }
-      const notes = await this.noteModel.find({ "creator": new Types.ObjectId(creator) }).exec();
+  
       return notes;
-    } catch (error: any) {
-      throw new HttpException(
-        { message: 'Failed to fetch notes' },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    
+    } catch (error) {
+      console.error("Error fetching notes for creator:", error);
+      throw error; // Re-throw the original error
     }
   }
-
-
-
-  // Update a Note
   
+
   async updateNote(noteId: string, updateData: UpdateNoteDto): Promise<Note> {
     try {
       // Update the note and handle the possibility of null
@@ -112,7 +126,29 @@ export class NoteService {
     }
   }
   
+  async getNoteById(noteId: string): Promise<Note> {
+    console.log("Fetching note with ID:", noteId);
   
+    if (!Types.ObjectId.isValid(noteId)) {
+      console.error("Invalid Note ID:", noteId);
+      throw new HttpException('Invalid Note ID', HttpStatus.BAD_REQUEST);
+    }
+  
+    try {
+      const note = await this.noteModel.findById(noteId).exec();
+      if (!note) {
+        throw new HttpException('Note not found', HttpStatus.NOT_FOUND);
+      }
+      return note;
+    } catch (error) {
+      console.error("Error fetching note with ID:", noteId, error);
+      throw new HttpException(
+        { message: 'Failed to fetch note' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+    
 
 
 }

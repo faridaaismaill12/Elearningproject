@@ -54,7 +54,7 @@ const QuizResults = () => {
     if (quizId && token) fetchResponse();
   }, [quizId, token]);
 
- 
+
 
   return (
     <div className="quiz-results-container">
