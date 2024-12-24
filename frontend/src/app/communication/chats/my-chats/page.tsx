@@ -4,6 +4,7 @@ import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import './MyChat.css'; 
 import io, { Socket } from "socket.io-client";
+import Cookies from "js-cookie";
 
 interface ChatRoom {
   _id: string;
@@ -31,7 +32,7 @@ export default function ChatPage() {
 
   const fetchChatRooms = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = Cookies.get("authToken");
       if (!token) throw new Error('Authentication token not found.');
 
       const response = await axios.get('http://localhost:4000/communication/chats', {
@@ -45,7 +46,7 @@ export default function ChatPage() {
 
   const fetchChatDetails = async (chatId: string) => {
     try {
-      const token = localStorage.getItem('authToken');
+     const token = Cookies.get("authToken");  
       if (!token) throw new Error('Authentication token not found.');
 
       const response = await axios.get(
@@ -80,7 +81,7 @@ export default function ChatPage() {
   };
 
   const fetchCurrentUser = async () => {
-    const token = localStorage.getItem('authToken');
+    const token = Cookies.get("authToken");
     if (!token) return;
 
     const decodedToken = JSON.parse(atob(token.split('.')[1]));

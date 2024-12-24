@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { FaReply, FaEdit, FaTrash, FaComment } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 export default function ForumDetails() {
   const { id } = useParams();
@@ -20,7 +21,7 @@ export default function ForumDetails() {
   // Fetch current user
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) return;
 
       const decodedToken = JSON.parse(atob(token.split(".")[1]));
@@ -33,7 +34,7 @@ export default function ForumDetails() {
   // Fetch the forum details
   const fetchForum = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) {
         setError("Authentication token not found. Please log in.");
         return;
@@ -88,7 +89,7 @@ export default function ForumDetails() {
   // Add or edit a reply
   const handleReplySubmit = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) {
         setError("Authentication token not found. Please log in.");
         return;
@@ -122,7 +123,7 @@ export default function ForumDetails() {
   // Delete a reply
   const deleteReply = async (replyId) => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) {
         setError("Authentication token not found. Please log in.");
         return;
@@ -141,7 +142,7 @@ export default function ForumDetails() {
   // Delete the forum
   const deleteForum = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) {
         setError("Authentication token not found. Please log in.");
         return;
@@ -160,7 +161,7 @@ export default function ForumDetails() {
   // Edit the forum
   const handleForumEdit = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) {
         setError("Authentication token not found. Please log in.");
         return;

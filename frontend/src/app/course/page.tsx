@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import CoursePage from "./coursePage"; // Instructor view
 import StudentCoursePage from "./studentCoursePage"; // Student view
 import AdminPage from "./AdminPage"; // Admin view
+import Cookies from "js-cookie";
 
 export default function Page() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function Page() {
 
   useEffect(() => {
     // Simulate fetching the user role from a token or API
-    const token = localStorage.getItem("authToken");
+    const token = Cookies.get("authToken");
     const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decode the JWT
     const role = decodedToken.role; // Assume role is present in the token
 

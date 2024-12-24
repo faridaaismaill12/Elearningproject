@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import Cookies from "js-cookie";
 interface EditCourseProps {
   course: any; // Pass the current course details
   onClose: () => void; // Function to close the modal
@@ -17,7 +17,7 @@ const EditCourse: React.FC<EditCourseProps> = ({ course, onClose, onSuccess }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem('authToken'); 
+  const token = Cookies.get("authToken");
   const handleUpdateCourse = async () => {
     setLoading(true);
     setError("");

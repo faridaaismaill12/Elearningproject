@@ -3,6 +3,7 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 import { IoSearch } from "react-icons/io5";
 import axios from "axios";
 import "./Navbar.css";
+import Cookies from "js-cookie";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -14,7 +15,7 @@ const Navbar = () => {
   const [userRole, setUserRole] = useState<string>("User");
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = Cookies.get("authToken");
 
     if (token) {
       setIsLoggedIn(true);

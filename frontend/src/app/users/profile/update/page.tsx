@@ -29,7 +29,7 @@ export default function UpdateProfilePage() {
       }
 
       try {
-        const response = await axios.get(`http://localhost:5010/users/view-profile`, {
+        const response = await axios.get(`http://localhost:4000/users/view-profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -77,7 +77,7 @@ export default function UpdateProfilePage() {
 
     try {
       const response = await axios.patch(
-        `http://localhost:5010/users/update-profile`,
+        `http://localhost:4000/users/update-profile`,
         formData,
         {
           headers: {

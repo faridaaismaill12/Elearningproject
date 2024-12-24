@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
+import Cookies from "js-cookie";
 
 // Define the type for a forum
 interface Forum {
@@ -27,7 +28,7 @@ export default function ViewAllForums() {
   useEffect(() => {
     const fetchForumsAndCourse = async () => {
       try {
-        const token = localStorage.getItem("authToken");
+        const token = Cookies.get("authToken");
         if (!token) {
           setError("Authentication token not found.");
           return;
@@ -73,7 +74,7 @@ export default function ViewAllForums() {
     }
 
     try {
-      const token = localStorage.getItem("authToken");
+      const token = Cookies.get("authToken");
       if (!token) {
         setError("Authentication token not found.");
         return;

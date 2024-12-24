@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Quiz.css';
 import { useParams } from 'next/navigation';
+import Cookies from 'js-cookie';
 
 
 const QuizForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
@@ -16,7 +17,7 @@ const QuizForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const [quizzes, setQuizzes] = useState<any[]>([]); 
   const [loading, setLoading] = useState(false); 
   
-  const token = localStorage.getItem('authToken'); 
+  const token = Cookies.get("authToken");
   if (!token) {
     console.error('No token found');
     return;
@@ -27,7 +28,7 @@ const QuizForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
 
     setLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:6185/instructor/quizzes/all/${moduleId}`, {
+      const { data } = await axios.get(`http://localhost:4000/instructor/quizzes/all/${moduleId}`, {
         headers: {
           Authorization: `Bearer ${token}` // Pass the token to the backend
         }

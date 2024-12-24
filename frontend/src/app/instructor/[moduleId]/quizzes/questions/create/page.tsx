@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios, { AxiosError } from 'axios';
 import { useParams } from 'next/navigation';
 import './Question.css';
+import Cookies from 'js-cookie';
 
 const InsertToQuestionBank: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const { moduleId } = useParams();
@@ -12,7 +13,7 @@ const InsertToQuestionBank: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   const [creating, setCreating] = useState(false);
   const [options, setOptions] = useState<string[]>(['True', 'False']);  // Default options for TorF
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
-  const token = localStorage.getItem('authToken'); 
+  const token = Cookies.get("authToken"); 
 
   if (!token) {
     console.error('No token found');

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import Cookies from "js-cookie";
 interface ViewEnrolledProps {
   onClose: () => void;
 }
@@ -12,7 +12,7 @@ const ViewEnrolled: React.FC<ViewEnrolledProps> = ({ onClose }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const token = localStorage.getItem('authToken'); 
+  const token = Cookies.get("authToken");
   const handleFetchEnrolledCourses = async () => {
     if (!studentId.trim()) {
       setError("Student ID cannot be empty.");

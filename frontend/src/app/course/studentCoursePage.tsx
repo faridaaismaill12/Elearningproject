@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 const StudentCoursePage = () => {
   const [email, setEmail] = useState<string | null>(null);
@@ -13,12 +14,12 @@ const StudentCoursePage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
-    if (storedToken) {
-      setToken(storedToken);
+    const token = Cookies.get("authToken"); // Replace 'authToken' with your token's key
+    if (token) {
+      setToken(token);
 
       try {
-        const decodedToken = JSON.parse(atob(storedToken.split(".")[1])); // Decode the JWT
+        const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decode the JWT
         const userEmail = decodedToken.email; // Extract email from the token
         setEmail(userEmail);
       } catch (error) {

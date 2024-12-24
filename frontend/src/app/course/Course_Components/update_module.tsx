@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 const UpdateModule = ({ courseId, moduleId, currentDetails, onClose }) => {
   const [title, setTitle] = useState(currentDetails?.title || "");
@@ -14,6 +15,9 @@ const UpdateModule = ({ courseId, moduleId, currentDetails, onClose }) => {
   const router = useRouter();
 
   const handleUpdate = async () => {
+
+    const token = Cookies.get("authToken");
+    
     setLoading(true);
     setError(null);
     try {
@@ -21,10 +25,7 @@ const UpdateModule = ({ courseId, moduleId, currentDetails, onClose }) => {
         `http://localhost:4000/courses/${courseId}/modules/${moduleId}`,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ2ODQ0NTUsImV4cCI6MTczNDc3MDg1NX0.LYAmmv4QDNDVD3tR2XhjCXSKj5Mul19m9wSCg-ayTFc`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             title,
             content,

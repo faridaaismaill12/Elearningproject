@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import Cookies from "js-cookie";
 interface CreateLessonProps {
   courseId: string;
   moduleId: string;
@@ -24,7 +24,7 @@ const CreateLesson: React.FC<CreateLessonProps> = ({ courseId, moduleId, onClose
     };
 
     try {
-      const token = localStorage.getItem('authToken'); 
+      const token = Cookies.get("authToken");
       const response = await fetch(
         `http://localhost:4000/courses/${courseId}/modules/${moduleId}/lessons`,
         {
