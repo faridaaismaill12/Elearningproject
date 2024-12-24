@@ -384,29 +384,36 @@ export class StudentQuizzesService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+  
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException('Course not found');
     }
+  
     const moduleIds = course.modules.map((module) => module._id);
     if (moduleIds.length === 0) {
       throw new NotFoundException('No modules found for this course');
     }
+  
     const quizzes = await this.quizModel.find({ moduleId: { $in: moduleIds } });
     if (quizzes.length === 0) {
-      throw new NotFoundException('No quizzes found for this course');
+      return 0; // Return a default value if no quizzes are found
     }
+  
     const quizIds = quizzes.map((quiz) => quiz._id);
     const responses = await this.responseModel.find({
       quiz: { $in: quizIds },
-      user: new Types.ObjectId(userId),  
+      user: new Types.ObjectId(userId),
     });
+  
     if (responses.length === 0) {
-      return 0;
+      return 0; // Return 0 if the user has no responses
     }
+  
     const totalScore = responses.reduce((sum, response) => sum + response.score, 0);
     return totalScore / responses.length;
   }
+  
   
 
   async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: number; quizType: string; duration: number }[]> {

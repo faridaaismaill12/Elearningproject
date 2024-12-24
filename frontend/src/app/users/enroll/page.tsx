@@ -29,7 +29,7 @@ export default function EnrollCoursePage() {
       }
 
       try {
-        const response = await axios.get("http://localhost:5010/users/get-role", {
+        const response = await axios.get("http://localhost:4000/users/get-role", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -72,7 +72,7 @@ export default function EnrollCoursePage() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5010/users/enroll-user",
+        "http://localhost:4000/users/enroll-user",
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
