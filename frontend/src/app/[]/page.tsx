@@ -15,12 +15,7 @@ const HomePage = () => {
       {/* Option 2 Banner */}
       <Banner2 />
 
-      {/* Main Banner */}
-      <Banner />
-
-      {/* Slider Section */}
-      <Slider />
-
+     
       {/* About Section */}
       <About />
 

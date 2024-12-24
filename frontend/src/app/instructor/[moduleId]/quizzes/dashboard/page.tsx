@@ -50,7 +50,7 @@ const ModuleQuizzes: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/instructor/quizzes/all/${moduleId}`,
+        `http://localhost:6305/instructor/quizzes/all/${moduleId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -74,7 +74,7 @@ const ModuleQuizzes: React.FC = () => {
 
     try {
       await axios.delete(
-        `http://localhost:4000/instructor/quizzes/delete/${moduleId}/${quizId}`,
+        `http://localhost:6305/instructor/quizzes/delete/${moduleId}/${quizId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -103,7 +103,7 @@ const ModuleQuizzes: React.FC = () => {
       };
 
       await axios.patch(
-        `http://localhost:4000/instructor/quizzes/update/${quizId}`,
+        `http://localhost:6305/instructor/quizzes/update/${quizId}`,
         updatedQuiz,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -185,13 +185,7 @@ const ModuleQuizzes: React.FC = () => {
             View Question Bank
           </button>
         </div>
-        <div className="box_left">
-          <h3>View Student Results</h3>
-          <p>View and Evalutate student quiz performance</p>
-          <button type="button" onClick={navigateToResultsTable}>
-            Go to Create Question
-          </button>
-        </div>
+  
       </div>
       <div className="module-quizzes-container">
         <h2>Available Quizzes</h2>

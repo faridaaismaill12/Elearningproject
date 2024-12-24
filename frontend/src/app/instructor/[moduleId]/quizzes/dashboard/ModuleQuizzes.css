@@ -1,14 +1,9 @@
 .dashboard_container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column; 
   gap: 20px;
   padding: 50px 70px;
-  flex-wrap: wrap;
-}
-
-h1 {
-  font-weight: 600;
-  font-size: 2rem;
+  flex-direction: row;
 }
 
 .box_left,
@@ -17,12 +12,13 @@ h1 {
   border: 1px solid #cdcdcd;
   border-radius: 24px;
   padding: 20px;
-  height: 220px;
-  width: 48%; /* Adjust to make them responsive */
-  max-width: 600px;
+  height: 260px;
+  width: 100%; 
+  max-width: 600px; 
   box-shadow: 0 8px 14px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-align: center;
+ 
 }
 
 .box_left h3,
@@ -42,7 +38,8 @@ h1 {
 
 .box_left button,
 .box_right button {
-  width: 40%;
+  width: 60%;
+  height:20%;
   background-color: #7700ff;
   color: #ffffff;
   border: none;
@@ -66,6 +63,7 @@ h1 {
   transform: translateY(-5px);
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
 }
+
 
 .module-quizzes-container {
   padding: 20px;

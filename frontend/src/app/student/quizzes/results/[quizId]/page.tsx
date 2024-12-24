@@ -33,7 +33,7 @@ const QuizResults = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:6280/student/quizzes/user-response/${quizId}`,
+          `http://localhost:6318/student/quizzes/user-response/${quizId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

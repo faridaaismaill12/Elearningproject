@@ -275,7 +275,6 @@ export class StudentQuizzesService {
     };
   }
 
-
   async getUserResponse(userId: string, quizId: string): Promise<QuizResponse> {
     if (!Types.ObjectId.isValid(userId)) {
         throw new NotFoundException('Invalid user ID format');
