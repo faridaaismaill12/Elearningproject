@@ -274,7 +274,7 @@ export class ForumService {
             'REPLY'
         ) as unknown as Notification;
 
-        await this.communicationGateway.emitNotification(thread.createdBy.toString(), notification as unknown as Notification);
+        await this.communicationGateway.emitNotification(new Types.ObjectId(thread.createdBy), notification as unknown as Notification);
 
         return savedReply;
     }
@@ -475,4 +475,3 @@ async updateReply(replyId: string, userId: string, updateData: Partial<Reply>): 
     }
 
 }
-

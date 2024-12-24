@@ -3,15 +3,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
+// import "./style.css";
+
 
 const CourseDetailsPage = () => {
-  const { courseId } = useParams(); // Capture dynamic route param
+  const { courseId } = useParams();
   const router = useRouter();
   const [courseDetails, setCourseDetails] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [averageScore, setAverageScore] = useState<number | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -22,10 +25,10 @@ const CourseDetailsPage = () => {
     if (storedToken) {
       setToken(storedToken);
       const decodedToken = JSON.parse(atob(storedToken.split(".")[1]));
-      setCurrentUserId(decodedToken.id); // Extract current user's ID
+      setCurrentUserId(decodedToken.id);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
-      router.push("/login"); // Redirect to login if token is not found
+      router.push("/login");
     }
   }, []);
 
@@ -37,86 +40,52 @@ const CourseDetailsPage = () => {
       setError(null);
 
       try {
-        // Fetch course details
-        const courseResponse = await fetch(
+        const courseResponse = await axios.get(
           `http://localhost:4000/courses/${courseId}`,
           {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
+        setCourseDetails(courseResponse.data);
 
-        if (!courseResponse.ok) {
-          throw new Error(
-            `Failed to fetch course details: ${courseResponse.statusText}`
-          );
-        }
-
-        const courseData = await courseResponse.json();
-        setCourseDetails(courseData);
-
-        // Fetch modules
-        const modulesResponse = await fetch(
+        const modulesResponse = await axios.get(
           `http://localhost:4000/courses/${courseId}/modules`,
           {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
+        setModules(modulesResponse.data);
 
-        if (!modulesResponse.ok) {
-          throw new Error(
-            `Failed to fetch modules: ${modulesResponse.statusText}`
-          );
-        }
-
-        const modulesData = await modulesResponse.json();
-        setModules(modulesData);
-
-        // Fetch enrolled students with roles
-        const studentPromises = courseData.enrolledStudents.map(
+        const studentPromises = courseResponse.data.enrolledStudents.map(
           async (studentId: string) => {
-            const userResponse = await fetch(
+            const userResponse = await axios.get(
               `http://localhost:4000/users/find-user/${studentId}`,
               {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
+                headers: { Authorization: `Bearer ${token}` },
               }
             );
-
-            if (!userResponse.ok) {
-              throw new Error(
-                `Failed to fetch user details: ${userResponse.statusText}`
-              );
-            }
-
-            return userResponse.json();
+            return userResponse.data;
           }
         );
-
         const studentsData = await Promise.all(studentPromises);
         setEnrolledStudents(studentsData);
+
+        const averageScoreResponse = await axios.get(
+          `http://localhost:4000/student/quizzes/average-scores/${courseId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setAverageScore(averageScoreResponse.data.averageScore);
       } catch (err: any) {
+        console.error("Error fetching data:", err.message);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (courseId) {
-      fetchCourseDetails();
-    } else {
-      setError("Course ID is missing.");
-    }
+    if (courseId) fetchCourseDetails();
   }, [courseId, token]);
 
   const handleModuleClick = (moduleId: string) => {
@@ -129,7 +98,7 @@ const CourseDetailsPage = () => {
 
   const handleCreate1to1Chat = async (participantId: string) => {
     if (participantId === currentUserId) {
-      return; // Do not allow creating 1:1 chat with self
+      return;
     }
 
     try {
@@ -181,7 +150,7 @@ const CourseDetailsPage = () => {
       );
 
       alert("Group chat created successfully!");
-      setSelectedStudents([]); // Reset selected students
+      setSelectedStudents([]);
     } catch (err: any) {
       alert(
         "Failed to create group chat. Error: " +
@@ -192,7 +161,7 @@ const CourseDetailsPage = () => {
 
   const toggleStudentSelection = (studentId: string) => {
     if (studentId === currentUserId) {
-      return; // Prevent selecting yourself
+      return;
     }
 
     setSelectedStudents((prevSelected) => {
@@ -204,179 +173,68 @@ const CourseDetailsPage = () => {
     });
   };
 
-  if (loading) return <div style={styles.loading}>Loading course details...</div>;
-
-  if (error) return <div style={styles.error}>{error}</div>;
+  if (loading) return <div className="loading">Loading course details...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Course Details</h1>
-      </div>
-      <div style={styles.card}>
+    <div className="container">
+      <h1 className="title">Course Details</h1>
+      <div className="card">
         <p>
           <strong>Title:</strong> {courseDetails?.title || "N/A"}
         </p>
         <p>
           <strong>Description:</strong> {courseDetails?.description || "N/A"}
         </p>
+        <p>
+          <strong>Your Average Quiz Score:</strong>{" "}
+          {averageScore !== null ? `${averageScore.toFixed(2)}%` : "No scores yet"}
+        </p>
       </div>
 
-      <h2 style={styles.subtitle}>Modules</h2>
-      <div style={styles.listContainer}>
-        {modules.length > 0 ? (
-          <ul style={styles.list}>
-            {modules.map((module) => (
-              <li
-                key={module._id}
-                style={styles.moduleItem}
-                onClick={() => handleModuleClick(module._id)}
+      <h2 className="subtitle">Modules</h2>
+      <ul className="list">
+        {modules.map((module) => (
+          <li
+            key={module._id}
+            className="module-item"
+            onClick={() => handleModuleClick(module._id)}
+          >
+            {module.title}
+          </li>
+        ))}
+      </ul>
+
+      <h2 className="subtitle">Enrolled Students</h2>
+      <ul className="list">
+        {enrolledStudents.map((student) => (
+          <li key={student._id} className="student-item">
+            {student.email}
+            <input
+              type="checkbox"
+              checked={selectedStudents.includes(student._id)}
+              onChange={() => toggleStudentSelection(student._id)}
+            />
+            {student._id !== currentUserId && (
+              <button
+                onClick={() => handleCreate1to1Chat(student._id)}
+                className="chat-button"
               >
-                {module.title}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p style={styles.noData}>No modules available for this course.</p>
-        )}
-      </div>
+                Create 1:1 Chat
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
 
-      <h2 style={styles.subtitle}>Enrolled Students</h2>
-      <div style={styles.listContainer}>
-        {enrolledStudents.length > 0 ? (
-          <ul style={styles.list}>
-            {enrolledStudents.map((student) => (
-              <li
-                key={student._id}
-                style={{
-                  ...styles.listItem,
-                  backgroundColor:
-                    student.role === "instructor" ? "#f0f8ff" : "transparent",
-                }}
-              >
-                {student.role === "instructor" && <strong>(Instructor)</strong>}
-                <input
-                  type="checkbox"
-                  checked={selectedStudents.includes(student._id)}
-                  onChange={() => toggleStudentSelection(student._id)}
-                  disabled={student._id === currentUserId}
-                />
-                {student.email}
-                {student._id !== currentUserId && (
-                  <button
-                    onClick={() => handleCreate1to1Chat(student._id)}
-                    style={styles.chatButton}
-                  >
-                    Create 1:1 Chat
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p style={styles.noData}>No enrolled students for this course.</p>
-        )}
-      </div>
-
-      <button onClick={handleCreateGroupChat} style={styles.groupChatButton}>
+      <button onClick={handleCreateGroupChat} className="group-button">
         Create Group Chat
       </button>
-
-      <button onClick={handleViewForums} style={styles.forumButton}>
+      <button onClick={handleViewForums} className="forum-button">
         View Forums
       </button>
     </div>
   );
-};
-
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    padding: "2rem",
-    fontFamily: "Arial, sans-serif",
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-  header: {
-    textAlign: "center",
-    marginBottom: "2rem",
-  },
-  title: {
-    fontSize: "2.5rem",
-    color: "#444",
-  },
-  card: {
-    backgroundColor: "#f9f9f9",
-    padding: "1.5rem",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    marginBottom: "2rem",
-  },
-  subtitle: {
-    fontSize: "1.5rem",
-    marginBottom: "1rem",
-  },
-  listContainer: {
-    marginBottom: "2rem",
-  },
-  list: {
-    listStyleType: "none",
-    padding: 0,
-  },
-  listItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0.5rem 1rem",
-    borderBottom: "1px solid #ddd",
-  },
-  moduleItem: {
-    padding: "0.5rem",
-    margin: "0.5rem 0",
-    backgroundColor: "#eaf7ff",
-    border: "1px solid #b3e5fc",
-    borderRadius: "5px",
-    cursor: "pointer",
-    textAlign: "center",
-  },
-  chatButton: {
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    padding: "0.5rem 1rem",
-    cursor: "pointer",
-  },
-  groupChatButton: {
-    display: "block",
-    margin: "1rem auto",
-    backgroundColor: "#28a745",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    padding: "0.5rem 1rem",
-    cursor: "pointer",
-  },
-  forumButton: {
-    display: "block",
-    margin: "1rem auto",
-    backgroundColor: "#ff5722",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    padding: "0.5rem 1rem",
-    cursor: "pointer",
-  },
-  loading: {
-    textAlign: "center",
-  },
-  error: {
-    color: "red",
-    textAlign: "center",
-  },
-  noData: {
-    color: "#999",
-    textAlign: "center",
-  },
 };
 
 export default CourseDetailsPage;

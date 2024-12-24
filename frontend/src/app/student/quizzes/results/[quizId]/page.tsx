@@ -75,7 +75,7 @@ const QuizResults = () => {
       } else if (quizResponse.score > 50) {
         return <h3>Good effort! Keep practicing, and you'll improve even more!</h3>;
       }else {
-        return <h3>Don't give up! Keep trying, and you'll get there!</h3>;
+        return <h3>You need to review the module again!</h3>;
       }
     }
     return null;

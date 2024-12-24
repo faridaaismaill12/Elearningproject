@@ -39,6 +39,14 @@ async startQuiz(
   }
 }
 
+//get all quizzes for a certain module
+@Roles('student')
+@Get('all/:moduleId')
+async getQuizzesByModule(@Param('moduleId') moduleId: string) {
+  console.log(`Received quizId: ${moduleId}`);  // Ensure this log is outputted
+  return await this.studentQuizzesService.getQuizzes(moduleId);
+}
+
 @Roles('student')
 @Post('/submit/:quizId')
   async submitQuiz(

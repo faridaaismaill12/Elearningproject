@@ -408,5 +408,31 @@ export class StudentQuizzesService {
     return totalScore / responses.length;
   }
   
+
+  async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: number; quizType: string; duration: number }[]> {
+    const module_id = new Types.ObjectId(moduleId);
+  
+    const module = await this.moduleModel.findById(module_id).populate({
+      path: 'quizzes',
+      select: '_id name numberOfQuestions quizType duration difficultyLevel', 
+      model: 'Quiz',
+    });
+  
+    if (!module) {
+      throw new NotFoundException("Module not found");
+    }
+  
+    if (!module.quizzes || module.quizzes.length === 0) {
+      throw new NotFoundException("Quizzes not found");
+    }
+  
+    return module.quizzes.map((quiz: any) => ({
+      _id:quiz.id,
+      name: quiz.name,
+      numberOfQuestions: quiz.numberOfQuestions,
+      quizType: quiz.quizType,
+      duration: quiz.duration,
+    }));
+  }
   
 }

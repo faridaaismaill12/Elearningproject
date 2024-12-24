@@ -13,6 +13,7 @@ import {
     Req,
     UnauthorizedException,
     ForbiddenException,
+    Put,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -303,6 +304,16 @@ export class UserController {
 
 
 
+    @Put(':userId/complete-module/:moduleId')
+    async completeModule(
+        @Param('userId') userId: string,
+        @Param('moduleId') moduleId: string,
+    ): Promise<any> {
+        // Call the service method to mark the module as completed for the user
+        const updatedUser = await this.userService.addCompletedModule(userId, moduleId);
+        return updatedUser;
+      }
+
 //     @UseGuards(JwtAuthGuard, RolesGuard)
 //     @Roles('instructor')
 //     @Get(':id/enrolled-courses')
@@ -355,5 +366,3 @@ export class UserController {
     
 
 }
-
-

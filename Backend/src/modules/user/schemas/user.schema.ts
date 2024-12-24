@@ -40,7 +40,7 @@ export class User extends Document {
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }],
     default: [],
   })
-  enrolledCourses?: Types.ObjectId[];
+  enrolledCourses!: Types.ObjectId[];
 
   @Prop({
     type: String,
@@ -73,11 +73,29 @@ export class User extends Document {
   })
   chats?: Types.ObjectId[];
 
-  @Prop({ default: false }) // Indicates if 2FA is enabled
-  isTwoFactorEnabled?: boolean;
+  // Array of completed modules (storing as strings instead of ObjectIds)
+@Prop({
+  type: [String],
+  default: [],
+})
+completedModules?: string[];
 
-  @Prop({ nullable: true }) // Two-factor authentication secret
-    twoFactorSecret?: string;
+// Array of completed courses (storing as strings instead of ObjectIds)
+@Prop({
+  type: [String],
+  default: [],
+})
+completedCourses?: string[];
+
+
+@Prop({ default: false }) // Indicates if 2FA is enabled
+isTwoFactorEnabled?: boolean;
+
+@Prop({ nullable: true }) // Two-factor authentication secret
+  twoFactorSecret?: string;
+
+
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

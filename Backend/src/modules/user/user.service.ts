@@ -663,6 +663,25 @@ export class UserService {
         
     }
 
+    async addCompletedModule(userId: string, moduleId: string): Promise<UserDocument> {
+        const user = await this.userModel.findById(userId);
+      
+        if (!user) {
+          throw new NotFoundException(`User with ID ${userId} not found.`);
+        }
+      
+        // Ensure completedModules is initialized
+        if (!user.completedModules) {
+          user.completedModules = [];
+        }
+      
+        // Add the moduleId as a string to the array
+        if (!user.completedModules.includes(moduleId)) {
+          user.completedModules.push(moduleId);
+          await user.save();
+        }
+      
+        return user;
+    }
     
 }
-

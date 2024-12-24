@@ -31,8 +31,6 @@ import { CommunicationGateway } from './communication.chatgateway';
 import { CommunicationController } from './controllers/communication.controller';
 import { CommunicationService } from './services/communication.service';
 import { CourseModule } from '../course/course.module';
-import { NotificationController } from './controllers/notifications.controller';
-import { NotificationGateway } from './notifications.gateway';
 
 
 @Module({
@@ -61,11 +59,10 @@ import { NotificationGateway } from './notifications.gateway';
   controllers: [
     CommunicationController,
     ForumController,
-    NotificationController, // Ensure this is added
+    // NotificationController, // Ensure this is added
     SavedConversationController, // Ensure this is added
   ],
   providers: [
-    NotificationGateway, // Ensure this is included
     CommunicationGateway,
     ForumService,
     NotificationService, // Ensure this is included

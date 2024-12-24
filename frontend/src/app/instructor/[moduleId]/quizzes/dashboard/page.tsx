@@ -49,7 +49,7 @@ const ModuleQuizzes: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:6098/instructor/quizzes/all/${moduleId}`,
+        `http://localhost:4000/instructor/quizzes/all/${moduleId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,7 +73,7 @@ const ModuleQuizzes: React.FC = () => {
 
     try {
       await axios.delete(
-        `http://localhost:6098/instructor/quizzes/delete/${moduleId}/${quizId}`,
+        `http://localhost:4000/instructor/quizzes/delete/${moduleId}/${quizId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -102,7 +102,7 @@ const ModuleQuizzes: React.FC = () => {
       };
 
       await axios.patch(
-        `http://localhost:6098/instructor/quizzes/update/${quizId}`,
+        `http://localhost:4000/instructor/quizzes/update/${quizId}`,
         updatedQuiz,
         {
           headers: { Authorization: `Bearer ${token}` },
