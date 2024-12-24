@@ -123,7 +123,7 @@ export class InstructorDashboardService {
       if (!Types.ObjectId.isValid(moduleId)) {
         throw new BadRequestException('Invalid Module ID');
       }
-      const quizzes = await this.quizModel.find({ moduleId: { $in: moduleId } });
+      const quizzes = await this.quizModel.find({ moduleId: new Types.ObjectId(moduleId) });
       if (quizzes.length === 0) {
         throw new NotFoundException('No quizzes found for this course');
       }
