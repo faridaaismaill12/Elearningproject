@@ -88,10 +88,10 @@ const Navbar = () => {
           {isLoggedIn ? (
             <>
               <li className="nav-item">
-                <a className="nav-link" href="/course">Courses</a>
+                <a className="nav-link" href="/courses">Courses</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/courses">Notes</a>
+                <a className="nav-link" href="/Notes">Notes</a>
               </li>
               <li className="nav-item">
                 <a className="nav-link" href="/communication/chats/my-chats">Chat</a>
