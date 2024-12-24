@@ -10,6 +10,7 @@ import { User } from '../user/schemas/user.schema';
 import { Module, ModuleDocument } from '../course/schemas/module.schema';
 import {Course} from '../course/schemas/course.schema'; // Added Course schema
 import { populate } from 'dotenv';
+import { LessonDocument } from '../course/schemas/lesson.schema';
 
 @Injectable()
 export class StudentQuizzesService {
@@ -441,5 +442,63 @@ export class StudentQuizzesService {
       duration: quiz.duration,
     }));
   }
+
+
+  async isModuleCompletedByStudent(moduleId: string, userId: string): Promise<boolean> {
+    const module = await this.moduleModel.findById(new Types.ObjectId(moduleId)).populate('lessons quizzes');
+    if (!module) {
+        throw new NotFoundException(`Module with ID ${moduleId} not found.`);
+    }
+
+    console.log('user ID' , userId)
+    const userObjectId = new Types.ObjectId(userId);
+
+    console.log('USER Object id', userObjectId)
+
+    if (!module.quizzes || module.quizzes.length === 0) {
+        throw new NotFoundException(`No quizzes found for module with ID ${moduleId}.`);
+    }
+
+    const moduleQuizzes = module.quizzes.map((quiz) => quiz._id);
+
+    console.log('Module quizzes:', moduleQuizzes);
+
+    const responses = await this.responseModel.find({
+      user: userObjectId,
+      quiz: { $in: moduleQuizzes.map(id => new Types.ObjectId(id)) },  // Cast IDs explicitly to ObjectId
+  });
+  
+    console.log('User responses:', responses);
+
+    const totalScore = responses.reduce((sum, response) => {
+        const score = response.score ?? 0; // Default to 0 if score is missing
+        return sum + score;
+    }, 0);
+
+
+    const averageScore = totalScore / moduleQuizzes.length;
+
+
+    await this.userModel.updateOne(
+      { _id: userId },
+      { $addToSet: { completedModules: module._id } }  
+  );
+
+    // Debug log to check the average score
+    console.log('Average Score:', averageScore);
+
+    return averageScore >= 60; // Ensure this threshold is the desired value
+}
+
+
+
+
+
+
+
+
+
+  
+
   
 }

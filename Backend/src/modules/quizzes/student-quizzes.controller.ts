@@ -89,23 +89,20 @@ async getQuizzesByModule(@Param('moduleId') moduleId: string) {
     }
   }
 
+  @Get(':moduleId/completion-status')
+async isModuleCompletedByStudent(
+    @Param('moduleId') moduleId: string,
+    @Req() req: any,
+): Promise<{ completed: boolean }> {
+    const userId = req.user.id;
+    if (!userId) {
+        throw new BadRequestException('User ID is required.');
+    }
+
+    const completed = await this.studentQuizzesService.isModuleCompletedByStudent(moduleId, userId);
+    return { completed };
+
+
+
   }
-  
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-    
-
-
-
-
+}
