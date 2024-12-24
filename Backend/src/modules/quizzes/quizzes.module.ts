@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { Course, CourseSchema} from '../course/schemas/course.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LessonService } from '../course/lesson.service';
 
 
 @Modules({

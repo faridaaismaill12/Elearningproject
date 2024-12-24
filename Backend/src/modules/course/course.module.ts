@@ -14,6 +14,7 @@ import { ModuleService } from './module.service';
 import { Course, CourseSchema } from './schemas/course.schema';
 import { LessonSchema } from './schemas/lesson.schema';
 import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
+import { QuizResponse, ResponseSchema } from '../quizzes/schemas/response.schema';
 // import { NoteModel } from '.././notes/schemas/note.schema';
 
 @Module({
@@ -33,7 +34,8 @@ import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schem
       { name: Course.name, schema: CourseSchema },
       { name: ModuleSchema.name, schema: ModuleSchemaDef },
       { name: 'Lesson', schema: LessonSchema },
-      { name: User.name, schema: UserSchema }
+      { name: User.name, schema: UserSchema },
+   { name: QuizResponse.name, schema: ResponseSchema},
     ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Serve `uploads` from the project root
