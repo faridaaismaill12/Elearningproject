@@ -3,6 +3,7 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 import { IoSearch } from "react-icons/io5";
 import axios from "axios";
 import "./Navbar.css";
+import Cookies from "js-cookie";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -14,7 +15,7 @@ const Navbar = () => {
   const [userRole, setUserRole] = useState<string>("User");
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = Cookies.get("authToken");
 
     if (token) {
       setIsLoggedIn(true);
@@ -87,16 +88,16 @@ const Navbar = () => {
           {isLoggedIn ? (
             <>
               <li className="nav-item">
-                <a className="nav-link" href="/Home">Courses</a>
+                <a className="nav-link" href="/courses">Courses</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/courses">Notes</a>
+                <a className="nav-link" href="/Notes">Notes</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/Home">Chat</a>
+                <a className="nav-link" href="/communication/chats/my-chats">Chat</a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/Home">Notifications</a>
+                <a className="nav-link" href="/communication/notifications">Notifications</a>
               </li>
 
               {/* Role-based navigation items */}
@@ -106,7 +107,7 @@ const Navbar = () => {
                     <a className="nav-link" href="/student/dashboard">Student Dashboard</a>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="/student/courses">My Courses</a>
+                    <a className="nav-link" href="course">My Courses</a>
                   </li>
                 </>
               )}
@@ -117,7 +118,7 @@ const Navbar = () => {
                     <a className="nav-link" href="/instructor/dashboard">Instructor Dashboard</a>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="/instructor/manage-courses">Manage Courses</a>
+                    <a className="nav-link" href="/course">Manage Courses</a>
                   </li>
                 </>
               )}

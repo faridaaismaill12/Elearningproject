@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
 import './Quiz.css';
 import toast, { Toaster } from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 interface Question {
   _id: string;
@@ -39,7 +40,7 @@ const QuizPage = () => {
 
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error('Missing token');
       return;

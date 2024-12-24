@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Cookies from "js-cookie";
 
 const CreateModule = ({ courseId, onClose }: { courseId: string; onClose: () => void }) => {
   const [title, setTitle] = useState("");
@@ -9,8 +10,7 @@ const CreateModule = ({ courseId, onClose }: { courseId: string; onClose: () => 
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQ4MDM3NjEsImV4cCI6MTczNDg5MDE2MX0.UKj3a7WrPIreK-2K9lyIeElhWB9ak1M0sl-h-6H13iw"; // Token
-
+  const token = Cookies.get("authToken");
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 

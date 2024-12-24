@@ -1,5 +1,6 @@
 "use client";
 
+import Cookies from "js-cookie";
 import React, { useState } from "react";
 
 interface CreateCourseProps {
@@ -24,9 +25,7 @@ const CreateCourse: React.FC<CreateCourseProps> = ({ onClose }) => {
     };
 
     try {
-      const token =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWMzN2E3OGZiMjVjNzE2YzQwNTJkYyIsImVtYWlsIjoibWFyaW5hQGV4YW1wbGUuY29tIiwicm9sZSI6Imluc3RydWN0b3IiLCJpYXQiOjE3MzQzNTMzMDUsImV4cCI6MTczNDQzOTcwNX0.eb7Z24Mh3LuYs8IfPvze0LI7rx4_6VxdsNq9T2Bc2yU";
-
+      const token = Cookies.get("authToken");
       const response = await fetch("http://localhost:4000/courses", {
         method: "POST",
         headers: {

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import CreateCourse from "./Course_Components/create_course";
 import ViewEnrolled from "./Course_Components/view_enrolled";
 import EditCourse from "./Course_Components/edit_course";
+import Cookies from "js-cookie";
 
 const CoursePage = () => {
   const [showCreateCourse, setShowCreateCourse] = useState(false);
@@ -27,9 +28,9 @@ const CoursePage = () => {
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
-    if (storedToken) {
-      setToken(storedToken);
+    const token = Cookies.get("authToken"); // Replace 'authToken' with your token's key
+    if (token) {
+      setToken(token);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
       router.push("/login"); // Redirect to login if token is not found

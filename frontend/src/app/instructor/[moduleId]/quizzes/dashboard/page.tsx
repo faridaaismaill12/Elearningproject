@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'; // Import useRouter
 import { FaTrash, FaEdit } from 'react-icons/fa';
 import { MdQuiz } from 'react-icons/md';
 import { Types } from 'mongoose';
+import Cookies from 'js-cookie';
 
 interface Quiz {
   _id: any;
@@ -33,7 +34,7 @@ const ModuleQuizzes: React.FC = () => {
     quizType: 'easy',
   });
 
-  const token = localStorage.getItem('authToken');
+  const token = Cookies.get("authToken");
 
   useEffect(() => {
     if (moduleId) {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 const LessonDetailsPage = () => {
   const { courseId, moduleId, lessonId } = useParams();
@@ -9,14 +10,15 @@ const LessonDetailsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  
 
   const router = useRouter();
 
   // Retrieve token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken"); // Replace 'authToken' with your token's key
-    if (storedToken) {
-      setToken(storedToken);
+    const token = Cookies.get("authToken"); // Replace 'authToken' with your token's key
+    if (token) {
+      setToken(token);
     } else {
       console.error("No token found in localStorage. Redirecting to login...");
       router.push("/login"); // Redirect to login if token is not found
