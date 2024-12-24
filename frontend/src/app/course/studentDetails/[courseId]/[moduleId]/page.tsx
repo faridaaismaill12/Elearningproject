@@ -98,18 +98,18 @@
               },
             }
           );
-          console.log(quizzesResponse);
-          
-          if (quizzesResponse.statusText === "Not Found") {
+  
+          if (quizzesResponse.status === 404) {
             console.warn("No quizzes found for this module.");
             setQuizzes([]);
           } else if (!quizzesResponse.ok) {
-            throw new Error(`Failed to fetch quizzes: ${quizzesResponse.statusText}`);
+            throw new Error(
+              `Failed to fetch quizzes: ${quizzesResponse.statusText}`
+            );
           } else {
             const quizzesData = await quizzesResponse.json();
             setQuizzes(quizzesData);
           }
-          
 
           // Fetch notes for the module
           const notesResponse = await fetch(
@@ -122,12 +122,11 @@
               },
             }
           );
-
-          console.log(notesResponse);
+  
           if (!notesResponse.ok) {
             throw new Error(`Failed to fetch notes: ${notesResponse.statusText}`);
           }
-
+  
           const notesData = await notesResponse.json();
           setNotes(notesData);
         } catch (err: any) {
@@ -136,6 +135,7 @@
           setLoading(false);
         }
       };
+      
 
       if (courseId && moduleId) {
         fetchModuleDetails();

@@ -59,6 +59,14 @@ export class Module {
 
   @Prop({ type: [String], default: [] }) // Array of strings for video file locations
 videos!: string[];
+
+@Prop({
+  type: [{ type: Types.ObjectId, ref: 'Note' }],
+  default: [],
+})
+notes?: Types.ObjectId[];
+
+
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);

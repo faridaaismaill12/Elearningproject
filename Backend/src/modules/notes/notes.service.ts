@@ -6,13 +6,15 @@ import {UpdateNoteDto} from './dto/update-note.dto';
 import { Note } from './schemas/note.schema';
 import { validate } from 'class-validator';
 import { Course } from '../course/schemas/course.schema';
+import { Module } from '../course/schemas/module.schema';
 
 
 @Injectable()
 export class NoteService {
   constructor(@InjectModel(Note.name) private readonly noteModel: Model<Note>,
-              @InjectModel(Course.name) private readonly courseModel :Model<Course>) {}
-
+            @InjectModel(Course.name) private readonly courseModel :Model<Course>,
+            @InjectModel(Module.name) private moduleModel: Model< Module>,) {}
+                  
   async create(createNoteDto: CreateNoteDto): Promise<Note> {
     const { creator, course, module, lesson, content } = createNoteDto;
   
@@ -192,6 +194,12 @@ export class NoteService {
     try {
         if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(moduleId)) {
             throw new HttpException('Invalid User or Module ID', HttpStatus.BAD_REQUEST);
+        }
+
+        const module = await this.moduleModel.findById(moduleId);
+        const notes_ = module?.notes;
+        if(notes_?.length===0){
+          return [];
         }
 
         const notes = await this.noteModel.find({

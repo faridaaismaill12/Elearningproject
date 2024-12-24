@@ -43,7 +43,7 @@ async startQuiz(
 @Roles('student')
 @Get('all/:moduleId')
 async getQuizzesByModule(@Param('moduleId') moduleId: string) {
-  console.log(`Received quizId: ${moduleId}`);  // Ensure this log is outputted
+  console.log(`Received moduleID: ${moduleId}`);  // Ensure this log is outputted
   return await this.studentQuizzesService.getQuizzes(moduleId);
 }
 

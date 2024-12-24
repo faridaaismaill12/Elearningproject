@@ -419,11 +419,17 @@ export class StudentQuizzesService {
   async getQuizzes(moduleId: string): Promise<{ name: string; numberOfQuestions: number; quizType: string; duration: number }[]> {
     const module_id = new Types.ObjectId(moduleId);
   
-    const module = await this.moduleModel.findById(module_id).populate({
-      path: 'quizzes',
-      select: '_id name numberOfQuestions quizType duration difficultyLevel', 
-      model: 'Quiz',
-    });
+
+    if(!Types.ObjectId.isValid(module_id)){
+
+    }
+    
+    const module = await this.moduleModel.findById(module_id);
+    const quizzes = module?.quizzes;
+
+    if (!quizzes || quizzes.length === 0){
+      return [];
+    }
   
     if (!module) {
       throw new NotFoundException("Module not found");
