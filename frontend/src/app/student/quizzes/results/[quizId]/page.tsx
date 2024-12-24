@@ -33,7 +33,7 @@ const QuizResults = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:6318/student/quizzes/user-response/${quizId}`,
+          `http://localhost:4000/student/quizzes/user-response/${quizId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -67,6 +67,7 @@ const QuizResults = () => {
     }
   }, [quizId]);
 
+
   const renderResultsMessage = () => {
     if (quizResponse) {
       if (quizResponse.score > 90) {
@@ -81,6 +82,7 @@ const QuizResults = () => {
     }
     return null;
   };
+
 
   return (
     <div className="quiz-results-container">
