@@ -32,9 +32,12 @@ export class CourseService {
 
   // Create a course
   async createCourse(courseData: Partial<Course>, instructorEmail: string): Promise<Course> {
+
+    const instructorId= await this.userModel.findOne({email: instructorEmail}).exec();
     const newCourse = new this.courseModel({
       ...courseData,
-      instructor: instructorEmail, // Set instructor's email
+      instructor: instructorEmail,
+      enrolledStudents: [instructorId] // Set instructor's email
     });
   
     return newCourse.save();
@@ -100,12 +103,34 @@ export class CourseService {
       throw new NotFoundException('Course not found.');
     }
   
+    // Ensure the course has enrolled students
+    if (!course.enrolledStudents || course.enrolledStudents.length === 0) {
+      throw new NotFoundException('No students are enrolled in this course.');
+    }
+  
+    // Loop through the enrolled students
+    for (const studentId of course.enrolledStudents) {
+      // Find the student
+      const student = await this.userModel.findById(studentId);
+  
+      if (!student) {
+        throw new NotFoundException(`Student with ID ${studentId} not found.`);
+      }
+  
+      // Remove the course ID from the student's enrolledCourses array
+      student.enrolledCourses = student.enrolledCourses.filter(
+        (enrolledCourseId) => enrolledCourseId.toString() !== courseId
+      );
+      await student.save();
+    }
+  
     // Mark the course as deleted
     course.deleted = true;
     await course.save();
   
     return 'Course has been marked as deleted.';
   }
+  
   
   
 

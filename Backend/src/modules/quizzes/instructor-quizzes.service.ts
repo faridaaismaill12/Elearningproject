@@ -475,7 +475,7 @@ async averageCourseQuizzes(courseId: string): Promise<number> {
   const responses = await this.responseModel.find({ quiz: { $in: quizIds } });
 
   if (responses.length === 0) {
-    return 0;
+    return 0; // Return 0 if the user has no responses
   }
 
   const totalScore = responses.reduce((sum, response) => sum + response.score, 0);

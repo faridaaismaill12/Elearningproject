@@ -8,12 +8,14 @@ import { useRouter } from "next/navigation";
 import CreateCourse from "./Course_Components/create_course";
 import ViewEnrolled from "./Course_Components/view_enrolled";
 import EditCourse from "./Course_Components/edit_course";
+import CreateModule from "./Course_Components/create_module";
 import Cookies from "js-cookie";
 
 const CoursePage = () => {
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [showViewEnrolled, setShowViewEnrolled] = useState(false);
   const [showEditCourse, setShowEditCourse] = useState(false);
+  const [showCreateModule, setShowCreateModule] = useState(false);
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,13 +28,13 @@ const CoursePage = () => {
 
   const router = useRouter();
 
-  // Retrieve token from localStorage
+  // Retrieve token from cookies
   useEffect(() => {
     const token = Cookies.get("authToken"); // Replace 'authToken' with your token's key
     if (token) {
       setToken(token);
     } else {
-      console.error("No token found in localStorage. Redirecting to login...");
+      console.error("No token found. Redirecting to login...");
       router.push("/login"); // Redirect to login if token is not found
     }
   }, []);
@@ -111,6 +113,17 @@ const CoursePage = () => {
   const handleCloseEditCourse = () => {
     setShowEditCourse(false);
     setSelectedCourse(null);
+  };
+
+  // Open the Create Module Modal
+  const handleOpenCreateModule = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    setShowCreateModule(true);
+  };
+
+  const handleCloseCreateModule = () => {
+    setShowCreateModule(false);
+    setSelectedCourseId(null);
   };
 
   // Delete Course
@@ -218,6 +231,11 @@ const CoursePage = () => {
       {/* Create Course Modal */}
       {showCreateCourse && <CreateCourse onClose={handleCloseCreateCourse} />}
 
+      {/* Create Module Modal */}
+      {showCreateModule && selectedCourseId && (
+        <CreateModule courseId={selectedCourseId} onClose={handleCloseCreateModule} />
+      )}
+
       {/* Edit Course Modal */}
       {showEditCourse && selectedCourse && (
         <EditCourse
@@ -277,7 +295,7 @@ const CoursePage = () => {
                   transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
                   <MenuItem onClick={() => handleOpenEditCourse(course)}>Edit Course</MenuItem>
-                  <MenuItem onClick={() => console.log("Create Module clicked")}>Create Module</MenuItem>
+                  <MenuItem onClick={() => handleOpenCreateModule(course._id)}>Create Module</MenuItem>
                   <MenuItem onClick={() => setDeleteDialogOpen(true)}>Delete Course</MenuItem>
                   <MenuItem onClick={() => handleViewCourseDetails(course._id)}>Course Details</MenuItem>
                 </Menu>

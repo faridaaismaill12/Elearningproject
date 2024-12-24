@@ -83,7 +83,7 @@ async getQuizzesByModule(@Param('moduleId') moduleId: string) {
       return { averageScore };
     } catch (error) {
       if (error instanceof NotFoundException) {
-        throw new NotFoundException(error.message);  
+        throw new NotFoundException(error.message);
       }
       throw new BadRequestException('An error occurred while calculating the average score'); 
     }

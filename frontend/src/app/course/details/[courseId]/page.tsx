@@ -9,7 +9,7 @@ import Cookies from "js-cookie";
 import axios from "axios";
 
 const CourseDetails = () => {
-  const { courseId } = useParams<{ courseId: string }>(); // Get courseId from the route params
+  const { courseId } = useParams<{ courseId: string }>();
   const router = useRouter();
 
   const [courseDetails, setCourseDetails] = useState<any>(null);
@@ -21,17 +21,17 @@ const CourseDetails = () => {
   const [token, setToken] = useState<string | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [averageScore, setAverageScore] = useState<number | null>(null); // State for average score
+  const [averageScore, setAverageScore] = useState<number | null>(null);
 
-  // Retrieve token from localStorage
+  // Retrieve token from cookies
   useEffect(() => {
     const token = Cookies.get("authToken");
     if (token) {
       setToken(token);
       const decodedToken = JSON.parse(atob(token.split(".")[1]));
-      setCurrentUserId(decodedToken.id); // Extract current user's ID
+      setCurrentUserId(decodedToken.id);
     } else {
-      console.error("No token found in localStorage. Redirecting to login...");
+      console.error("No token found. Redirecting to login...");
       router.push("/login");
     }
   }, []);
@@ -82,18 +82,16 @@ const CourseDetails = () => {
         const response = await axios.get(`http://localhost:4000/instructor/quizzes/${courseId}/average-quizzes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("API Response:", response.data);
-        setAverageScore(response.data.averageScore); // Ensure the shape is consistent
+        setAverageScore(response.data.averageScore);
       } catch (err) {
         console.error("Failed to fetch average quiz score:", err.response?.data || err.message);
       }
-      
     };
 
     fetchAverageScore();
   }, [token, courseId]);
 
-  // Open Menu
+  // Menu handling for modules
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, moduleId: string) => {
     setAnchorEl(event.currentTarget);
     setSelectedModuleId(moduleId);
@@ -117,7 +115,7 @@ const CourseDetails = () => {
   // Create 1:1 Chat
   const handleCreate1to1Chat = async (participantId: string) => {
     if (participantId === currentUserId) {
-      return; // Do not allow creating 1:1 chat with self
+      return; // Do not allow creating a 1:1 chat with self
     }
 
     try {
@@ -137,10 +135,7 @@ const CourseDetails = () => {
 
       alert("1:1 Chat created successfully!");
     } catch (err: any) {
-      alert(
-        "Failed to create 1:1 chat. Error: " +
-          (err.response?.data?.message || err.message)
-      );
+      alert("Failed to create 1:1 chat. Error: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -172,27 +167,22 @@ const CourseDetails = () => {
       alert("Group chat created successfully!");
       setSelectedStudents([]);
     } catch (err: any) {
-      alert(
-        "Failed to create group chat. Error: " +
-          (err.response?.data?.message || err.message)
-      );
+      alert("Failed to create group chat. Error: " + (err.response?.data?.message || err.message));
     }
   };
 
-  // Toggle student selection
+  // Toggle student selection for group chat
   const toggleStudentSelection = (studentId: string) => {
-    if (studentId === currentUserId) {
-      return; // Prevent selecting yourself
-    }
+    if (studentId === currentUserId) return;
 
-    setSelectedStudents((prevSelected) => {
-      if (prevSelected.includes(studentId)) {
-        return prevSelected.filter((id) => id !== studentId);
-      } else {
-        return [...prevSelected, studentId];
-      }
-    });
+    setSelectedStudents((prevSelected) =>
+      prevSelected.includes(studentId)
+        ? prevSelected.filter((id) => id !== studentId)
+        : [...prevSelected, studentId]
+    );
   };
+
+  const handleOpenCreateModule = () => setShowCreateModule(true);
 
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif", maxWidth: "1200px", margin: "0 auto" }}>
@@ -220,6 +210,22 @@ const CourseDetails = () => {
       ) : (
         <p style={{ color: "red", textAlign: "center" }}>{error || "Loading course details..."}</p>
       )}
+
+      {/* Create Module Button */}
+      <button
+        onClick={handleOpenCreateModule}
+        style={{
+          padding: "0.5rem 1rem",
+          backgroundColor: "#007bff",
+          color: "#fff",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          marginBottom: "1rem",
+        }}
+      >
+        Create Module
+      </button>
 
       {/* View Forums Button */}
       <button
@@ -250,7 +256,6 @@ const CourseDetails = () => {
                 alignItems: "center",
                 padding: "0.5rem 1rem",
                 borderBottom: "1px solid #ddd",
-                backgroundColor: student.role === "instructor" ? "#f0f8ff" : "transparent",
               }}
             >
               {student.email}
@@ -307,7 +312,6 @@ const CourseDetails = () => {
               border: "1px solid #ddd",
               borderRadius: "8px",
               marginBottom: "1rem",
-              boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
             }}
           >
             <div style={{ flex: 1 }}>
@@ -326,8 +330,6 @@ const CourseDetails = () => {
                 onClose={handleMenuClose}
               >
                 <MenuItem onClick={() => handleViewModuleDetails(module._id)}>Module Details</MenuItem>
-                <MenuItem onClick={() => console.log("Edit Module")}>Edit Module</MenuItem>
-                <MenuItem onClick={() => console.log("Delete Module")}>Delete Module</MenuItem>
               </Menu>
             </div>
           </div>
@@ -336,7 +338,7 @@ const CourseDetails = () => {
         <p style={{ textAlign: "center", color: "#555" }}>No modules available.</p>
       )}
 
-      {/* Create Module Component */}
+      {/* Create Module Modal */}
       {showCreateModule && <CreateModule courseId={courseId} onClose={() => setShowCreateModule(false)} />}
     </div>
   );
