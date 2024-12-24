@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'; // Import useRouter
 import { FaTrash, FaEdit } from 'react-icons/fa';
 import { MdQuiz } from 'react-icons/md';
 import { Types } from 'mongoose';
+import Cookies from 'js-cookie';
 
 interface Quiz {
   _id: any;
@@ -33,7 +34,7 @@ const ModuleQuizzes: React.FC = () => {
     quizType: 'easy',
   });
 
-  const token = localStorage.getItem('authToken');
+  const token = Cookies.get('authToken');
 
   useEffect(() => {
     if (moduleId) {
@@ -49,7 +50,7 @@ const ModuleQuizzes: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/instructor/quizzes/all/${moduleId}`,
+        `http://localhost:5010/instructor/quizzes/all/${moduleId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,7 +74,7 @@ const ModuleQuizzes: React.FC = () => {
 
     try {
       await axios.delete(
-        `http://localhost:4000/instructor/quizzes/delete/${moduleId}/${quizId}`,
+        `http://localhost:5010/instructor/quizzes/delete/${moduleId}/${quizId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -102,7 +103,7 @@ const ModuleQuizzes: React.FC = () => {
       };
 
       await axios.patch(
-        `http://localhost:4000/instructor/quizzes/update/${quizId}`,
+        `http://localhost:5010/instructor/quizzes/update/${quizId}`,
         updatedQuiz,
         {
           headers: { Authorization: `Bearer ${token}` },

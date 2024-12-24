@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -10,13 +12,16 @@ interface DashboardData {
 }
 
 const InstructorDashboard = () => {
-  const [courseId, setCourseId] = useState<string>(''); // Replace with actual courseId or get it dynamically
-  const [moduleId, setModuleId] = useState<string>(''); // Replace with actual moduleId or get it dynamically
+  const [courseId, setCourseId] = useState<string>(); // Replace with actual courseId or get it dynamically
+  const [moduleId, setModuleId] = useState<string>(); // Replace with actual moduleId or get it dynamically
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setCourseId('6760586db808104ef1854b93');
+    setModuleId('676702b0493a18a88524332b');
+    
     if (!courseId || !moduleId) return;
 
     const fetchData = async () => {
@@ -31,11 +36,11 @@ const InstructorDashboard = () => {
           averageModuleGradeResponse,
           averageRatingResponse,
         ] = await Promise.all([
-          axios.get(`/dashboard/instructor/${courseId}/enrolled-students`),
-          axios.get(`/dashboard/instructor/average-completions/${courseId}`),
-          axios.get(`/dashboard/instructor/${courseId}/average-grades`),
-          axios.get(`/dashboard/instructor/${moduleId}/average-modules`),
-          axios.get(`/dashboard/instructor/${courseId}/average-rating`),
+          axios.get(`http://localhost:5010/dashboard/instructor/${courseId}/enrolled-students`),
+          axios.get(`http://localhost:5010/dashboard/instructor/average-completions/${courseId}`),
+          axios.get(`http://localhost:5010/dashboard/instructor/${courseId}/average-grades`),
+          axios.get(`http://localhost:5010/dashboard/instructor/${moduleId}/average-modules`),
+          axios.get(`http://localhost:5010/dashboard/instructor/${courseId}/average-rating`),
         ]);
 
         setData({

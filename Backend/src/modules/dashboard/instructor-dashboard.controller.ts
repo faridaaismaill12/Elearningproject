@@ -9,7 +9,7 @@ export class InstructorDashboardController {
     
   //Number of Enrolled Students per course
     @Roles('instructor')
-    @Get(':courseId/enrolled-students')
+    @Get('course/:courseId/enrolled-students')
     async getEnrolledStudents(@Param('courseId') courseId: string): Promise<Number>{
       try {
         const numberEnrolledStudents = await this.instructordashboardService.numberEnrolledStudents(courseId);
@@ -24,7 +24,7 @@ export class InstructorDashboardController {
 
     //Average Completion Rate
     @Roles('instructor')
-    @Get('average-completions/:courseId')
+    @Get('course/:courseId/average-completions')
     async getAverageLessonCompletions(
       @Param('courseId') courseId: string,
     ): Promise<{ averageCompletions: number }> {
@@ -42,7 +42,7 @@ export class InstructorDashboardController {
 
     //Average Quiz Grade by Course
     @Roles('instructor')
-    @Get(':courseId/average-grades')  
+    @Get('course/:courseId/average-grades')  
       async getAverageCourseGrade(@Param('courseId') courseId: string): Promise<number> {
         try {
           const average = await this.instructordashboardService.averageCourseGrades(courseId);
@@ -57,7 +57,7 @@ export class InstructorDashboardController {
     
       //Average Quiz Grade by Module
     @Roles('instructor')
-    @Get(':moduleId/average-modules')  
+    @Get('module/:moduleId/average-modules')  
       async getAverageModuleGrade(@Param('moduleId') moduleId: string): Promise<number> {
         try {
           const average = await this.instructordashboardService.averageModuleGrades(moduleId);
@@ -72,8 +72,8 @@ export class InstructorDashboardController {
    
       //Average Course Rating
     @Roles('instructor')
-    @Get(':courseId/average-rating')  
-      async getAverageRating(@Param('courseID') courseID: string): Promise<number> {
+    @Get('course/:courseId/average-rating')  
+      async getAverageRating(@Param('courseId') courseID: string): Promise<number> {
         try {
           const average = await this.instructordashboardService.averageCourseRating(courseID);
           return average;

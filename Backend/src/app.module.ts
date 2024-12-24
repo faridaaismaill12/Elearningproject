@@ -8,6 +8,7 @@ import { CommunicationModule } from './modules/communication/communication.modul
 import { CourseModule } from './modules/course/course.module'; 
 import { NoteModule } from './modules/notes/notes.module';
 import { SecurityModule } from './modules/security/security.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 import * as dotenv from 'dotenv';
 
@@ -43,6 +44,7 @@ dotenv.config();
     NoteModule,
     CourseModule,
     QuizzesModule,
+    DashboardModule
   ],
   providers: [],
 })
