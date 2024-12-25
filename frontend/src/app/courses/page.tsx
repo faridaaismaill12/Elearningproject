@@ -67,6 +67,7 @@ const AllCoursesPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      console.log(response.data);
       setSuccess(response.data.message || "Successfully enrolled in the course!");
       setFormData({ email: "", courseId: "" });
     } catch (err: any) {

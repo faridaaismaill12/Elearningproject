@@ -18,7 +18,7 @@ export default function VerifyMFA() {
     try {
       const token = Cookies.get("authToken");
       await axios.post(
-        "http://localhost:5010/users/verify",
+        "http://localhost:4000/users/verify",
         { otp },
         {
           headers: { Authorization: `Bearer ${token}` },

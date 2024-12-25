@@ -114,9 +114,9 @@ export class UserService {
         const { email, courseId } = enrollUserDto;
     
         // Validate student (should match the studentId in the token)
-        const student = await this.userModel.findById(studentId);
-        console.log(student);
-        console.log(email);
+        const student = await this.userModel.findById(new Types.ObjectId(studentId));
+        console.log("student",student);
+        // console.log(email);
         if (!student ) {
           throw new ForbiddenException('You can only enroll yourself.');
         }
@@ -147,7 +147,7 @@ export class UserService {
     
         // Enroll the student by adding the course ObjectId to enrolledCourses
         student.enrolledCourses.push(course._id);
-
+        // console.log(student.id)
         course.enrolledStudents.push(student.id);
     
         // Save the changes

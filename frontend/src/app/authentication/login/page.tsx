@@ -37,11 +37,11 @@ export default function LoginPage() {
       Cookies.set("authToken", token, { expires: 1 });
       router.push("/users/profile/view"); // Redirect to dashboard after successful login
 
-      // if (isMfaEnabled) {
-      //   router.push("/authentication/mfa/verify");
-      // } else {
-      //   router.push("/authentication/mfa/enable");
-      // }
+      if (isMfaEnabled) {
+        router.push("/authentication/mfa/verify");
+      } else {
+        router.push("/authentication/mfa/enable");
+      }
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || "Login failed. Please try again.");

@@ -47,7 +47,7 @@ const QuizResponses: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:6085/instructor/quiz-responses/${quizId}`,
+        `http://localhost:4000/instructor/quiz-responses/${quizId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

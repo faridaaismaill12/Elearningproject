@@ -17,6 +17,7 @@ const CreateModule = ({ courseId, onClose }: { courseId: string; onClose: () => 
     formData.append("title", title);
     formData.append("content", content);
     formData.append("difficultyLevel", difficultyLevel);
+    formData.append("notes", JSON.stringify([]));
     files.forEach((file) => formData.append("files", file));
 
     try {

@@ -15,6 +15,7 @@ import { Course, CourseSchema } from './schemas/course.schema';
 import { LessonSchema } from './schemas/lesson.schema';
 import { Module as ModuleSchema, ModuleSchema as ModuleSchemaDef } from './schemas/module.schema';
 import { QuizResponse, ResponseSchema } from '../quizzes/schemas/response.schema';
+import { Rating, RatingSchema } from './schemas/rating.schema';
 // import { NoteModel } from '.././notes/schemas/note.schema';
 
 @Module({
@@ -36,6 +37,7 @@ import { QuizResponse, ResponseSchema } from '../quizzes/schemas/response.schema
       { name: 'Lesson', schema: LessonSchema },
       { name: User.name, schema: UserSchema },
    { name: QuizResponse.name, schema: ResponseSchema},
+   {name:Rating.name, schema:RatingSchema},
     ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Serve `uploads` from the project root

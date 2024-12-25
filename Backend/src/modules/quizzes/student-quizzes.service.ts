@@ -427,7 +427,7 @@ export class StudentQuizzesService {
     const module = await this.moduleModel.findById(module_id);
     const quizzes = module?.quizzes;
 
-    if (!quizzes || quizzes.length === 0){
+    if (!quizzes || quizzes.length === 0) {
       return [];
     }
   

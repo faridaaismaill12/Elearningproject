@@ -1,35 +1,34 @@
 import {
-  Controller,
-  Post,
-  Body,
-  Param,
   BadRequestException,
-  UploadedFiles,
-  UseInterceptors,
-  Get,
-  Patch,
+  Body,
+  Controller,
   Delete,
+  Get,
   NotFoundException,
-  Res,
+  Param,
+  Patch,
+  Post,
   Req,
-  UseGuards,
+  Res,
   UnauthorizedException,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { CourseService } from './course.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { diskStorage } from 'multer';
 import path, { extname } from 'path';
+import { Roles } from '../../decorators/roles.decorator';
 import { JwtAuthGuard } from '../security/guards/jwt-auth.guard';
 import { RolesGuard } from '../security/guards/role.guard';
-import { Roles } from '../../decorators/roles.decorator';
+import { CourseService } from './course.service';
 import { Course } from './schemas/course.schema';
-import { Lesson } from './schemas/lesson.schema';
 
 import * as fs from 'fs';
 
-import { Types } from 'mongoose';
 import archiver from 'archiver';
+import { Types } from 'mongoose';
 
 // Multer storage configuration
 const storage = diskStorage({
@@ -66,7 +65,7 @@ export class CourseController {
   @Post()
   async createCourse(
     @Body() courseData: Partial<Course>,
-    @Req() req: any, // Extract the instructor's email from the JWT
+    @Req() req: any, // Extract the instructor's   email from the JWT
   ): Promise<any> {
     const instructorEmail = req.user.email; // Get instructor's email from the JWT token
   
@@ -117,6 +116,37 @@ async uploadFilesToModule(
   const fileLocations = files.map((file) => `uploads/${file.filename}`);
   return await this.courseService.addFilesToModule(courseId, moduleId, fileLocations);
 }
+
+@Post(':courseId/rate')
+  async rateCourse(
+    @Param('courseId') courseId: string,
+    @Body('value') value: number,
+    @Body('userId') userId: string
+  ): Promise<Course> {
+    try {
+
+
+
+      if (!value || !userId) {
+        throw new BadRequestException('Rating value and user ID are required.');
+      }
+
+      console.log("hegab");
+
+      return await this.courseService.rateCourse(courseId, value, userId);
+
+
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        console.log(error);
+        throw error;
+        
+      }
+
+      console.error('Error in rateCourse controller:');
+      throw new BadRequestException('Failed to rate course.');
+    }
+  }
 
 
 

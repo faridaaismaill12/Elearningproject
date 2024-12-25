@@ -55,7 +55,7 @@ export default function SearchInstructorsPage() {
     );
 
     try {
-      const response = await axios.get("http://localhost:5010/users/search-instructors", {
+      const response = await axios.get("http://localhost:4000/users/search-instructors", {
         params: filteredFormData,
         headers: { Authorization: `Bearer ${token}` },
       });

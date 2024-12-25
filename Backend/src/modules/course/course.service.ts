@@ -13,15 +13,18 @@ import * as path from 'path';
 import { User } from '../user/schemas/user.schema';
 
 import { Note } from '../notes/schemas/note.schema';
+import{Rating} from '../course/schemas/rating.schema';
 
 const rootPath = path.resolve(__dirname, '..', '..'); // Adjust if necessary
 @Injectable()
 export class CourseService {
+  // ratingModel: any;
   constructor(
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(ModuleSchema.name) private moduleModel: Model<ModuleDocument>,
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Rating.name) private ratingModel: Model<Rating>,
     // @InjectModel(Note.name) private noteModel: Model<Note>,
   private readonly moduleService: ModuleService
   ) {}
@@ -72,7 +75,43 @@ export class CourseService {
       .exec();
   }
   
+  async rateCourse (courseId: string, val: number, userId: string): Promise<Course> {
+    if (!Types.ObjectId.isValid(courseId)) {
+      throw new BadRequestException('Invalid course ID format.');
+    }
+    // console.log("1");
+    console.log(val);
+
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found.`);
+    }
+    // console.log("12")
+    if (val < 1 || val > 5) {
+      console.log("error ")
+      throw new BadRequestException('Rating must be between 1 and 5.');
+    }
+
+    const rating = new this.ratingModel({ courseId, userId, rating: val });
+    console.log(rating);
+    await rating.save();
+    // console.log("13")
+    // Add the new rating to the course
+    course.ratings.push(rating.id);
+    // console.log("122")
+    // Calculate the new average rating
+    // const totalRatings = course.ratings.length;
+    // const totalRatingSum = await course.ratings.reduce(async (sumPromise, rate) => {
+    //   const sum = await sumPromise;
+    //   const ratingDoc = await this.ratingModel.findOne({ id: rate }).populate('rating');
+    //   return sum + (ratingDoc ? ratingDoc.rating : 0);
+    // }, Promise.resolve(0));
+    // course.averageRating = totalRatingSum / totalRatings;
   
+    return course.save();
+  
+  
+  }
   
 
   // Get a specific course by MongoDB _id

@@ -160,7 +160,7 @@ export class UserController {
     //  * Delete a user (Admin only)
     //  */
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin') // Only admins can delete users
+    // @Roles('admin') // Only admins can delete users
     @Delete('delete-user')
     async deleteUser(
         @Body('userId') userId: string) {

@@ -34,7 +34,7 @@ const ModuleQuizzes: React.FC = () => {
     quizType: 'easy',
   });
 
-  const token = Cookies.get("authToken");
+  
 
   useEffect(() => {
     if (moduleId) {
@@ -43,6 +43,7 @@ const ModuleQuizzes: React.FC = () => {
   }, [moduleId]);
 
   const fetchQuizzes = async () => {
+    const token = Cookies.get("authToken");
     if (!token || !moduleId) {
       setError('Missing token or moduleId');
       return;
@@ -50,7 +51,7 @@ const ModuleQuizzes: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:6305/instructor/quizzes/all/${moduleId}`,
+        `http://localhost:4000/instructor/quizzes/all/${moduleId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,11 +71,12 @@ const ModuleQuizzes: React.FC = () => {
   };
 
   const deleteQuiz = async (quizId: string) => {
+    const token = Cookies.get("authToken");
     if (!token) return;
 
     try {
       await axios.delete(
-        `http://localhost:6305/instructor/quizzes/delete/${moduleId}/${quizId}`,
+        `http://localhost:4000/instructor/quizzes/delete/${moduleId}/${quizId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -101,9 +103,10 @@ const ModuleQuizzes: React.FC = () => {
       const updatedQuiz = {
         ...formData,
       };
+      const token = Cookies.get("authToken");
 
       await axios.patch(
-        `http://localhost:6305/instructor/quizzes/update/${quizId}`,
+        `http://localhost:4000/instructor/quizzes/update/${quizId}`,
         updatedQuiz,
         {
           headers: { Authorization: `Bearer ${token}` },
