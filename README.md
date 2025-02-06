@@ -38,7 +38,7 @@ personalized insights into user performance. It caters to three user roles: stud
 
 ## Full Tech Stack:
 * Backend: NestJS (Node.js, TypeScript).
-* Frontend: Next.js, with Tailwind CSS for styling 
+* Frontend: Next.js, with Tailwind CSS for styling.
 * Database: MongoDB for flexible and scalable storage.
 * Security: : Multi-Factor Authentication (MFA)
 
